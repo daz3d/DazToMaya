@@ -21,6 +21,12 @@
 	var s_sExporter = "DzFbxExporter";//"DzDAZCOLLADAExporter"
 	var s_sExportExt = "fbx";//"dae"
 	
+	// TODO: This should be a preference controlled by the user instead of
+	// a hard-coded path on the primary drive of the user's machine; this
+	// either needs to be configurable on both sides of the "bridge", or
+	// this side needs to store a DzAppSettings with the path used and the
+	// other side needs to retrieve the path; either way, both sides need
+	// to agree before a change can be pushed to end users
 	var s_sExportPath = "C:/TEMP3D";
 	if( App.platform() == DzApp.MacOSX ){
 		s_sExportPath = "/users/Shared/temp3d";
