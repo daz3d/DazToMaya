@@ -7,23 +7,34 @@
 	s_oFileInfo.deleteLater();
 	
 	var s_aSkeletons = Scene.getSkeletonList();
-	var s_oPrimarySkeleton = s_aSkeletons.length > 0 ? s_aSkeletons[0] : undefined;
+	
+	var s_oPrimaryNode = Scene.getPrimarySelection();
+	var s_oPrimarySkeleton = undefined;
+	if( s_oPrimaryNode ){
+		if( s_oPrimaryNode.inherits( "DzSkeleton" ) ){
+			s_oPrimarySkeleton = s_oPrimaryNode;
+		} else if( s_oPrimaryNode.inherits( "DzBone" ) ){
+			s_oPrimarySkeleton = s_oPrimaryNode.getSkeleton();
+		}
+	}
 	
 	var s_sExporter = "DzFbxExporter";//"DzDAZCOLLADAExporter"
 	var s_sExportExt = "fbx";//"dae"
+	
 	var s_sExportPath = "C:/TEMP3D";
 	if( App.platform() == DzApp.MacOSX ){
 		s_sExportPath = "/users/Shared/temp3d";
 	}
+	
 	var s_sExportBaseName = "DazToMaya";
 	
-	function getXRot( sBoneLabel )
+	function getXRot( oSkeleton, sBoneLabel )
 	{
-		if( !s_oPrimarySkeleton || sBoneLabel.isEmpty() ){
+		if( !oSkeleton || sBoneLabel.isEmpty() ){
 			return undefined;
 		}
 		
-		var oBone = s_oPrimarySkeleton.findBoneByLabel( sBoneLabel );
+		var oBone = oSkeleton.findBoneByLabel( sBoneLabel );
 		if( !oBone ){
 			return undefined;
 		}
@@ -34,16 +45,16 @@
 		return nValue;
 	};
 	
-	function setXRot( sBoneLabel, nValue )
+	function setXRot( oSkeleton, sBoneLabel, nValue )
 	{
-		if( !s_oPrimarySkeleton
+		if( !oSkeleton
 			|| sBoneLabel.isEmpty()
 			|| nValue == undefined ){
 			return;
 		}
 		
 		//print( ":: set x :: " + sBoneLabel + " :: " + nValue );
-		var oBone = s_oPrimarySkeleton.findBoneByLabel( sBoneLabel );
+		var oBone = oSkeleton.findBoneByLabel( sBoneLabel );
 		if( !oBone ){
 			return;
 		}
@@ -59,36 +70,36 @@
 		}
 		
 		//Left
-		try { var xRotLeftMetatarsals = getXRot( "Left Metatarsals" ); } catch( error ){}
-		try { var xRotLeftHeel = getXRot( "Left Heel" ); } catch( error ){}
-		try { var xRotLeftFoot = getXRot( "Left Foot" ); } catch( error ){}
-		try { var xRotLeftToes = getXRot( "Left Toes" ); } catch( error ){}
-		try { var xRotLeftBigToe = getXRot( "Left Big Toe" ); } catch( error ){}
-		try { var xRotLeftBigToe2 = getXRot( "Left Big Toe_2" ); } catch( error ){}
-		try { var xRotLeftSmallToe1 = getXRot( "Left Small Toe 1" ); } catch( error ){}
-		try { var xRotLeftSmallToe12 = getXRot( "Left Small Toe 1_2" ); } catch( error ){}
-		try { var xRotLeftSmallToe2 = getXRot( "Left Small Toe 2" ); } catch( error ){}
-		try { var xRotLeftSmallToe22 = getXRot( "Left Small Toe 2_2" ); } catch( error ){}
-		try { var xRotLeftSmallToe3 = getXRot( "Left Small Toe 3" ); } catch( error ){}
-		try { var xRotLeftSmallToe32 = getXRot( "Left Small Toe 3_2" ); } catch( error ){}
-		try { var xRotLeftSmallToe4 = getXRot( "Left Small Toe 4" ); } catch( error ){}
-		try { var xRotLeftSmallToe42 = getXRot( "Left Small Toe 4_2" ); } catch( error ){}
+		try { var xRotLeftMetatarsals = getXRot( oSkeleton, "Left Metatarsals" ); } catch( error ){}
+		try { var xRotLeftHeel = getXRot( oSkeleton, "Left Heel" ); } catch( error ){}
+		try { var xRotLeftFoot = getXRot( oSkeleton, "Left Foot" ); } catch( error ){}
+		try { var xRotLeftToes = getXRot( oSkeleton, "Left Toes" ); } catch( error ){}
+		try { var xRotLeftBigToe = getXRot( oSkeleton, "Left Big Toe" ); } catch( error ){}
+		try { var xRotLeftBigToe2 = getXRot( oSkeleton, "Left Big Toe_2" ); } catch( error ){}
+		try { var xRotLeftSmallToe1 = getXRot( oSkeleton, "Left Small Toe 1" ); } catch( error ){}
+		try { var xRotLeftSmallToe12 = getXRot( oSkeleton, "Left Small Toe 1_2" ); } catch( error ){}
+		try { var xRotLeftSmallToe2 = getXRot( oSkeleton, "Left Small Toe 2" ); } catch( error ){}
+		try { var xRotLeftSmallToe22 = getXRot( oSkeleton, "Left Small Toe 2_2" ); } catch( error ){}
+		try { var xRotLeftSmallToe3 = getXRot( oSkeleton, "Left Small Toe 3" ); } catch( error ){}
+		try { var xRotLeftSmallToe32 = getXRot( oSkeleton, "Left Small Toe 3_2" ); } catch( error ){}
+		try { var xRotLeftSmallToe4 = getXRot( oSkeleton, "Left Small Toe 4" ); } catch( error ){}
+		try { var xRotLeftSmallToe42 = getXRot( oSkeleton, "Left Small Toe 4_2" ); } catch( error ){}
 		
 		//Right
-		try { var xRotRightMetatarsals = getXRot( "Right Metatarsals" ); } catch( error ){}
-		try { var xRotRightHeel = getXRot( "Right Heel" ); } catch( error ){}
-		try { var xRotRightFoot = getXRot( "Right Foot" ); } catch( error ){}
-		try { var xRotRightToes = getXRot( "Right Toes" ); } catch( error ){}
-		try { var xRotRightBigToe = getXRot( "Right Big Toe" ); } catch( error ){}
-		try { var xRotRightBigToe2 = getXRot( "Right Big Toe_2" ); } catch( error ){}
-		try { var xRotRightSmallToe1 = getXRot( "Right Small Toe 1" ); } catch( error ){}
-		try { var xRotRightSmallToe12 = getXRot( "Right Small Toe 1_2" ); } catch( error ){}
-		try { var xRotRightSmallToe2 = getXRot( "Right Small Toe 2" ); } catch( error ){}
-		try { var xRotRightSmallToe22 = getXRot( "Right Small Toe 2_2" ); } catch( error ){}
-		try { var xRotRightSmallToe3 = getXRot( "Right Small Toe 3" ); } catch( error ){}
-		try { var xRotRightSmallToe32 = getXRot( "Right Small Toe 3_2" ); } catch( error ){}
-		try { var xRotRightSmallToe4 = getXRot( "Right Small Toe 4" ); } catch( error ){}
-		try { var xRotRightSmallToe42 = getXRot( "Right Small Toe 4_2" ); } catch( error ){}
+		try { var xRotRightMetatarsals = getXRot( oSkeleton, "Right Metatarsals" ); } catch( error ){}
+		try { var xRotRightHeel = getXRot( oSkeleton, "Right Heel" ); } catch( error ){}
+		try { var xRotRightFoot = getXRot( oSkeleton, "Right Foot" ); } catch( error ){}
+		try { var xRotRightToes = getXRot( oSkeleton, "Right Toes" ); } catch( error ){}
+		try { var xRotRightBigToe = getXRot( oSkeleton, "Right Big Toe" ); } catch( error ){}
+		try { var xRotRightBigToe2 = getXRot( oSkeleton, "Right Big Toe_2" ); } catch( error ){}
+		try { var xRotRightSmallToe1 = getXRot( oSkeleton, "Right Small Toe 1" ); } catch( error ){}
+		try { var xRotRightSmallToe12 = getXRot( oSkeleton, "Right Small Toe 1_2" ); } catch( error ){}
+		try { var xRotRightSmallToe2 = getXRot( oSkeleton, "Right Small Toe 2" ); } catch( error ){}
+		try { var xRotRightSmallToe22 = getXRot( oSkeleton, "Right Small Toe 2_2" ); } catch( error ){}
+		try { var xRotRightSmallToe3 = getXRot( oSkeleton, "Right Small Toe 3" ); } catch( error ){}
+		try { var xRotRightSmallToe32 = getXRot( oSkeleton, "Right Small Toe 3_2" ); } catch( error ){}
+		try { var xRotRightSmallToe4 = getXRot( oSkeleton, "Right Small Toe 4" ); } catch( error ){}
+		try { var xRotRightSmallToe42 = getXRot( oSkeleton, "Right Small Toe 4_2" ); } catch( error ){}
 		
 		Scene.selectAllNodes( false );
 		
@@ -104,37 +115,37 @@
 		
 		//Left
 		//print( "-----------------------------------------" );
-		try { setXRot( "Left Metatarsals", xRotLeftMetatarsals ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Metatarsals", xRotLeftMetatarsals ); } catch( error ){}
 		try { setXRot( "Left Heel", nZero ); } catch( error ){}
-		//try { setXRot( "Left Foot", xRotLeftFoot ); } catch( error ){}
-		try { setXRot( "Left Toes", xRotLeftToes ); } catch( error ){}
-		try { setXRot( "Left Big Toe", xRotLeftBigToe ); } catch( error ){}
-		try { setXRot( "Left Big Toe_2", xRotLeftBigToe2 ); } catch( error ){}
-		try { setXRot( "Left Small Toe 1", xRotLeftSmallToe1 ); } catch( error ){}
-		try { setXRot( "Left Small Toe 1_2", xRotLeftSmallToe12 ); } catch( error ){}
-		try { setXRot( "Left Small Toe 2", xRotLeftSmallToe2 ); } catch( error ){}
-		try { setXRot( "Left Small Toe 2_2", xRotLeftSmallToe22 ); } catch( error ){}
-		try { setXRot( "Left Small Toe 3", xRotLeftSmallToe3 ); } catch( error ){}
-		try { setXRot( "Left Small Toe 3_2", xRotLeftSmallToe32 ); } catch( error ){}
-		try { setXRot( "Left Small Toe 4", xRotLeftSmallToe4 ); } catch( error ){}
-		try { setXRot( "Left Small Toe 4_2", xRotLeftSmallToe42 ); } catch( error ){}
+		//try { setXRot( oSkeleton, "Left Foot", xRotLeftFoot ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Toes", xRotLeftToes ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Big Toe", xRotLeftBigToe ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Big Toe_2", xRotLeftBigToe2 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Small Toe 1", xRotLeftSmallToe1 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Small Toe 1_2", xRotLeftSmallToe12 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Small Toe 2", xRotLeftSmallToe2 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Small Toe 2_2", xRotLeftSmallToe22 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Small Toe 3", xRotLeftSmallToe3 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Small Toe 3_2", xRotLeftSmallToe32 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Small Toe 4", xRotLeftSmallToe4 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Left Small Toe 4_2", xRotLeftSmallToe42 ); } catch( error ){}
 		
 		//Right
 		//print( "-----------------------------------------" );
-		try { setXRot( "Right Metatarsals", xRotRightMetatarsals ); } catch( error ){}
-		try { setXRot( "Right Heel", nZero ); } catch( error ){}
-		//try { setXRot( "Right Foot", xRotRightFoot ); } catch( error ){}
-		try { setXRot( "Right Toes", xRotRightToes ); } catch( error ){}
-		try { setXRot( "Right Big Toe", xRotRightBigToe ); } catch( error ){}
-		try { setXRot( "Right Big Toe_2", xRotRightBigToe2 ); } catch( error ){}
-		try { setXRot( "Right Small Toe 1", xRotRightSmallToe1 ); } catch( error ){}
-		try { setXRot( "Right Small Toe 1_2", xRotRightSmallToe12 ); } catch( error ){}
-		try { setXRot( "Right Small Toe 2", xRotRightSmallToe2 ); } catch( error ){}
-		try { setXRot( "Right Small Toe 2_2", xRotRightSmallToe22 ); } catch( error ){}
-		try { setXRot( "Right Small Toe 3", xRotRightSmallToe3 ); } catch( error ){}
-		try { setXRot( "Right Small Toe 3_2", xRotRightSmallToe32 ); } catch( error ){}
-		try { setXRot( "Right Small Toe 4", xRotRightSmallToe4 ); } catch( error ){}
-		try { setXRot( "Right Small Toe 4_2", xRotRightSmallToe42 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Metatarsals", xRotRightMetatarsals ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Heel", nZero ); } catch( error ){}
+		//try { setXRot( oSkeleton, "Right Foot", xRotRightFoot ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Toes", xRotRightToes ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Big Toe", xRotRightBigToe ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Big Toe_2", xRotRightBigToe2 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Small Toe 1", xRotRightSmallToe1 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Small Toe 1_2", xRotRightSmallToe12 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Small Toe 2", xRotRightSmallToe2 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Small Toe 2_2", xRotRightSmallToe22 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Small Toe 3", xRotRightSmallToe3 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Small Toe 3_2", xRotRightSmallToe32 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Small Toe 4", xRotRightSmallToe4 ); } catch( error ){}
+		try { setXRot( oSkeleton, "Right Small Toe 4_2", xRotRightSmallToe42 ); } catch( error ){}
 		
 		//print( "-----" );
 	};
@@ -236,12 +247,12 @@
 	
 	// --- END convert_figure_to_props ----
 	
-	function doesHavingSkeleton()
+	function sceneContainsSkeleton()
 	{
 		return Scene.getNumSkeletons() > 0;
 	};
 	
-	function doesHavingHip()
+	function sceneContainsHipNode()
 	{
 		var oNode;
 		for( var i = 0, n = Scene.getNumNodes(); i < n; i += 1 ){
@@ -360,8 +371,8 @@
 	replaceInstanceAll();
 	
 	
-	if( doesHavingSkeleton() ){
-		if( !doesHavingHip() ){
+	if( sceneContainsSkeleton() ){
+		if( !sceneContainsHipNode() ){
 			var aConvert = Scene.getSkeletonList();
 			var nConvert = aConvert.length;
 			if( nConvert > 0 ){
