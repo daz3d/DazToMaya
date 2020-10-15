@@ -52,7 +52,7 @@ def setArnoldExtraSettings():
 				cmds.setAttr(con[0] + '.alphaIsLuminance', 1)
 			except:
 				pass
-	
+
 	objList = pm.ls(geometry = True)
 	for x in objList:
 		try:
@@ -151,7 +151,7 @@ def fixEyelashesAndMoisture():
 				for material in cmds.ls(cmds.listConnections(shading_engine), materials=True):
 					mats.append(material)
 		return mats
-	
+					
 	sceneMats = sceneMats()
 	for mat in sceneMats:
 		list = cmds.listConnections(mat)
@@ -191,7 +191,6 @@ class xmlPhongFixes:
 		pm.connectAttr(p2d.wrapU, tex.wrapU)
 		pm.connectAttr(p2d.wrapV, tex.wrapV)
 		return tex
-	
 	def connectImageNode(self, xmlValue, imageOut, targetNode):
 		imageNode = self.createFileTexture('fileOne', 'p2d')
 		cmds.setAttr( imageNode + '.fileTextureName', xmlValue , type="string")
@@ -204,7 +203,9 @@ class xmlPhongFixes:
 			pass
 		
 		return imageNode
-	
+
+
+
 	def getMatsInXml(self):
 		xmlFilePath = daztoc4dXML
 		xmlFile = ElementTree.parse(xmlFilePath)
@@ -215,7 +216,7 @@ class xmlPhongFixes:
 			matName = node.attrib['name']
 			matsInXml.append(matName)
 		return matsInXml
-	
+		
 	def getXmlMat(self, matName, xmlMatProperty):
 		xmlFilePath = daztoc4dXML
 		xmlFile = ElementTree.parse(xmlFilePath)
@@ -235,10 +236,10 @@ class xmlPhongFixes:
 		rgbCol = [255,255,255]
 		rgbResult = [rgbCol[0]*floatValue, rgbCol[1]*floatValue, rgbCol[2]*floatValue]
 		return rgbResult
-	
+
 	def getValuesFromXml(self, sceneMat, xmlMat):
 		xmlMatList = self.getMatsInXml()
-		
+
 		print("----->>>>  " + str(xmlMat))
 		xmlValue = self.getXmlMat(xmlMat, 'Refraction_Weight') #---------
 		print("VALUE: " + str(xmlValue))
@@ -248,7 +249,7 @@ class xmlPhongFixes:
 				cmds.setAttr(sceneMat + ".transparency", xmlValue, xmlValue, xmlValue, type="double3")
 			except Exception as e:
 				print e.message, e.args
-		
+
 		# xmlValue = None #----- SPEC
 		# xmlSpec1 = self.getXmlMat(xmlMat, 'Glossy_Roughness_Map')
 		# xmlSpec2 = self.getXmlMat(xmlMat, 'Top_Coat_Weight_Map')
@@ -272,7 +273,7 @@ class xmlPhongFixes:
 		# 		cmds.connectAttr(normalNode + '.outValue' , sceneMat + "_ai" + '.normalCamera')
 		# 	except:
 		# 		pass
-		
+
 		# xmlValue = self.getXmlMat(xmlMat, 'Normal_Map_Map') #---------
 		# if xmlValue != None and xmlValue != "":
 		# 	normalNode = pm.shadingNode('aiNormalMap', name="aiNormalMap", asTexture=True, isColorManaged=True)
@@ -288,9 +289,9 @@ class xmlPhongFixes:
 		# 	xmlValue = xmlValue2
 		# if xmlValue != None:
 		# 	self.connectImageNode(xmlValue, '.outColor', sceneMat + "_ai" + '.opacity')
-		
+
 		print("--- Done Converting ---")
-	
+
 	def doSceneMaterials(self):
 		sceneMaterials = cmds.ls(type='shadingEngine')
 		for shading_engine in sceneMaterials:
@@ -310,7 +311,7 @@ class xmlPhongFixes:
 							self.getValuesFromXml(material, material)
 						except Exception as e:
 							print e.message, e.args
-	
+							
 	def __init__(self):
 		self.doSceneMaterials()
 
@@ -342,11 +343,11 @@ class addXmlExtraMats:
 		pm.connectAttr(p2d.wrapU, tex.wrapU)
 		pm.connectAttr(p2d.wrapV, tex.wrapV)
 		return tex
-	
+		
 	def connectImageNode(self, xmlValue, imageOut, targetNode, gresycale=False):
 		imageNode = self.createFileTexture('fileOne', 'p2d')
 		cmds.setAttr( imageNode + '.fileTextureName', xmlValue , type="string")
-		
+
 		#targetNode = "Barrel_ai"
 		try:
 			cmds.connectAttr(imageNode + imageOut , targetNode)
@@ -354,7 +355,7 @@ class addXmlExtraMats:
 				cmds.setAttr(imageNode +".ignoreColorSpaceFileRules",1)
 				cmds.setAttr(imageNode +".alphaIsLuminance",1)
 				cmds.setAttr(imageNode +".colorSpace",'Raw', type='string')
-			
+
 			# if "Alpha" in imageOut:
 			# 	cmds.setAttr(imageNode +".alphaIsLuminance",1)
 		except Exception as e:
@@ -373,7 +374,7 @@ class addXmlExtraMats:
 			matName = node.attrib['name']
 			matsInXml.append(matName)
 		return matsInXml
-	
+		
 	def getXmlMat(self, matName, xmlMatProperty):
 		xmlFilePath = daztoc4dXML
 		xmlFile = ElementTree.parse(xmlFilePath)
@@ -388,7 +389,7 @@ class addXmlExtraMats:
 				except:
 					pass
 		return xmlValue
-	
+
 	def arnoldFixes2(self):
 		objs = mel.eval('ls -geometry') #MAKE ALL GEOMETRY OPAQUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 		if objs is None:
@@ -422,11 +423,11 @@ class addXmlExtraMats:
 		
 		
 				print("---")
-	
+
 	def getObjFromMat(self, mayaMat):
 		obj = cmds.listConnections(mayaMat, type = "shadingEngine" )
 		return(obj)
-	
+
 	def getValuesFromXml(self, sceneMat, xmlMat):
 		xmlMatList = self.getMatsInXml()
 		arnoldMethodNew = True
@@ -438,7 +439,7 @@ class addXmlExtraMats:
 				cmds.setAttr(sceneMat + "_ai" + ".specularRoughness", 0.45 )
 			except:
 				pass
-			
+
 			xmlValue = None #----- SPEC
 			xmlSpec1 = self.getXmlMat(xmlMat, 'Glossy_Roughness_Map')
 			xmlSpec2 = self.getXmlMat(xmlMat, 'Top_Coat_Weight_Map')
@@ -457,12 +458,12 @@ class addXmlExtraMats:
 					cmds.setAttr(sceneMat + "_ai" + ".transmission", float(xmlValue) )
 				except Exception as e:
 					print e.message, e.args
-				
+
 				if float(xmlValue) > 0.1:
 					xmlRefRough = self.getXmlMat(xmlMat, 'Refraction_Roughness') #---------REF-ROUGH FIX
 					if xmlRefRough != None and xmlRefRough != "":
 						cmds.setAttr(sceneMat + "_ai" + ".specularRoughness", float(xmlRefRough) )
-			
+
 			xmlValue = self.getXmlMat(xmlMat, 'Opacity_Strength') #--------- REFRACTION
 			if xmlValue != None and xmlValue != "":
 				try:
@@ -470,14 +471,14 @@ class addXmlExtraMats:
 					cmds.setAttr(sceneMat + "_ai" + ".transmission", 1.0 - float(xmlValue) )
 				except Exception as e:
 					print e.message, e.args
-			
+
 			bumpNormalMethod = 0
 			findNormal = self.getXmlMat(xmlMat, 'Normal_Map_Map') #---------
 			findBump1 = self.getXmlMat(xmlMat, 'Bump_Strength_Map') #---------
 			findBump2 = self.getXmlMat(xmlMat, 'Base_Bump_Map') #---------
 			if findNormal != None and findNormal != "":
 				bumpNormalMethod = "NormalOnly"
-			
+
 			xmlValue = self.getXmlMat(xmlMat, 'Metallicity_Map') #---------
 			if xmlValue != None and xmlValue != "":
 				self.connectImageNode(xmlValue, '.outAlpha', sceneMat + "_ai" + '.metalness', True)
@@ -496,16 +497,17 @@ class addXmlExtraMats:
 					imageNode = self.connectImageNode(xmlValue, '.outAlpha', normalNode + '.bumpValue', True)
 					try:
 						cmds.connectAttr(normalNode + '.outNormal' , sceneMat + "_ai" + '.normalCamera')
+						cmds.setAttr(normalNode + '.bumpDepth', 0.150)
 					except:
 						pass
-				
+
 				# 	if "Hair" in sceneMat or "Strand" in sceneMat:
 				# 		cmds.connectAttr(imageNode + '.outColor',  sceneMat + "_ai" + '.specularColor')
 				# 	try:
 				# 		cmds.setAttr(normalNode + ".bumpInterp", 1)
 				# 	except:
 				# 		pass
-			
+
 			xmlValue = self.getXmlMat(xmlMat, 'Displacement_Strength_Map') #---------
 			if xmlValue != None and xmlValue != "":
 				print(" DISPLACEMENT " *5)
@@ -515,7 +517,7 @@ class addXmlExtraMats:
 				obj = cmds.listConnections(sceneMat + "_ai", type = "shadingEngine" )
 				print("obj: ", obj[0])
 				cmds.connectAttr(displacementNode + ".displacement", obj[0] + ".displacementShader")
-			
+
 			xmlValue = self.getXmlMat(xmlMat, 'Normal_Map_Map') #---------
 			if xmlValue != None and xmlValue != "":
 				normalNode = pm.shadingNode('aiNormalMap', name="aiNormalMap", asTexture=True, isColorManaged=True)
@@ -525,13 +527,19 @@ class addXmlExtraMats:
 			xmlValue = None #----- OPACITY/CUTOUT
 			xmlValue1 = self.getXmlMat(xmlMat, 'Opacity_Strength_Map')
 			xmlValue2 = self.getXmlMat(xmlMat, 'Cutout_Opacity_Map') #---------
+			# print("/////"*50)
+			# try:
+			# 	print("xmlValue1", xmlValue1)
+			# 	print("xmlValue2", xmlValue2)
+			# except:
+			# 	pass
 			if xmlValue1 != None and xmlValue1 != "":
 				xmlValue = xmlValue1
 			if xmlValue2 != None and xmlValue2 != "":
 				xmlValue = xmlValue2
 			if xmlValue != None:
 				self.connectImageNode(xmlValue, '.outColor', sceneMat + "_ai" + '.opacity', True)
-		
+
 		if arnoldMethodNew == False: #- OLD METHOD OLD ARNOLD -----------------------------------------
 			for matName in xmlMatList:
 				xmlValue = self.getXmlMat(xmlMat, 'Glossy_Roughness_Map')
@@ -545,7 +553,7 @@ class addXmlExtraMats:
 				#if xmlValue != None and xmlValue != "":
 				#	self.connectImageNode(xmlValue, '.outAlpha', matName + "_ai" + '.Ks')
 		print("--- Done Converting ---")
-	
+
 	def doSceneMaterials(self):
 		sceneMaterials = cmds.ls(type='shadingEngine')
 		for shading_engine in sceneMaterials:
@@ -565,7 +573,7 @@ class addXmlExtraMats:
 							self.getValuesFromXml(material, material)
 						except Exception as e:
 							print e.message, e.args
-	
+							
 	def __init__(self):
 		self.doSceneMaterials()
 
@@ -1052,6 +1060,7 @@ class morphsConnector:
 		if len(morphSLAVES) > 0:
 			for blendGrouop in morphSLAVES:
 				self.connectMorphs(morphMAIN, blendGrouop)
+
 
 def btnSaveWithText():
 	try:
@@ -1614,7 +1623,7 @@ def slider_drag_callback(*args):
 			cmds.setAttr( mapRough[0] + '.exposure', roughTotal)
 		except:
 			pass
-		
+
 		#----------------------------------------------------------------------------------------
 		#VRAY--------------------------------------------------------------------------------
 		try:
@@ -3562,15 +3571,6 @@ class convertToVray:
 #========================================================================================================
 #========================================================================================================
 #========================================================================================================
-#//////////////////////////////////////////////////////////////////////////////
-#//
-#//??Copyright 2016 Autodesk, Inc.??All rights reserved.
-#//
-#//??Use of this software is subject to the terms of the Autodesk license 
-#//??agreement provided at the time of installation or download, or which 
-#//??otherwise accompanies this software in either electronic or hard copy form.?? 
-#//
-#//////////////////////////////////////////////////////////////////////////////
 
 def convertAllShaders():
 	"""
@@ -4228,7 +4228,7 @@ def autoIK():
 		cmds.scriptEditorInfo(suppressErrors=False)
 
 def btnGoHelp():
-	webbrowser.open("http://docs.daz3d.com/doku.php/public/read_me/index/71381/start")
+	webbrowser.open("http://www.3dtoall.com/products/daztomaya/support/")
 
 checkSave = 0
 def tempFun():
@@ -4499,7 +4499,7 @@ def autoImportDaz():
 			pass
 
 		xmlPhongFixes()
-		
+
 		print "DazToMaya Complete!"		
 		#result = cmds.confirmDialog( title='DazToMaya', message="Convert Complete!", button=['Ok'], defaultButton='Yes', cancelButton='No', dismissString='No' )
 
