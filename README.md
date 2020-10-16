@@ -24,11 +24,14 @@ Name  | Windows  | macOS
 ------------- | ------------- | -------------
 appdir_common  | The directory containing the primary executable (.exe) for the target application.  Sub-hierarchy is common between 32-bit and 64-bit architectures.  | The directory containing the primary application bundle (.app) for the target application.  Sub-hierarchy is common between 32-bit and 64-bit architectures.
 MAYA_APP_DIR  | The directory that represents your personal Maya application directory - see [Maya Documentation][MayaDocsURL]  | Same on both platforms.
+MAYA_SCRIPT_PATH  | The search path for MEL scripts - see [Maya Documentation][MayaDocsURL]  | Same on both platforms.
 
 The directory structure is as follows:
 
 - `Maya`:                  Files that pertain to the _Maya_ side of the bridge
   - `MAYA_APP_DIR`:  See table above
+    - `...`:            Remaining sub-hierarchy
+  - `MAYA_SCRIPT_PATH`:  See table above
     - `...`:            Remaining sub-hierarchy
 - `Daz Studio`:               Files that pertain to the _Daz Studio_ side of the bridge
   - `appdir_common`:          See table above
@@ -41,4 +44,4 @@ The directory structure is as follows:
 [RepositoryURL]: https://github.com/daz3d/DazToMaya/
 [DazStudioURL]: https://www.daz3d.com/get_studio
 [MayaURL]: https://www.autodesk.com/products/maya
-[MayaDocsURL]: https://knowledge.autodesk.com/support/maya/learn-explore/caas/CloudHelp/cloudhelp/2015/ENU/Maya/files/Environment-Variables-File-path-variables-htm.html#
+[MayaDocsURL]: https://knowledge.autodesk.com/support/maya/getting-started/caas/CloudHelp/cloudhelp/2019/ENU/Maya-EnvVar/files/GUID-228CCA33-4AFE-4380-8C3D-18D23F7EAC72-htm.html#
