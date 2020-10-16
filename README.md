@@ -10,9 +10,10 @@
 * A compatible version of the [Daz Studio][DazStudioURL] application
   * Minimum: 4.10
 * A compatible version of the [Maya][MayaURL] application
-  * ...
+  * Minimum: 2016
 * Operating System:
-  * ...
+  * Windows 7 or newer
+  * macOS 10.13 (High Sierra) or newer
 
 ## Directory Structure
 ---
