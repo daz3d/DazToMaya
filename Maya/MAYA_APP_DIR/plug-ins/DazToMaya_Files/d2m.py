@@ -4247,7 +4247,7 @@ try:
 	cmds.deleteUI(windowName)
 except:
 	pass
-windowDazMain = cmds.window(windowName, toolbox=True, maximizeButton=False, minimizeButton=True, sizeable=False, title="DazToMaya v1.6e", widthHeight=(343, 452)) 
+windowDazMain = cmds.window(windowName, toolbox=True, maximizeButton=False, minimizeButton=True, sizeable=False, title="DazToMaya v1.6", widthHeight=(343, 452)) 
 cmds.columnLayout( "columnName01", adjustableColumn = True)
 cmds.image( image=d2mLogo, width=343)
 #cmds.separator( height=10, style='none' )
