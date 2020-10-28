@@ -1,5 +1,9 @@
 /*
+THIS SCRIPT IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+THE ENTIRE RISK ARISING OUT OF THE USE OR PERFORMANCE OF THE SCRIPT AND DOCUMENTATION REMAINS WITH YOU.
+UNDER NO CIRCUMSTANCES SHALL DAZ PRODUCTIONS, ITS AUTHORS, OR ANYONE ELSE INVOLVED IN THE CREATION, PRODUCTION, OR DELIVERY OF THE SCRIPT, BE LIABLE TO YOU OR ANY OTHER PERSON FOR ANY INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES OF ANY KIND RELATED TO OR ARISING OUT OF YOUR USE OR INABILITY TO USE THE SCRIPT OR DOCUMENTATION, EVEN IF DAZ PRODUCTIONS HAS BEEN INFORMED OF THE POSSIBILITY OF SUCH DAMAGES.
 TO RUN THE SCRIPT, COPY THIS FILE TO YOUR `DOCUMENTS/MAYA/SCRIPTS` FOLDER. OPEN A FRESH SESSION OF MAYA AND TYPE `DAZTools` ON THE MEL COMMAND LINE AND PRESS ENTER.
+DESIGNED AND WRITTEN BY MICHEL BIDART.
 */
 
 global proc DAZTools()
@@ -499,7 +503,7 @@ global proc string FixD2M (string $topJoint)
 {
 	string $name[] = `stringToStringArray $topJoint "_"`;
 	string $newP = `joint -p 0 0 0 -name $name[0]`;
-	parent `listRelatives -c -pa ("|"+$topJoint)` $newP;
+	parent `listRelatives -c -pa -type transform ("|"+$topJoint)` $newP;
 	delete "Character*_Ctrl_Reference" ("*"+$topJoint);
 	for ($jnt in `listRelatives -ad -type joint $newP`)
 	{
@@ -571,8 +575,9 @@ global proc int MakeRig(string $export)
 			ColorCtrl "yellow" $name;
 			TRSCtrl 2 "2 2 2" $name;
 			AttachToJoint 1 $name $extra;
-			parent ($name+"_zero") ($jointParent[0]+"_ctrl");
-			parentConstraint -mo $jointParent ($name+"_zero");
+			parentConstraint -mo $jointParent[0] ($name+"_zero");
+			if (!`objExists ($jointParent[0]+"_ctrl")`) $jointParent = `listRelatives -p $jointParent[0]`;
+			catch (`parent ($name+"_zero") ($jointParent[0]+"_ctrl")`);
 		}
 		print "---- FK Rig set up ----\n";
 		
