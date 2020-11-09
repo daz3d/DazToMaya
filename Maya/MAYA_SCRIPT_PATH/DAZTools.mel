@@ -394,6 +394,12 @@ global proc DAZRigger()
     if ($result == "Run on open file"){
         string $scene = `file -q -sn`;
         $SourceFolder = `dirname $scene`;
+	if ($SourceFolder=="")
+	{
+		string $newFolder[] = `fileDialog2 -cap "Select the folder where your rig will be saved." -fm 2 -dialogStyle 2`;
+		if (`size($newFolder)` == 0) error "Process aborted by user";
+		$SourceFolder = $newFolder[0];
+	}
         $prompt = 0;
     }
     if ($result == "Cancel") error "Script interrupted by user.";
