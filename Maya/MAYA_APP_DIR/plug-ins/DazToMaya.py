@@ -71,7 +71,7 @@ def initializePlugin( mobject ):
     #--------------------- ADD ITEMS IN MENU // END --------------------------
     
     ''' Initialize the plug-in when Maya loads it. '''
-    mplugin = OpenMayaMPx.MFnPlugin( mobject, "Daz3D", "1.5" )
+    mplugin = OpenMayaMPx.MFnPlugin( mobject, "Daz3D", "1.7" )
     try:
         mplugin.registerCommand( commandName, cmdCreator )
     except:

@@ -1,14 +1,16 @@
-from xml.etree import ElementTree
 import xml.etree.cElementTree as ET
 import maya.mel as mel
 import maya.cmds as cmds
 import math
 import os
-import sys, traceback
-import pymel.core as pm
-from pymel import versions
+import sys
+import traceback
 import webbrowser
+import pymel.core as pm
+from xml.etree import ElementTree
+from pymel import versions
 from shutil import copyfile
+
 
 #no delete morph, editer for user...
 
@@ -2730,12 +2732,13 @@ def shaderToAiStandard(inShd, nodeType, mapping):
 		aiName = inShd.rsplit(':')[-1] + '_ai'
 	else:
 		aiName = inShd + '_ai'
-		
+	
 	#print 'creating '+ aiName
 	aiNode = cmds.shadingNode(nodeType, name=aiName, asShader=True)
 	for chan in mapping:
 		fromAttr = chan[0]
 		toAttr = chan[1]
+
 		try:
 			if cmds.objExists(inShd + '.' + fromAttr):
 				#print '\t', fromAttr, ' -> ', toAttr
@@ -2930,7 +2933,7 @@ def convertAlltoArnoldDazFixes():
 						mel.eval('setAttr "%s.KtColor" -type double3 1 1 1' %mats[i])
 						mel.eval('setAttr "%s.opacity" -type double3 0.0324675 0.0324675 0.0324675' %mats[i])
 						mel.eval('setAttr "%s.specularRoughness" 0.00649351' %mats[i])
-						mel.eval('setAttr "%s.Ks" 0.25974' %mats[i])
+						mel.eval('setAttr "%s." 0.25974' %mats[i])
 					except:
 						print "matchange skiped"
 				if "Reflection" in mats[i]:
@@ -3291,7 +3294,7 @@ try:
 	cmds.deleteUI(windowName)
 except:
 	pass
-windowDazMain = cmds.window(windowName, toolbox=True, maximizeButton=False, minimizeButton=True, sizeable=False, title="DazToMaya v1.6", widthHeight=(343, 452)) 
+windowDazMain = cmds.window(windowName, toolbox=True, maximizeButton=False, minimizeButton=True, sizeable=False, title="DazToMaya v1.7", widthHeight=(343, 452)) 
 cmds.columnLayout( "columnName01", adjustableColumn = True)
 cmds.image( image=d2mLogo, width=343)
 #cmds.separator( height=10, style='none' )
