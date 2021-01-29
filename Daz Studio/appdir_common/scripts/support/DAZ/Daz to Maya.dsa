@@ -33,7 +33,8 @@
 	}
 	
 	var s_sExportBaseName = "DazToMaya";
-	
+	/*********************************************************************/
+
 	function getXRot( oSkeleton, sBoneLabel )
 	{
 		if( !oSkeleton || sBoneLabel.isEmpty() ){
@@ -51,6 +52,8 @@
 		return nValue;
 	};
 	
+	/*********************************************************************/
+
 	function setXRot( oSkeleton, sBoneLabel, nValue )
 	{
 		if( !oSkeleton
@@ -68,6 +71,67 @@
 		var oControl = oBone.getXRotControl();
 		oControl.setValue( nValue );
 	};
+	// This function will give all the head morphs of selected character 
+	// and will create the rule to be used in the fbx export.
+	/*********************************************************************/
+	
+	function createMorphRules(){
+        var oNode = Scene.getPrimarySelection();
+        if( !oNode ){
+            return;
+        }
+        if( oNode.inherits( "DzBone" ) ){
+            oNode = oNode.getSkeleton();
+        }
+        if( oNode.inherits( "DzSkeleton" ) ){
+            oNode = oNode.findBone( "head" );
+        }
+        if( !oNode ){
+            return;
+        }
+        var oProperty;
+        var	oPropGroup;
+        var	oPropTree;
+        var oPropOwner;
+        var oTgtProperty;
+        var	oTgtPropGroup;
+        var	oTgtPropTree;
+        var oTgtPropOwner;
+        var aProperties = oNode.getPropertyList();
+        var morphRule;
+        var morphName;
+        var morphList=[];
+        var morphRule = "";
+        for( var i = 0, n = aProperties.length; i < n; i += 1 ){
+            oProperty = aProperties[ i ];        
+            if( !oProperty.getPath().startsWith( "/Pose Controls" ) ){
+                continue;
+            }
+
+            if( oProperty.isAlias() ){
+                oTgtProperty = oProperty.getAliasTarget();
+                oTgtPropGroup = oTgtProperty.getGroup();
+                oTgtPropTree = oTgtPropGroup.getTree();
+                oTgtPropOwner = oTgtPropTree.getOwner();
+                morphName =oTgtProperty.name;
+                morphList[i]=morphName;
+                //oTgtPropOwner.name + "." +
+                continue;
+            }
+        }
+        //Remove any nulls or undefined in the array
+        morphList = morphList.filter(Boolean);
+
+	    for( var i = 0, n = morphList.length; i < n; i += 1 ){
+
+            morphRule = morphRule + morphList[i] + "\n1\n";
+            
+            };
+
+	    return morphRule = morphRule.substring(0,morphRule.length - 2);
+    };
+
+	/*********************************************************************/
 	
 	function heelsFix( oSkeleton )
 	{
@@ -252,12 +316,14 @@
 	};
 	
 	// --- END convert_figure_to_props ----
+	/*********************************************************************/
 	
 	function sceneContainsSkeleton()
 	{
 		return Scene.getNumSkeletons() > 0;
 	};
-	
+
+	/*********************************************************************/
 	function sceneContainsHipNode()
 	{
 		var oNode;
@@ -274,7 +340,7 @@
 	
 	// --- START replaceInstance ----
 	// Adapted: https://www.daz3d.com/forums/discussion/comment/4940501/#Comment_4940501
-	
+	/*********************************************************************/
 	function doAction( sClassName  )
 	{
 		var oMgr = MainWindow.getActionMgr();
@@ -285,7 +351,8 @@
 		
 		oAction.trigger();
 	};
-	
+
+	/*********************************************************************/
 	function replaceInstance( oInstance, oNode )
 	{
 		var oParent = oInstance.getNodeParent();
@@ -338,7 +405,7 @@
 	};
 	
 	// --- END replaceInstance ----
-	
+	/*********************************************************************/
 	function replaceInstanceAll()
 	{
 		var oNode;
@@ -414,6 +481,7 @@
 	// - Modified to support switching exporters
 	// - Other changes for this specific use case
 	
+	/*********************************************************************/
 	function exportScene( sClassName, sPath, sBaseName, sExt )
 	{
 		// Get the export manager
@@ -462,7 +530,8 @@
 				// The names of the morphs are in the form: node_name.parameter_name
 				// The default action is to Bake
 				// So "FBMHeavy\nExport\nThin\nExport" would export all morphs that have FBMHeavy and all morphs that have Thin in the name
-				oSettings.setStringValue( "rules", "head\n1" );
+				// Using Function to grab the current head morphs in the selection
+				oSettings.setStringValue( "rules", createMorphRules() );
 				
 				// Format
 				// Format for format is "Year# -- Type",
@@ -559,7 +628,7 @@
 	// SAVE maps to file... bump, specular, etc....
 	// ----------------------------------------------------------
 	
-	
+
 	function label2Variable( sLabel )
 	{
 		var sLabelLwr = sLabel.toLowerCase();
@@ -581,12 +650,15 @@
 		
 		return sResult;
 	};
-	
+	/*********************************************************************/
+
 	function fixFilename( sFilename )
 	{
 		return sFilename.replace( "&", "(_)" );
 	};
-	
+
+	/*********************************************************************/
+
 	function value2XMLString( oElement, sPropLabel )
 	{
 		try {
@@ -630,7 +702,9 @@
 		
 		return( '' );
 	};
-	
+
+	/*********************************************************************/
+
 	function savePropertiesToFile( sExporter, sExportPath, sExportBaseName, sExportExt )
 	{
 		var sFile = "%1/%2.xml".arg( sExportPath ).arg( sExportBaseName );
