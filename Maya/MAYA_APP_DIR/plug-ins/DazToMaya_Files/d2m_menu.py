@@ -1,8 +1,11 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import maya.cmds as cmds
 import pymel.core as pm
 import os
 import xml.etree.ElementTree as ET
 import maya.mel as mel
+from six.moves import range
 class generateMenu():
 	import maya.cmds as cmds
 	import pymel.core as pm
@@ -19,8 +22,8 @@ class generateMenu():
 	pathIconMac = "/users/Shared/Autodesk/maya/plug-ins/DazToMaya_Files/DazToMaya_Icon.png"
 	
 	try:
-		print("path icon: ", pathIcon)
-		print("path icon: ", pathMayaIcons + mayaVersion + "/prefs/icons/DazToMaya_Icon.png")
+		print(("path icon: ", pathIcon))
+		print(("path icon: ", pathMayaIcons + mayaVersion + "/prefs/icons/DazToMaya_Icon.png"))
 		cmds.sysFile( pathIcon, copy= pathMayaIcons + mayaVersion + "/prefs/icons/DazToMaya_Icon.png" )# Windows
 	except:
 		pass
@@ -106,7 +109,7 @@ class generateMenu():
 				
 			
 			
-print "START"
+print("START")
 def start():
 	generateMenu().start()
 def remove():

@@ -1,6 +1,9 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import maya.OpenMaya as OpenMaya
 import maya.OpenMayaMPx as OpenMayaMPx
+import importlib
 
 commandName = 'daztomaya'
 
@@ -38,14 +41,14 @@ class DazToMayaClass( OpenMayaMPx.MPxCommand ):
                         pathfound = 1
                 if not pathfound:
                     sys.path.append( dir )
-            exec ('import ' + modname) in globals()
-            exec( 'reload( ' + modname + ' )' ) in globals()
+            exec(('import ' + modname), globals())
+            exec(( 'importlib.reload( ' + modname + ' )' ), globals())
             return modname
         def DazToMayastart():
             # When you import a file you must give it the full path
-            print "d2mRun: " + scriptPath
+            print("d2mRun: " + scriptPath)
             psource( scriptPath )
-        print "executed"
+        print("executed")
         DazToMayastart()
         #-------------------------------------------------------------------------------------
 
@@ -71,7 +74,7 @@ def initializePlugin( mobject ):
     #--------------------- ADD ITEMS IN MENU // END --------------------------
     
     ''' Initialize the plug-in when Maya loads it. '''
-    mplugin = OpenMayaMPx.MFnPlugin( mobject, "Daz3D", "1.7" )
+    mplugin = OpenMayaMPx.MFnPlugin( mobject, "Daz3D", "1.5" )
     try:
         mplugin.registerCommand( commandName, cmdCreator )
     except:
@@ -79,7 +82,7 @@ def initializePlugin( mobject ):
 
 def uninitializePlugin( mobject ):
     ''' Uninitialize the plug-in when Maya un-loads it. '''
-    print "Unloaded!"
+    print("Unloaded!")
     import d2m_menu
     d2m_menu.remove() 
     mplugin = OpenMayaMPx.MFnPlugin( mobject )

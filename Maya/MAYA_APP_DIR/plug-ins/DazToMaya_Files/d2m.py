@@ -1,16 +1,18 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from xml.etree import ElementTree
 import xml.etree.cElementTree as ET
 import maya.mel as mel
 import maya.cmds as cmds
 import math
 import os
-import sys
-import traceback
-import webbrowser
+import sys, traceback
 import pymel.core as pm
-from xml.etree import ElementTree
 from pymel import versions
+import webbrowser
 from shutil import copyfile
-
+from six.moves import range
+import base64
 
 #no delete morph, editer for user...
 
@@ -87,14 +89,14 @@ mappingPhong = [
 		]
 
 if os.path.exists(serialPath):
-	print "DazToMaya - Ready"
+	print("DazToMaya - Ready")
 else:
-	print "Serial file not found"
+	print("Serial file not found")
 	serial = ET.Element("serialPath")
 	ET.SubElement(serial, "d2m_serial", number="")
 	tree = ET.ElementTree(serial)
 	tree.write(serialPath)
-	print serialPath
+	print(serialPath)
 	#cmds.confirmDialog( title='FBX not found', message="Serial file not found.", button=['OK'])
 
 #Read Serial File for Serial...
@@ -145,7 +147,7 @@ except:
 	pass
 
 class waitDialog(object):
-	 def __init__(self):
+	def __init__(self):
 		try:
 			pm.deleteUI(self.WindowWait)
 		except:
@@ -156,10 +158,10 @@ class waitDialog(object):
 		cmds.text( label='Importing please wait...' )
 		cmds.separator( height=20, style='in' )
 	 
-	 def show(self):
-		 self.WindowWait.show()
-	 def close(self):
-		 pm.deleteUI(self.WindowWait)
+	def show(self):
+		self.WindowWait.show()
+	def close(self):
+		pm.deleteUI(self.WindowWait)
 
 
 #-------------------------------------------------------------------
@@ -171,7 +173,7 @@ except:
 	pass
 
 class waitDialog2(object):
-	 def __init__(self):
+	def __init__(self):
 		try:
 			pm.deleteUI(self.WindowWait2)
 		except:
@@ -182,9 +184,9 @@ class waitDialog2(object):
 		cmds.text( label='Converting please wait...' )
 		cmds.separator( height=20, style='in' )
 	 
-	 def show(self):
-		 self.WindowWait2.show()
-	 def close(self):
+	def show(self):
+		self.WindowWait2.show()
+	def close(self):
 		 pm.deleteUI(self.WindowWait2)
 
 #-------------------------------------------------------------------------------------
@@ -513,8 +515,8 @@ def checkIfModified():
 	for o in objs:
 		if cmds.objectType(o) == "locator":
 			if o.find("Character1_Reference") == 0:
-				print "\n"*10
-				print "Scene already modified"
+				print("\n"*10)
+				print("Scene already modified")
 				sys.exit() #ABOUR SCRIPT IF SCENE NOT READY!!
 #DETECT FIGURE------------------------
 i = 0
@@ -526,7 +528,7 @@ o = ""
 for o in objs:
 	if cmds.objectType(o) == "locator":
 		if o.find("Character1_Reference") == 0:
-			print "Found"
+			print("Found")
 			
 	if o.find("Genesis2Female") == 0:
 		figure="Genesis2MaleFBXASC046Shape"
@@ -540,7 +542,7 @@ def clampTextures():
 		mel.eval('setAttr "hardwareRenderingGlobals.enableTextureMaxRes" 1')
 		mel.eval('setAttr "hardwareRenderingGlobals.textureMaxResolution" 512')
 	except:
-		print "No Text Clamp"
+		print("No Text Clamp")
 
 def sentinelExtraFinger():
 	mel.eval('select -r lThumb2')
@@ -565,7 +567,7 @@ def sentinelRemoveFinger():
 		mel.eval('select -r -sym rThumb4')
 		mel.eval('doDelete')
 	except:
-		print "Sentinel Finger Fix"
+		print("Sentinel Finger Fix")
 
 
 def cleanMorphs(figureWithMorphs):
@@ -616,7 +618,7 @@ def cleanMatNames():
 			except:
 				pass
 	except:
-		print "no std mats"
+		print("no std mats")
 
 def loadSkeleton():
 	pass
@@ -674,7 +676,7 @@ def slider_drag_callback(*args):
 		i = i + 1
 	
 def value_change_callback(*args): 
-	print 'Value Changed' 
+	print('Value Changed') 
 
 def removeLimits():
 	meshList = mel.eval('ls -type joint')
@@ -765,7 +767,7 @@ def connectTex(image,material,input):
 			cmds.setAttr(newFile+'.fileTextureName',image,type='string')
 			cmds.setAttr(newFile+'.filterType',0)
 	except:
-		print "Texture Nc."
+		print("Texture Nc.")
 		
 def getTransparencyFile(matname):
 	#matname = "Strands"
@@ -818,7 +820,7 @@ def eyeLashFix():
 	for l in listAll:
 		try:
 			if "Lashes" in l:
-				print "Texture: " + l
+				print("Texture: " + l)
 			if "lash" in l:
 				lashMaterial = l
 				conn = cmds.listConnections(lashMaterial+'.'+"color",type='file')
@@ -937,7 +939,7 @@ def dazToIk():
 		if "SENTINEL" in j:
 			sentinel = sentinel + 1
 	if sentinel >= 1:
-		print "Sentinel Detected"
+		print("Sentinel Detected")
 	else:
 		if cmds.objExists('lThumb4'):
 			mel.eval('setCharacterObject("lThumb4","Character1",53,0)')
@@ -999,7 +1001,7 @@ def dazToIk():
 		if "SENTINEL" in j:
 			sentinel = sentinel + 1
 	if sentinel >= 1:
-		print "Sentinel Detected"
+		print("Sentinel Detected")
 	else:
 		mel.eval('setCharacterObject("rThumb4","Character1",77,0)')
 			   
@@ -1213,7 +1215,7 @@ def sentinelRotationsFix():
 		mel.eval('setAttr "rFoot.rotateY" 6.61')
 		mel.eval('setAttr "rFoot.rotateZ" 3.66')
 	except:
-		print "Sentinel fix"
+		print("Sentinel fix")
 
 def genesis1rotationsFix():
 	try:
@@ -1386,7 +1388,7 @@ def genesis1rotationsFix():
 		mel.eval('setAttr "rFoot.rotateZ" -3.78')
 
 	except:
-		print "Gen1RotsFix..."
+		print("Gen1RotsFix...")
 
 def genesis2rotationsFix():
 	try:
@@ -1550,7 +1552,7 @@ def genesis2rotationsFix():
 		mel.eval('setAttr "rPinky3.rotateY" 0.0')
 		mel.eval('setAttr "rPinky3.rotateZ" -0.0')
 	except:
-		print "Gen2RotsFix..."
+		print("Gen2RotsFix...")
 
 def genesis3rotationsFix():
 	#---------------------------------------------------------
@@ -1740,7 +1742,7 @@ def genesis3rotationsFix():
 		mel.eval('setAttr "rFoot.rotateZ" -5.7')
 		'''
 	except:
-		print "Gen3RotsFix..."
+		print("Gen3RotsFix...")
 
 def genesis8rotationsFix():
 	#---------------------------------------------------------
@@ -1946,7 +1948,7 @@ def genesis8rotationsFix():
 		mel.eval('setAttr "rFoot.rotateZ" -3.53')
 		'''
 	except:
-		print "Gen8RotsFix..."
+		print("Gen8RotsFix...")
 
 def makeSkeleton():
 	mel.eval('CreateLocator')
@@ -2167,13 +2169,13 @@ def cleanNamespace():
 	for j in jointList:
 		if ":" in j:
 			try:
-				print "Namespace detected, try cleaning"
+				print("Namespace detected, try cleaning")
 				nameToGetNameSpace = j
 				nameSpace = nameToGetNameSpace.split(":")
 				mel.eval('namespace -mergeNamespaceWithRoot -removeNamespace %s' %nameSpace[0])
 			except:
-				print "namespace msg finished"
-	print "namespace fix finished"
+				print("namespace msg finished")
+	print("namespace fix finished")
 
 def genesis8matfix():
 	try:
@@ -2243,7 +2245,7 @@ def eyeLashesFix1():
 		mel.eval('setAttr "Eyelashes.specularColor" -type double3 0 0 0 ')
 		mel.eval('setAttr "Eyelashes.cosinePower" 2')
 	except:
-		print "Lashes fix"
+		print("Lashes fix")
 
 def eyeLashesFix2():
 	try:
@@ -2254,12 +2256,12 @@ def eyeLashesFix2():
 		mel.eval('setAttr "Eyelash.cosinePower" 2')
 		mel.eval('setAttr "Eyelash.reflectedColor" -type double3 0 0 0')
 	except:
-		print "Lashes fix"
+		print("Lashes fix")
 	try:
 		mel.eval('setAttr "ncl1_vr.opacityMap" -type double3 0.027972 0.027972 0.027972')
 		mel.eval('setAttr "ncl1_vr.reflectionColor" -type double3 0.776224 0.776224 0.776224')
 	except:
-		print "Lashes fix"
+		print("Lashes fix")
 
 class convertToVray:
 	replaceShaders = True
@@ -2347,7 +2349,7 @@ class convertToVray:
 		shdGroup = cmds.listConnections(oldShd, type="shadingEngine")
 		
 		if shdGroup:
-			print ">>>>>>>>" + newShd
+			print(">>>>>>>>" + newShd)
 			if "Eye" in newShd:
 				try:
 					cmds.connectAttr(newShd + '.outColor', shdGroup[0] + '.aiSurfaceShader', force=True) #CHELO LINE... 
@@ -2477,12 +2479,12 @@ class convertToVray:
 			
 			#cmds.connectAttr(transpMap[0], outShd + '.opacityMap', force=True)
 			try:
-				print "-*-*-*-*-*-*-"
-				print transpMap[0]
+				print("-*-*-*-*-*-*-")
+				print(transpMap[0])
 				transMapToInvert = transpMap[0].replace(".outTransparency","")
 				mel.eval('setAttr "%s.invert" 1' %transMapToInvert)
 			except:
-				print "already inv"
+				print("already inv")
 
 
 	def convertPhong(self,inShd, outShd): 
@@ -2502,7 +2504,7 @@ class convertToVray:
 		try:
 			cmds.setAttr(outShd + '.' + "opacityMap", 1.0 - transpR, 1.0 - transpG, 1.0 - transpB, type = 'double3' )
 		except:
-			print "map detected"
+			print("map detected")
 		self.transparencyToOpacity(inShd, outShd)
 
 	def convertVrayMtl(self,inShd, outShd):
@@ -2590,13 +2592,13 @@ class convertToVray:
 		try:
 			pm.setAttr("defaultRenderGlobals.currentRenderer", "vray")      
 		except:
-			print "can't set Vray"
+			print("can't set Vray")
 		try:
 			mel.eval('setAttr "EyeMoisture.transparency" -type double3 1 1 1')
 			mel.eval('setAttr "Cornea.transparency" -type double3 1 1 1')
 		except:
 			pass
-		print "Done."
+		print("Done.")
 		self.convertUi()
 
 #========================================================================================================
@@ -2648,12 +2650,12 @@ def doMapping(inShd):
 	ret = None
 	
 	shaderType = cmds.objectType(inShd)
-	print("-*-**-"*10)
-	print(shaderType, inShd)
+	print(("-*-**-"*10))
+	print((shaderType, inShd))
 	if 'phong' in shaderType :
 		#ret = shaderToAiStandard(inShd, 'aiStandardSurface', mappingPhong)
 		ret = shaderToAiStandard(inShd, 'aiStandard', mappingPhong)
-		print(inShd,"Converted")
+		print((inShd,"Converted"))
 		convertPhong(inShd, ret)
 
 	#else:
@@ -2689,7 +2691,7 @@ def assignToNewShader(oldShd, newShd):
 	
 	if shdGroup:
 		if "Eye" in newShd or "Cornea" in newShd or "Tear" in newShd:
-			print "=========" + newShd
+			print("=========" + newShd)
 			cmds.connectAttr(newShd + '.outColor', shdGroup[0] + '.aiSurfaceShader', force=True) #CHELO LINE...
 		else:
 			cmds.connectAttr(newShd + '.outColor', shdGroup[0] + '.surfaceShader', force=True)
@@ -2732,13 +2734,12 @@ def shaderToAiStandard(inShd, nodeType, mapping):
 		aiName = inShd.rsplit(':')[-1] + '_ai'
 	else:
 		aiName = inShd + '_ai'
-	
+		
 	#print 'creating '+ aiName
 	aiNode = cmds.shadingNode(nodeType, name=aiName, asShader=True)
 	for chan in mapping:
 		fromAttr = chan[0]
 		toAttr = chan[1]
-
 		try:
 			if cmds.objExists(inShd + '.' + fromAttr):
 				#print '\t', fromAttr, ' -> ', toAttr
@@ -2874,7 +2875,7 @@ def setupOpacities():
 			try:
 				cmds.setAttr(shape+".aiOpaque", 0)  
 			except:
-				print "no opaque"
+				print("no opaque")
 		
 
 if not cmds.pluginInfo( 'mtoa', query=True, loaded=True ):
@@ -2898,21 +2899,21 @@ def breakLashCon(mat):
 				try:
 					mel.eval('disconnectAttr %s.outColor %s.color' %(f,mat))
 				except:
-					print "breakCon skiped"
+					print("breakCon skiped")
 			except:
-				print "File Text.Error"
+				print("File Text.Error")
 
 def convertAlltoArnoldDazFixes():
 	convertAllPhongToArnold()               
 	objs = mel.eval('ls -geometry') #MAKE ALL GEOMETRY OPAQUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 	if objs is None:
-		print "Nothing on scene"
+		print("Nothing on scene")
 	else:
 		for o in objs:
 			try:
 				mel.eval('setAttr "%s.aiOpaque" 0' %o)
 			except:
-				print "no obj"
+				print("no obj")
 		
 		i = 0
 		mats = mel.eval('ls -type "aiStandardSurface"')
@@ -2923,7 +2924,7 @@ def convertAlltoArnoldDazFixes():
 					mel.eval('setAttr "%s.Ks" 0.045' %m)
 					mel.eval('setAttr "%s.KsColor" -type double3 0.077 0.077 0.077' %m)
 				except:
-					print "no phong"
+					print("no phong")
 				
 				if "lashes" in mats[i] or "Lashes" in mats[i]:
 					breakLashCon(mats[i])
@@ -2933,9 +2934,9 @@ def convertAlltoArnoldDazFixes():
 						mel.eval('setAttr "%s.KtColor" -type double3 1 1 1' %mats[i])
 						mel.eval('setAttr "%s.opacity" -type double3 0.0324675 0.0324675 0.0324675' %mats[i])
 						mel.eval('setAttr "%s.specularRoughness" 0.00649351' %mats[i])
-						mel.eval('setAttr "%s." 0.25974' %mats[i])
+						mel.eval('setAttr "%s.Ks" 0.25974' %mats[i])
 					except:
-						print "matchange skiped"
+						print("matchange skiped")
 				if "Reflection" in mats[i]:
 					try:
 						mel.eval('setAttr "%s.color" -type double3 0 0 0'%mats[i])
@@ -2943,22 +2944,22 @@ def convertAlltoArnoldDazFixes():
 						mel.eval('setAttr "%s.specularRoughness" 0.0324675'%mats[i])
 						mel.eval('setAttr "%s.Ks" 0.746753'%mats[i])
 					except:
-						print "matchange skiped"
+						print("matchange skiped")
 				if "Moisture" in mats[i]:
 					try:
 						mel.eval('setAttr "%s.opacity" -type double3 0 0 0'%mats[i])
 					except:
-						print "matchange skiped"
+						print("matchange skiped")
 				if "EyeLights" in mats[i]:
 					try:
 						mel.eval('setAttr "%s.opacity" -type double3 0 0 0'%mats[i])
 					except:
-						print "matchange skiped"
+						print("matchange skiped")
 				if "Tear" in mats[i]:
 					try:
 						mel.eval('setAttr "%s.opacity" -type double3 0 0 0'%mats[i])
 					except:
-						print "matchange skiped"
+						print("matchange skiped")
 					
 				i = i + 1
 				
@@ -3005,7 +3006,7 @@ def sceneRenamer():
 		oModif = oModif.replace("FBXASC056","_8")
 		oModif = oModif.replace("FBXASC057","_9")
 
-		print o + "  ---  " + oModif
+		print(o + "  ---  " + oModif)
 		if o == oModif:
 			pass
 		else:	
@@ -3029,7 +3030,7 @@ def lowestYonScene():
 	
 def compensateHip():
 	try:
-		print "MIN: " + str(lowestYonScene())
+		print("MIN: " + str(lowestYonScene()))
 		lowestY = lowestYonScene()
 		hipY = cmds.getAttr("hip.translateY")
 		cmds.setAttr( 'hip.translateY', hipY+(lowestY*-1) )
@@ -3052,7 +3053,7 @@ def morphIndex(figureWithMorphs, morphName):
 			blendname = blendname.split("[")
 			blendname = blendname[1].split("]")
 			blendname = blendname[0]
-			print str(i) + " === " + blendShapesList[i] + " ---- " + blendname
+			print(str(i) + " === " + blendShapesList[i] + " ---- " + blendname)
 
 		i = i + 1
 		if blendname != "None":
@@ -3074,9 +3075,9 @@ def removeAllWeirdMophsFromScene():
 	allObjects = cmds.ls(l=True)
 	for blendShapeGroup in allObjects:
 		if cmds.nodeType(blendShapeGroup) == 'blendShape':
-			print "--------------------------"
-			print blendShapeGroup
-			print "--------------------------"
+			print("--------------------------")
+			print(blendShapeGroup)
+			print("--------------------------")
 		try:
 			removeWeirdMophs(blendShapeGroup)
 		except:
@@ -3137,7 +3138,7 @@ def autoIK():
 		pm.setAttr("defaultRenderGlobals.currentRenderer", "mayaSoftware")
 		mel.eval('FrameAllInAllViews;')
 	except:
-		print "Can't set Software Render"
+		print("Can't set Software Render")
 
 	jointsList = mel.eval('ls -type joint')
 
@@ -3212,8 +3213,8 @@ def autoIK():
 		genesis8matfix() #-----Probar forzar ojos correctos...... agregado para male3 lion-o...
 		
 		#ROTATIONS FIX-----------------------------------
-		print "------------------------------------"
-		print "------------------------------------"
+		print("------------------------------------")
+		print("------------------------------------")
 		clampTextures()
 		transparencyFix()
 		
@@ -3294,7 +3295,7 @@ try:
 	cmds.deleteUI(windowName)
 except:
 	pass
-windowDazMain = cmds.window(windowName, toolbox=True, maximizeButton=False, minimizeButton=True, sizeable=False, title="DazToMaya v1.7", widthHeight=(343, 452)) 
+windowDazMain = cmds.window(windowName, toolbox=True, maximizeButton=False, minimizeButton=True, sizeable=False, title="DazToMaya v1.6", widthHeight=(343, 452)) 
 cmds.columnLayout( "columnName01", adjustableColumn = True)
 cmds.image( image=d2mLogo, width=343)
 #cmds.separator( height=10, style='none' )
@@ -3489,13 +3490,13 @@ def autoImportDaz():
 			waitDialog().show()
 		except:
 			pass
-		print "Importing Daz..."
+		print("Importing Daz...")
 		cmds.refresh()
 		if rb0 == True:
 			importFbx()
 		if rb1 == True:
 			mel.eval('Import')
-		print "AutoIK..."
+		print("AutoIK...")
 		
 		try:
 			pm.setAttr("defaultRenderGlobals.currentRenderer", "mayaSoftware")
@@ -3544,7 +3545,7 @@ def autoImportDaz():
 		except:
 			pass
 
-		print "DazToMaya Complete!"		
+		print("DazToMaya Complete!")		
 		#result = cmds.confirmDialog( title='DazToMaya', message="Convert Complete!", button=['Ok'], defaultButton='Yes', cancelButton='No', dismissString='No' )
 
 
@@ -3561,7 +3562,7 @@ def btnConvert():
 				pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
 				convertAlltoArnoldDazFixes()
 			except:
-				print "can't set Arnold"
+				print("can't set Arnold")
 
 		if matConv == "Vray":
 			convertToVray().startConvert()
@@ -3569,7 +3570,7 @@ def btnConvert():
 			eyeLashesFix2()
 			extraEyeFixes()
 			vrayFixes()
-			print "Convert Done"
+			print("Convert Done")
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
 #Serial Dialog--------------------------------------------------------
@@ -3607,8 +3608,7 @@ cmds.text( label='CopyRight (c) 2020. All Rights Reserved.' )
 #cmds.showWindow(window)
 #cmds.showWindow(windowSerial)
 
-codeGenerator = os.path.expanduser("~/T")
-codeGenerator = codeGenerator.encode('base64','strict')
+codeGenerator = base64.b64encode(bytes(os.path.expanduser("~/T"), 'utf-8'))
 codeGenerator = codeGenerator[:-25]
 cmds.textField("txtFieldCode", edit=True, tx=codeGenerator)
 
@@ -3648,12 +3648,12 @@ def EnterSerialCheck():
 			pass
 	else:
 		cmds.confirmDialog( title='DazToMaya', message="Serial Not Valid.                                 ", button=['OK'])
-		print "Serial Not Valid"
+		print("Serial Not Valid")
 
 #---------------------------------------------------------------------- 
 
 def d2mstart():
-	if "2014" in mayaversion or "2015" in mayaversion or "2016" in mayaversion or "2017" in mayaversion or "2018" in mayaversion or "2019" in mayaversion or "2020" in mayaversion:
+	if "2014" in mayaversion or "2015" in mayaversion or "2016" in mayaversion or "2017" in mayaversion or "2018" in mayaversion or "2019" in mayaversion or "2020" in mayaversion or "2022" in mayaversion:
 		sCheck = 0
 		if "U2" in serialNumber: sCheck = sCheck +1 
 		if "YT" in serialNumber: sCheck = sCheck +1 
@@ -3665,7 +3665,7 @@ def d2mstart():
 		else:
 			cmds.showWindow(windowSerial)
 	else:
-		print "Maya Version not Supported. Please visit www.daz3d.com"
+		print("Maya Version not Supported. Please visit www.daz3d.com")
 
 d2mstart()
 #d2m58-mac
