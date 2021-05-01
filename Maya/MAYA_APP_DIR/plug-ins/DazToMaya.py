@@ -1,6 +1,16 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import maya.OpenMaya as OpenMaya
 import maya.OpenMayaMPx as OpenMayaMPx
+from sys import version_info
+if version_info[0] < 3:
+    pass # Python 2 has built in reload
+elif version_info[0] == 3 and version_info[1] <= 4:
+    from imp import reload # Python 3.0 - 3.4 
+else:
+    from importlib import reload # Python 3.5+
+
 
 commandName = 'daztomaya'
 
@@ -38,14 +48,14 @@ class DazToMayaClass( OpenMayaMPx.MPxCommand ):
                         pathfound = 1
                 if not pathfound:
                     sys.path.append( dir )
-            exec ('import ' + modname) in globals()
-            exec( 'reload( ' + modname + ' )' ) in globals()
+            exec(('import ' + modname), globals())
+            exec(( 'reload( ' + modname + ' )' ), globals())
             return modname
         def DazToMayastart():
             # When you import a file you must give it the full path
-            print "d2mRun: " + scriptPath
+            print("d2mRun: " + scriptPath)
             psource( scriptPath )
-        print "executed"
+        print("executed")
         DazToMayastart()
         #-------------------------------------------------------------------------------------
 
@@ -79,7 +89,7 @@ def initializePlugin( mobject ):
 
 def uninitializePlugin( mobject ):
     ''' Uninitialize the plug-in when Maya un-loads it. '''
-    print "Unloaded!"
+    print("Unloaded!")
     import d2m_menu
     d2m_menu.remove() 
     mplugin = OpenMayaMPx.MFnPlugin( mobject )

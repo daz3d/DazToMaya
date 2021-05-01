@@ -1,8 +1,11 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import maya.cmds as cmds
 import pymel.core as pm
 import os
 import xml.etree.ElementTree as ET
 import maya.mel as mel
+from six.moves import range
 class generateMenu():
 	import maya.cmds as cmds
 	import pymel.core as pm
@@ -57,7 +60,7 @@ class generateMenu():
 			try:
 				itemLabel = cmds.menu(menuNumber, query=True, label=True)
 				if itemLabel == menuName:
-					print "Found!", str(x)
+					print("Found!", str(x))
 					return "menu" + str(x)
 			except:
 				pass
@@ -124,7 +127,7 @@ class generateMenu():
 				
 			
 			
-print "START"
+print("START")
 def start():
 	generateMenu().start()
 def remove():
