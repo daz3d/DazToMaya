@@ -3,7 +3,14 @@ from __future__ import print_function
 import sys
 import maya.OpenMaya as OpenMaya
 import maya.OpenMayaMPx as OpenMayaMPx
-import importlib
+from sys import version_info
+if version_info[0] < 3:
+    pass # Python 2 has built in reload
+elif version_info[0] == 3 and version_info[1] <= 4:
+    from imp import reload # Python 3.0 - 3.4 
+else:
+    from importlib import reload # Python 3.5+
+
 
 commandName = 'daztomaya'
 
@@ -42,7 +49,7 @@ class DazToMayaClass( OpenMayaMPx.MPxCommand ):
                 if not pathfound:
                     sys.path.append( dir )
             exec(('import ' + modname), globals())
-            exec(( 'importlib.reload( ' + modname + ' )' ), globals())
+            exec(( 'reload( ' + modname + ' )' ), globals())
             return modname
         def DazToMayastart():
             # When you import a file you must give it the full path
@@ -74,7 +81,7 @@ def initializePlugin( mobject ):
     #--------------------- ADD ITEMS IN MENU // END --------------------------
     
     ''' Initialize the plug-in when Maya loads it. '''
-    mplugin = OpenMayaMPx.MFnPlugin( mobject, "Daz3D", "1.5" )
+    mplugin = OpenMayaMPx.MFnPlugin( mobject, "Daz3D", "1.7" )
     try:
         mplugin.registerCommand( commandName, cmdCreator )
     except:

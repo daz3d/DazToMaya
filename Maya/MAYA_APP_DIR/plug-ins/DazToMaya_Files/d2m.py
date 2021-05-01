@@ -12,7 +12,13 @@ from pymel import versions
 import webbrowser
 from shutil import copyfile
 from six.moves import range
-import base64
+
+from sys import version_info
+if version_info[0] < 3:
+    pass 
+else:
+    import base64
+
 
 #no delete morph, editer for user...
 
@@ -3295,7 +3301,7 @@ try:
 	cmds.deleteUI(windowName)
 except:
 	pass
-windowDazMain = cmds.window(windowName, toolbox=True, maximizeButton=False, minimizeButton=True, sizeable=False, title="DazToMaya v1.6", widthHeight=(343, 452)) 
+windowDazMain = cmds.window(windowName, toolbox=True, maximizeButton=False, minimizeButton=True, sizeable=False, title="DazToMaya v1.7", widthHeight=(343, 452)) 
 cmds.columnLayout( "columnName01", adjustableColumn = True)
 cmds.image( image=d2mLogo, width=343)
 #cmds.separator( height=10, style='none' )
@@ -3608,7 +3614,14 @@ cmds.text( label='CopyRight (c) 2020. All Rights Reserved.' )
 #cmds.showWindow(window)
 #cmds.showWindow(windowSerial)
 
-codeGenerator = base64.b64encode(bytes(os.path.expanduser("~/T"), 'utf-8'))
+
+
+if version_info[0] < 3:   
+	codeGenerator = os.path.expanduser("~/T")
+	codeGenerator = codeGenerator.encode('base64','strict')
+else:
+	codeGenerator = base64.b64encode(bytes(os.path.expanduser("~/T"), 'utf-8'))
+
 codeGenerator = codeGenerator[:-25]
 cmds.textField("txtFieldCode", edit=True, tx=codeGenerator)
 
