@@ -4,3 +4,4 @@ reload(d2m)
 
 def run():
     print "Daz to Maya, run() method"
+    d2m.initialize()
