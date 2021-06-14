@@ -15,14 +15,15 @@ from shutil import copyfile
 
 # no delete morph, editer for user...
 
-d2mLogo = os.path.abspath("../icons/DazToMaya_Icon.png")
+d2m_logo = os.path.abspath("../icons/d2m_import_logo.png")
+d2m_banner = os.path.abspath("../icons/d2m_banner.png")
+d2m_help_icon = os.path.abspath("../icons/d2m_help_icon.png")
 txtConf = os.path.abspath("./d2m.cfg")
 
 scale_menu_value = "Automatic"
 
 mayaversion = str(versions.current())
 
-replaceShaders = True
 targetShaders = ['phong']
 mappingPhongNEW = [
     ['diffuse', 'baseColor'],
@@ -301,14 +302,7 @@ def assign_to_new_shader(old_shd, new_shd):
             cmds.connectAttr(new_shd + '.outColor',
                              shd_group[0] + '.surfaceShader', force=True)
             cmds.delete(old_shd)
-
-        '''
-        if replaceShaders:
-            cmds.connectAttr(newShd + '.outColor', shdGroup[0] + '.surfaceShader', force=True)
-            #cmds.delete(oldShd)
-        else:
-            cmds.connectAttr(newShd + '.outColor', shdGroup[0] + '.aiSurfaceShader', force=True)
-        '''
+        
         ret_val = True
 
     return ret_val
@@ -2451,6 +2445,7 @@ def d2mstart():
     print window_daz_main
     if "2014" in mayaversion or "2015" in mayaversion or "2016" in mayaversion or "2017" in mayaversion or "2018" in mayaversion or "2019" in mayaversion or "2020" in mayaversion:
         cmds.showWindow(window_daz_main)
+        cmds.window(window_name, edit=True, widthHeight=(343, 470))
     else:
         print "Maya Version not Supported. Please visit www.daz3d.com"
 
@@ -2512,14 +2507,17 @@ def open_main_window():
                                     maximizeButton=False,
                                     minimizeButton=True,
                                     sizeable=False,
-                                    title="DazToMaya v1.7",
-                                    widthHeight=(343, 452)
+                                    title="DazToMaya v1.7"
                                 )
 
     cmds.columnLayout("columnName01", adjustableColumn=True)
 
+    # Banner
+    cmds.separator(height=5, style='none')
+    cmds.image(image=d2m_banner)
     cmds.separator(height=10, style='in')
 
+    # Import settings
     cmds.rowColumnLayout(   
                             numberOfColumns=2,
                             columnWidth=[(1, 200), (2, 120)],
@@ -2548,6 +2546,7 @@ def open_main_window():
     cmds.text(label=label_text, align='center')
     cmds.separator(height=8, style='none')
 
+    # Import button
     cmds.button(
                     label='Save Scene with Textures...',
                     width=343,
@@ -2617,12 +2616,23 @@ def open_main_window():
     cmds.separator(height=18, style='in')
 
     # Copyright section
-    cmds.separator(height=20, style='none')
-    cmds.columnLayout("LogoColum", columnOffset=("left", 155))
-    cmds.image(image=d2mLogo)
-    cmds.setParent('..')
-    cmds.separator(height=20, style='none')
+    cmds.separator(height=5, style='none')
+    cmds.rowColumnLayout(   
+                            numberOfColumns=4,
+                            columnWidth=[(1, 43), (2, 200), (3, 50), (4, 50)]
+                        )
+    cmds.separator(style='none')
     cmds.text(label='Copyright (c) 2020. All Rights Reserved.')
+    cmds.iconTextButton(
+                            width=24,
+                            height=24,
+                            style='iconOnly',
+                            image=d2m_help_icon,
+                            annotation="DazToMaya: Help and Tutorials", c=lambda *args: btn_go_help_callback()
+                        )
+    cmds.separator(style='none')
+    cmds.setParent('..')
+    cmds.separator(height=5, style='none')
 
 
 def btn_save_with_text_callback():
@@ -2686,7 +2696,7 @@ def btn_convert_callback():
                 print "can't set Arnold"
 
         if mat_conv == "Vray":
-            convertToVray().startConvert()
+            ConvertToVray().start_convert()
             eyelashes_fix1()
             eyelashes_fix2()
             extra_eye_fixes()
@@ -2893,6 +2903,11 @@ def go_to_daz_callback():
     cmds.launch(web="https://www.daz3d.com/home")
 
 
+def btn_go_help_callback():
+    webbrowser.open(
+        "http://docs.daz3d.com/doku.php/public/read_me/index/71381/start")
+
+
 class WaitDialog(object):
     wait_window_name = "DazToMayaPleaseWait11"
     wait_window = None
@@ -2921,38 +2936,19 @@ class WaitDialog(object):
         pm.deleteUI(self.wait_window_name)
 
 
-class convertToVray:
-    replaceShaders = True
-    targetShaders = ['phong']
+class ConvertToVray:
+    target_shaders = ['phong']
 
-    mappingVRMtl = [
-        ['diffuseColorAmount', 'Kd'],
-        ['color', 'color'],  # or diffuseColor ?
-        ['roughnessAmount', 'diffuseRoughness'],
-        ['reflectionColorAmount', 'Ks'],
-        ['reflectionColor', 'KsColor'],
-        ['refractionColorAmount', 'Kt'],
-        ['refractionColor', 'KtColor'],
-        ['refractionIOR', 'IOR'],
-        ['opacityMap', 'opacity'],
-        ['useFresnel', 'specularFresnel'],
-        ['anisotropyRotation', 'anisotropyRotation'],
-        ['translucencyColor', 'KsssColor'],
-        ['fogColor', 'transmittance'],
-        ['fogColor', 'sssRadius'],
-        ['normalCamera', 'normalCamera']  # or Bump ?
-    ]
-
-    mappingPhong = [
+    mapping_phong = [
         ['color', 'color'],
         ['transparency', 'opacityMap']
     ]
 
-    def convertUi(self):
-        self.convertAllShaders()
+    def convert_ui(self):
+        self.convert_all_shaders()
         # setupOpacities()
 
-    def convertAllShaders(self):
+    def convert_all_shaders(self):
         """
         Converts each (in-use) material in the scene
         """
@@ -2961,18 +2957,18 @@ class convertToVray:
         # if a shader in the list is not registered (i.e. VrayMtl)
         # everything would fail
 
-        for shdType in self.targetShaders:
-            shaderColl = cmds.ls(exactType=shdType)
-            if shaderColl:
-                for x in shaderColl:
+        for shd_type in self.target_shaders:
+            shader_coll = cmds.ls(exactType=shd_type)
+            if shader_coll:
+                for x in shader_coll:
                     # query the objects assigned to the shader
                     # only convert things with members
-                    shdGroup = cmds.listConnections(x, type="shadingEngine")
-                    setMem = cmds.sets(shdGroup, query=True)
-                    if setMem:
-                        ret = self.doMapping(x)
+                    shd_group = cmds.listConnections(x, type="shadingEngine")
+                    set_mem = cmds.sets(shd_group, query=True)
+                    if set_mem:
+                        ret = self.do_mapping(x)
 
-    def doMapping(self, inShd):
+    def do_mapping(self, in_shd):
         """
         Figures out which attribute mapping to use, and does the thing.
 
@@ -2981,16 +2977,16 @@ class convertToVray:
         """
         ret = None
 
-        shaderType = cmds.objectType(inShd)
-        if 'phong' in shaderType:
-            ret = self.shaderToAiStandard(inShd, 'VRayMtl', self.mappingPhong)
-            self.convertPhong(inShd, ret)
+        shader_type = cmds.objectType(in_shd)
+        if 'phong' in shader_type:
+            ret = self.shader_to_ai_standard(in_shd, 'VRayMtl', self.mapping_phong)
+            self.convert_phong(in_shd, ret)
 
         if ret:
             # assign objects to the new shader
-            self.assignToNewShader(inShd, ret)
+            self.assign_to_new_shader(in_shd, ret)
 
-    def assignToNewShader(self, oldShd, newShd):
+    def assign_to_new_shader(self, old_shd, new_shd):
         """
         Creates a shading group for the new shader, and assigns members of the old shader to it
 
@@ -3000,48 +2996,51 @@ class convertToVray:
         @type newShd: String
         """
 
-        retVal = False
+        ret_val = False
 
-        shdGroup = cmds.listConnections(oldShd, type="shadingEngine")
+        shd_group = cmds.listConnections(old_shd, type="shadingEngine")
 
-        if shdGroup:
-            print ">>>>>>>>" + newShd
-            if "Eye" in newShd:
+        if shd_group:
+            print ">>>>>>>>" + new_shd
+            if "Eye" in new_shd:
                 try:
                     # CHELO LINE...
                     cmds.connectAttr(
-                        newShd + '.outColor', shdGroup[0] + '.aiSurfaceShader', force=True)
+                                        new_shd + '.outColor',
+                                        shd_group[0] + '.aiSurfaceShader',
+                                        force=True
+                                    )
                 except:
                     pass
             else:
                 try:
-                    cmds.connectAttr(newShd + '.outColor',
-                                     shdGroup[0] + '.surfaceShader', force=True)
-                    cmds.delete(oldShd)
+                    cmds.connectAttr(
+                                        new_shd + '.outColor',
+                                        shd_group[0] + '.surfaceShader',
+                                        force=True
+                                    )
+                    cmds.delete(old_shd)
                 except:
                     pass
+            
+            ret_val = True
 
-            '''
-            if self.replaceShaders:
-                cmds.connectAttr(newShd + '.outColor', shdGroup[0] + '.surfaceShader', force=True)
-                #cmds.delete(oldShd)
-            else:
-                cmds.connectAttr(newShd + '.outColor', shdGroup[0] + '.aiSurfaceShader', force=True)
-            '''
-            retVal = True
+        return ret_val
 
-        return retVal
-
-    def setupConnections(self, inShd, fromAttr, outShd, toAttr):
+    def setup_connections(self, in_shd, from_attr, out_shd, to_attr):
         conns = cmds.listConnections(
-            inShd + '.' + fromAttr, d=False, s=True, plugs=True)
+                                        in_shd + '.' + from_attr,
+                                        d=False,
+                                        s=True,
+                                        plugs=True
+                                    )
         if conns:
-            cmds.connectAttr(conns[0], outShd + '.' + toAttr, force=True)
+            cmds.connectAttr(conns[0], out_shd + '.' + to_attr, force=True)
             return True
 
         return False
 
-    def shaderToAiStandard(self, inShd, nodeType, mapping):
+    def shader_to_ai_standard(self, in_shd, node_type, mapping):
         """
         'Converts' a shader to arnold, using a mapping table.
 
@@ -3054,73 +3053,73 @@ class convertToVray:
         """
 
         # print 'Converting material:', inShd
-        if ':' in inShd:
-            aiName = inShd.rsplit(':')[-1] + '_vr'
+        if ':' in in_shd:
+            ai_name = in_shd.rsplit(':')[-1] + '_vr'
         else:
-            aiName = inShd + '_vr'
+            ai_name = in_shd + '_vr'
 
-        aiNode = cmds.shadingNode(nodeType, name=aiName, asShader=True)
+        ai_node = cmds.shadingNode(node_type, name=ai_name, asShader=True)
         for chan in mapping:
-            fromAttr = chan[0]
-            toAttr = chan[1]
+            from_attr = chan[0]
+            to_attr = chan[1]
 
-            if cmds.objExists(inShd + '.' + fromAttr):
-                if not self.setupConnections(inShd, fromAttr, aiNode, toAttr):
+            if cmds.objExists(in_shd + '.' + from_attr):
+                if not self.setup_connections(in_shd, from_attr, ai_node, to_attr):
                     # copy the values
-                    val = cmds.getAttr(inShd + '.' + fromAttr)
-                    self.setValue(aiNode + '.' + toAttr, val)
+                    val = cmds.getAttr(in_shd + '.' + from_attr)
+                    self.set_value(ai_node + '.' + to_attr, val)
 
-        return aiNode
+        return ai_node
 
-    def setValue(self, attr, value):
+    def set_value(self, attr, value):
         """Simplified set attribute function.
 
         @param attr: Attribute to set. Type will be queried dynamically
         @param value: Value to set to. Should be compatible with the attr type.
         """
 
-        aType = None
+        a_type = None
 
         if cmds.objExists(attr):
             # temporarily unlock the attribute
-            isLocked = cmds.getAttr(attr, lock=True)
-            if isLocked:
+            is_locked = cmds.getAttr(attr, lock=True)
+            if is_locked:
                 cmds.setAttr(attr, lock=False)
 
             # one last check to see if we can write to it
             if cmds.getAttr(attr, settable=True):
-                attrType = cmds.getAttr(attr, type=True)
+                attr_type = cmds.getAttr(attr, type=True)
 
                 # print value, type(value)
 
-                if attrType in ['string']:
-                    aType = 'string'
-                    cmds.setAttr(attr, value, type=aType)
+                if attr_type in ['string']:
+                    a_type = 'string'
+                    cmds.setAttr(attr, value, type=a_type)
 
-                elif attrType in ['long', 'short', 'float', 'byte', 'double', 'doubleAngle', 'doubleLinear', 'bool']:
-                    aType = None
+                elif attr_type in ['long', 'short', 'float', 'byte', 'double', 'doubleAngle', 'doubleLinear', 'bool']:
+                    a_type = None
                     cmds.setAttr(attr, value)
 
-                elif attrType in ['long2', 'short2', 'float2',  'double2', 'long3', 'short3', 'float3',  'double3']:
+                elif attr_type in ['long2', 'short2', 'float2',  'double2', 'long3', 'short3', 'float3',  'double3']:
                     if isinstance(value, float):
-                        if attrType in ['long2', 'short2', 'float2',  'double2']:
+                        if attr_type in ['long2', 'short2', 'float2',  'double2']:
                             value = [(value, value)]
-                        elif attrType in ['long3', 'short3', 'float3',  'double3']:
+                        elif attr_type in ['long3', 'short3', 'float3',  'double3']:
                             value = [(value, value, value)]
 
-                    cmds.setAttr(attr, *value[0], type=attrType)
+                    cmds.setAttr(attr, *value[0], type=attr_type)
 
                 # else:
                 #    print 'cannot yet handle that data type!!'
 
-            if isLocked:
+            if is_locked:
                 # restore the lock on the attr
                 cmds.setAttr(attr, lock=True)
 
-    def transparencyToOpacity(self, inShd, outShd):
-        transpMap = cmds.listConnections(
-            inShd + '.transparency', d=False, s=True, plugs=True)
-        if transpMap:
+    def transparency_to_opacity(self, in_shd, out_shd):
+        transp_map = cmds.listConnections(
+            in_shd + '.transparency', d=False, s=True, plugs=True)
+        if transp_map:
             # map is connected, argh...
             # need to add a reverse node in the shading tree
 
@@ -3135,32 +3134,32 @@ class convertToVray:
             #cmds.connectAttr(transpMap[0], outShd + '.opacityMap', force=True)
             try:
                 print "-*-*-*-*-*-*-"
-                print transpMap[0]
-                transMapToInvert = transpMap[0].replace(".outTransparency", "")
-                mel.eval('setAttr "%s.invert" 1' % transMapToInvert)
+                print transp_map[0]
+                trans_map_to_invert = transp_map[0].replace(".outTransparency", "")
+                mel.eval('setAttr "%s.invert" 1' % trans_map_to_invert)
             except:
                 print "already inv"
 
-    def convertPhong(self, inShd, outShd):
-        cosinePower = cmds.getAttr(inShd + '.cosinePower')
-        roughness = math.sqrt(1.0 / (0.454 * cosinePower + 3.357))
+    def convert_phong(self, in_shd, out_shd):
+        cosine_power = cmds.getAttr(in_shd + '.cosinePower')
+        roughness = math.sqrt(1.0 / (0.454 * cosine_power + 3.357))
 
-        transpValues = cmds.getAttr(inShd + '.transparency')
-        caca2 = str(transpValues[0]).split(",")
+        transp_values = cmds.getAttr(in_shd + '.transparency')
+        caca2 = str(transp_values[0]).split(",")
 
-        transpR = float(str(caca2[0])[1:])
-        transpG = float(str(caca2[1])[1:])
-        transpB = float(str(caca2[2])[1:-1])
+        transp_r = float(str(caca2[0])[1:])
+        transp_r = float(str(caca2[1])[1:])
+        transp_b = float(str(caca2[2])[1:-1])
 
         #setValue(outShd + '.opacityMap', 1.0)
         try:
-            cmds.setAttr(outShd + '.' + "opacityMap", 1.0 - transpR,
-                         1.0 - transpG, 1.0 - transpB, type='double3')
+            cmds.setAttr(out_shd + '.' + "opacityMap", 1.0 - transp_r,
+                         1.0 - transp_r, 1.0 - transp_b, type='double3')
         except:
             print "map detected"
-        self.transparencyToOpacity(inShd, outShd)
+        self.transparency_to_opacity(in_shd, out_shd)
 
-    def convertVrayMtl(self, inShd, outShd):
+    def convert_vray_mtl(self, inShd, outShd):
 
         # anisotropy from -1:1 to 0:1
         anisotropy = cmds.getAttr(inShd + '.anisotropy')
@@ -3176,21 +3175,21 @@ class convertToVray:
             ior = cmds.getAttr(inShd + '.fresnelIOR')
 
         reflectivity = 1.0
-        connReflectivity = cmds.listConnections(
+        conn_reflectivity = cmds.listConnections(
             outShd + '.Ks', d=False, s=True, plugs=True)
-        if not connReflectivity:
+        if not conn_reflectivity:
             reflectivity = cmds.getAttr(outShd+'.Ks')
 
-        frontRefl = (ior - 1.0) / (ior + 1.0)
-        frontRefl *= frontRefl
+        front_refl = (ior - 1.0) / (ior + 1.0)
+        front_refl *= front_refl
 
-        set_value(outShd + '.Ksn', frontRefl * reflectivity)
+        set_value(outShd + '.Ksn', front_refl * reflectivity)
 
-        reflGloss = cmds.getAttr(inShd + '.reflectionGlossiness')
-        set_value(outShd + '.specularRoughness', 1.0 - reflGloss)
+        refl_gloss = cmds.getAttr(inShd + '.reflectionGlossiness')
+        set_value(outShd + '.specularRoughness', 1.0 - refl_gloss)
 
-        refrGloss = cmds.getAttr(inShd + '.refractionGlossiness')
-        set_value(outShd + '.refractionRoughness', 1.0 - refrGloss)
+        refr_gloss = cmds.getAttr(inShd + '.refractionGlossiness')
+        set_value(outShd + '.refractionRoughness', 1.0 - refr_gloss)
 
         # bumpMap, bumpMult, bumpMapType ?
 
@@ -3199,24 +3198,24 @@ class convertToVray:
 
         # selfIllumination is missing  but I need to know the exact attribute name in maya or this will fail
 
-    def convertOptions(self):
+    def convert_options(self):
         cmds.setAttr("defaultArnoldRenderOptions.GIRefractionDepth", 10)
 
-    def isOpaque(self, shapeName):
+    def is_opaque(self, shapeName):
 
-        mySGs = cmds.listConnections(shapeName, type='shadingEngine')
-        if not mySGs:
+        my_sgs = cmds.listConnections(shapeName, type='shadingEngine')
+        if not my_sgs:
             return 1
 
-        surfaceShader = cmds.listConnections(mySGs[0] + ".aiSurfaceShader")
+        surface_shader = cmds.listConnections(my_sgs[0] + ".aiSurfaceShader")
 
-        if surfaceShader == None:
-            surfaceShader = cmds.listConnections(mySGs[0] + ".surfaceShader")
+        if surface_shader == None:
+            surface_shader = cmds.listConnections(my_sgs[0] + ".surfaceShader")
 
-        if surfaceShader == None:
+        if surface_shader == None:
             return 1
 
-        for shader in surfaceShader:
+        for shader in surface_shader:
             if cmds.attributeQuery("opacity", node=shader, exists=True) == 0:
                 continue
 
@@ -3227,7 +3226,7 @@ class convertToVray:
 
         return 1
 
-    def setupOpacities(self):
+    def setup_opacities(self):
         shapes = cmds.ls(type='geometryShape')
         for shape in shapes:
 
@@ -3235,7 +3234,7 @@ class convertToVray:
                 # print shape + ' is transparent'
                 cmds.setAttr(shape+".aiOpaque", 0)
 
-    def startConvert(self):
+    def start_convert(self):
         try:
             pm.setAttr("defaultRenderGlobals.currentRenderer", "vray")
         except:
@@ -3246,4 +3245,4 @@ class convertToVray:
         except:
             pass
         print "Done."
-        self.convertUi()
+        self.convert_ui()

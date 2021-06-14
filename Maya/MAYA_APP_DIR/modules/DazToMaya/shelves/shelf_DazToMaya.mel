@@ -12,21 +12,21 @@ global proc shelf_DazToMaya () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Launches Daz To Maya UI" 
+        -annotation "Launches Daz To Maya import UI" 
         -enableBackground 0
         -align "center" 
-        -label "DazToMaya UI" 
+        -label "" 
         -labelOffset 0
         -rotation 0
         -flipX 0
         -flipY 0
         -useAlpha 1
         -font "plainLabelFont" 
-        -imageOverlayLabel "DazToMaya" 
+        -imageOverlayLabel "" 
         -overlayLabelColor 0.865193 0.865193 0.865193 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "DazToMaya_Icon.png" 
-        -image1 "DazToMaya_Icon.png" 
+        -image "d2m_import_logo.png" 
+        -image1 "d2m_import_logo.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -44,21 +44,21 @@ global proc shelf_DazToMaya () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Launches Daz Tools UI" 
+        -annotation "Launches Daz To Maya Auto Rig Tools UI"
         -enableBackground 0
-        -align "center" 
-        -label "DazTools UI" 
+        -align "center"
+        -label ""
         -labelOffset 0
         -rotation 0
         -flipX 0
         -flipY 0
         -useAlpha 1
         -font "plainLabelFont" 
-        -imageOverlayLabel "DazTools" 
+        -imageOverlayLabel "" 
         -overlayLabelColor 0.865193 0.865193 0.865193 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "DazToMaya_Icon.png" 
-        -image1 "DazToMaya_Icon.png" 
+        -image "d2m_auto_rig_logo.png" 
+        -image1 "d2m_auto_rig_logo.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
