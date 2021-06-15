@@ -13,6 +13,10 @@ from xml.etree import ElementTree
 from pymel import versions
 from shutil import copyfile
 
+import Definitions
+
+reload(Definitions)
+
 # no delete morph, editer for user...
 
 d2m_logo = os.path.abspath("../icons/d2m_import_logo.png")
@@ -2365,13 +2369,8 @@ def import_fbx(daz_file_path):
 
 def auto_import_daz():
 
-    # Set file path based on the platform
-    daz_file_path = ""
-    platform_type = sys.platform
-    if platform_type == "win32":
-        daz_file_path = "C:\TEMP3D\DazToMaya.fbx"
-    elif platform_type == "darwin":
-        daz_file_path = "/users/Shared/temp3d/DazToMaya.fbx"
+    # Importing only first figure for now
+    daz_file_path = os.path.abspath(Definitions.EXPORT_DIR + "\FIG\FIG0\B_FIG.fbx")
 
     # exit if file not found
     if os.path.exists(daz_file_path) == False:
