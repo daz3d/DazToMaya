@@ -1118,12 +1118,12 @@
 		var wIncludeMorphsCbx = new DzCheckBox( lytMorphs );
 		wIncludeMorphsCbx.text = "Include Morphs";
 		wIncludeMorphsCbx.checked = false;
-		wIncludeMorphsCbx.enabled = false;
+		//wIncludeMorphsCbx.enabled = false;
 
 		// Button to choose morph data
 		var wChooseMorphsBut = new DzPushButton( lytMorphs );
 		wChooseMorphsBut.text = "Choose Morphs";
-		wChooseMorphsBut.enabled = false;
+		//wChooseMorphsBut.enabled = false;
 		
 		// Checkbox to collect textures at export
 		var wCollectTexturesCbx = new DzCheckBox( wSettingsDialog );

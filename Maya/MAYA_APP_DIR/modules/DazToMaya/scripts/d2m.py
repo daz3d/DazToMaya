@@ -14,8 +14,12 @@ from pymel import versions
 from shutil import copyfile
 
 import Definitions
+import DtuLoader
+import morphs
 
 reload(Definitions)
+reload(DtuLoader)
+reload(morphs)
 
 # no delete morph, editer for user...
 
@@ -985,41 +989,6 @@ def scene_modified_check():
                 print "\n"*10
                 print "Scene already modified"
                 sys.exit()  # ABOUR SCRIPT IF SCENE NOT READY!!
-
-
-def clean_morphs(figure_with_morphs):
-    """
-    Clean blend shape name from unenecessary parts
-    """
-    blend_shapes_list = mel.eval('aliasAttr -q %s' % figure_with_morphs)
-    i = 0
-    for blend_shape in blend_shapes_list:
-        bs_fixed = blend_shape.replace("head__eCTRL", "")
-        if (bs_fixed.find("__") > 1):
-            bs_split = bs_fixed.split("__")
-            bs_fixed = bs_fixed.replace(bs_split[0]+"__", "")
-        bs_fixed = bs_fixed.replace("headInner__", "")
-        bs_fixed = bs_fixed.replace("head_eCTRL", "")
-        bs_fixed = bs_fixed.replace("head__", "")
-        bs_fixed = bs_fixed.replace("head_", "")
-        bs_fixed = bs_fixed.replace("PHM", "")
-        bs_fixed = bs_fixed.replace("CTRL", "")
-        bs_fixed = bs_fixed.replace("QT1", "")
-        bs_fixed = bs_fixed.replace("Shape", "")
-        oldMorph = figure_with_morphs + "." + blend_shape
-        try:
-            # Rename Morphs (Blendshapes)
-            mel.eval('aliasAttr %s %s' % (bs_fixed, oldMorph))
-        except:
-            pass
-        i += 1
-
-
-def fix_morphs():
-    mesh_list = mel.eval('ls')
-    for mesh in mesh_list:
-        if "BlendShape" in mesh:
-            clean_morphs(mesh)
 
 
 def transparency_fix():
@@ -2097,7 +2066,7 @@ def scene_renamer():
         obj_modified = obj_modified.replace("FBXASC056", "_8")
         obj_modified = obj_modified.replace("FBXASC057", "_9")
 
-        print obj + "  ---  " + obj_modified
+        #print obj + "  ---  " + obj_modified
         if obj == obj_modified:
             pass
         else:
@@ -2205,9 +2174,10 @@ def auto_ik():
         transparency_fix()
 
         try:
-            fix_morphs()
+            morphs.fix_morphs()
         except:
             pass
+
         scene_modified_check()
         remove_hidden_objs()
 
