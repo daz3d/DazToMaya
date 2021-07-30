@@ -2502,7 +2502,7 @@
 					s_sMorphRules = getMorphString( s_aExportableProperties );
 					loadMorphLinks( s_aExportableProperties, oFigure );
 					disconnectMorphs( s_aExportableProperties );
-					disconnectSkeleton( oFigure );
+					// disconnectSkeleton( oFigure );
 				};	
 				// Export Figure
 				loadFigureBoneData( oFigure );
@@ -2517,7 +2517,7 @@
 				reparentFigure( oFigure );
 				if ( s_bIncludeMorphs ){
 					reconnectMorphs( s_aExportableProperties );
-					reconnectSkeleton( oFigure )
+					// reconnectSkeleton( oFigure )
 				}
 
 				// Write data
