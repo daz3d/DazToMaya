@@ -26,7 +26,7 @@ reload(morphs)
 d2m_logo = os.path.abspath("../icons/d2m_import_logo.png")
 d2m_banner = os.path.abspath("../icons/d2m_banner.png")
 d2m_help_icon = os.path.abspath("../icons/d2m_help_icon.png")
-txtConf = os.path.abspath("./d2m.cfg")
+txtConf = os.path.abspath("../scripts/d2m.cfg")
 
 scale_menu_value = "Automatic"
 
