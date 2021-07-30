@@ -3,6 +3,7 @@ import os
 import math
 import traceback
 import webbrowser
+import importlib
 
 import maya.mel as mel
 import maya.cmds as cmds
@@ -17,9 +18,17 @@ import Definitions
 import DtuLoader
 import morphs
 
-reload(Definitions)
-reload(DtuLoader)
-reload(morphs)
+python_version = sys.version_info[0]
+if python_version > 3:
+    import importlib
+    importlib.reload(Definitions)
+    importlib.reload(DtuLoader)
+    importlib.reload(morphs)
+else:
+    reload(Definitions)
+    reload(DtuLoader)
+    reload(morphs)
+
 
 # no delete morph, editer for user...
 
@@ -29,8 +38,6 @@ d2m_help_icon = os.path.abspath("../icons/d2m_help_icon.png")
 txtConf = os.path.abspath("../scripts/d2m.cfg")
 
 scale_menu_value = "Automatic"
-
-mayaversion = str(versions.current())
 
 targetShaders = ['phong']
 mappingPhongNEW = [
@@ -2411,8 +2418,9 @@ def auto_import_daz():
 
 def d2mstart():
     print("d2m start")
-    print(window_daz_main)
-    if "2014" in mayaversion or "2015" in mayaversion or "2016" in mayaversion or "2017" in mayaversion or "2018" in mayaversion or "2019" in mayaversion or "2020" in mayaversion:
+
+    maya_version = cmds.about(v=True)
+    if "2014" in maya_version or "2015" in maya_version or "2016" in maya_version or "2017" in maya_version or "2018" in maya_version or "2019" in maya_version or "2020" in maya_version or "2022" in maya_version:
         cmds.showWindow(window_daz_main)
         cmds.window(window_name, edit=True, widthHeight=(343, 470))
     else:

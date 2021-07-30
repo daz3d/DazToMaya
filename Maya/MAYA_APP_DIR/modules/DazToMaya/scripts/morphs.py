@@ -1,4 +1,5 @@
 import os
+import sys
 
 import maya.cmds as cmds
 import maya.api.OpenMaya as om2
@@ -6,8 +7,14 @@ import maya.api.OpenMaya as om2
 import Definitions
 import DtuLoader
 
-reload(Definitions)
-reload(DtuLoader)
+python_version = sys.version_info[0]
+if python_version > 3:
+    import importlib
+    importlib.reload(Definitions)
+    importlib.reload(DtuLoader)
+else:
+    reload(Definitions)
+    reload(DtuLoader)
 
 
 def fix_morphs():
