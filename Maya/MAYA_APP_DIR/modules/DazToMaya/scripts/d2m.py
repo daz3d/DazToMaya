@@ -229,7 +229,7 @@ def eyelashes_fix1():
         mel.eval('setAttr "Eyelashes.specularColor" -type double3 0 0 0 ')
         mel.eval('setAttr "Eyelashes.cosinePower" 2')
     except:
-        print "Lashes fix"
+        print("Lashes fix")
 
 
 def eyelashes_fix2():
@@ -241,14 +241,14 @@ def eyelashes_fix2():
         mel.eval('setAttr "Eyelash.cosinePower" 2')
         mel.eval('setAttr "Eyelash.reflectedColor" -type double3 0 0 0')
     except:
-        print "Lashes fix"
+        print("Lashes fix")
     try:
         mel.eval(
             'setAttr "ncl1_vr.opacityMap" -type double3 0.027972 0.027972 0.027972')
         mel.eval(
             'setAttr "ncl1_vr.reflectionColor" -type double3 0.776224 0.776224 0.776224')
     except:
-        print "Lashes fix"
+        print("Lashes fix")
 
 
 def do_mapping(in_shd):
@@ -302,7 +302,7 @@ def assign_to_new_shader(old_shd, new_shd):
 
     if shd_group:
         if "Eye" in new_shd or "Cornea" in new_shd or "Tear" in new_shd:
-            print "=========" + new_shd
+            print("=========" + new_shd)
             # CHELO LINE...
             cmds.connectAttr(new_shd + '.outColor',
                              shd_group[0] + '.aiSurfaceShader', force=True)
@@ -491,7 +491,7 @@ def setup_opacities():
             try:
                 cmds.setAttr(shape+".aiOpaque", 0)
             except:
-                print "no opaque"
+                print("no opaque")
 
 
 def convert_all_shaders():
@@ -529,9 +529,9 @@ def break_lash_connection(mat):
                 try:
                     mel.eval('disconnectAttr %s.outColor %s.color' % (file_text, mat))
                 except:
-                    print "breakCon skiped"
+                    print("breakCon skiped")
             except:
-                print "File Text.Error"
+                print("File Text.Error")
 
 
 def convert_all_to_arnold_daz_fixes():
@@ -539,13 +539,13 @@ def convert_all_to_arnold_daz_fixes():
     # Make all geometry opaque
     objs = mel.eval('ls -geometry')
     if objs is None:
-        print "Nothing on scene"
+        print("Nothing on scene")
     else:
         for o in objs:
             try:
                 mel.eval('setAttr "%s.aiOpaque" 0' % o)
             except:
-                print "no obj"
+                print("no obj")
 
         i = 0
         mats = mel.eval('ls -type "aiStandardSurface"')
@@ -559,7 +559,7 @@ def convert_all_to_arnold_daz_fixes():
                 mel.eval(
                     'setAttr "%s.KsColor" -type double3 0.077 0.077 0.077' % mat)
             except:
-                print "no phong"
+                print("no phong")
 
             if "lashes" in mats[i] or "Lashes" in mats[i]:
                 break_lash_connection(mats[i])
@@ -574,7 +574,7 @@ def convert_all_to_arnold_daz_fixes():
                         'setAttr "%s.specularRoughness" 0.00649351' % mats[i])
                     mel.eval('setAttr "%s." 0.25974' % mats[i])
                 except:
-                    print "matchange skiped"
+                    print("matchange skiped")
             if "Reflection" in mats[i]:
                 try:
                     mel.eval(
@@ -585,25 +585,25 @@ def convert_all_to_arnold_daz_fixes():
                         'setAttr "%s.specularRoughness" 0.0324675' % mats[i])
                     mel.eval('setAttr "%s.Ks" 0.746753' % mats[i])
                 except:
-                    print "matchange skiped"
+                    print("matchange skiped")
             if "Moisture" in mats[i]:
                 try:
                     mel.eval(
                         'setAttr "%s.opacity" -type double3 0 0 0' % mats[i])
                 except:
-                    print "matchange skiped"
+                    print("matchange skiped")
             if "EyeLights" in mats[i]:
                 try:
                     mel.eval(
                         'setAttr "%s.opacity" -type double3 0 0 0' % mats[i])
                 except:
-                    print "matchange skiped"
+                    print("matchange skiped")
             if "Tear" in mats[i]:
                 try:
                     mel.eval(
                         'setAttr "%s.opacity" -type double3 0 0 0' % mats[i])
                 except:
-                    print "matchange skiped"
+                    print("matchange skiped")
 
             i = i + 1
 
@@ -761,7 +761,7 @@ def daz_to_ik():
         if "SENTINEL" in joint:
             sentinel = sentinel + 1
     if sentinel >= 1:
-        print "Sentinel Detected"
+        print("Sentinel Detected")
     else:
         if cmds.objExists('lThumb4'):
             mel.eval('setCharacterObject("lThumb4","Character1",53,0)')
@@ -823,7 +823,7 @@ def daz_to_ik():
         if "SENTINEL" in joint:
             sentinel = sentinel + 1
     if sentinel >= 1:
-        print "Sentinel Detected"
+        print("Sentinel Detected")
     else:
         mel.eval('setCharacterObject("rThumb4","Character1",77,0)')
 
@@ -960,7 +960,7 @@ def sentinel_remove_finger():
         mel.eval('select -r -sym rThumb4')
         mel.eval('doDelete')
     except:
-        print "Sentinel Finger Fix"
+        print("Sentinel Finger Fix")
 
 
 def remove_hidden_objs():
@@ -986,8 +986,8 @@ def scene_modified_check():
     for obj in objs:
         if cmds.objectType(obj) == "locator":
             if obj.find("Character1_Reference") == 0:
-                print "\n"*10
-                print "Scene already modified"
+                print("\n"*10)
+                print("Scene already modified")
                 sys.exit()  # ABOUR SCRIPT IF SCENE NOT READY!!
 
 
@@ -1011,7 +1011,7 @@ def clamp_textures():
         mel.eval('setAttr "hardwareRenderingGlobals.enableTextureMaxRes" 1')
         mel.eval('setAttr "hardwareRenderingGlobals.textureMaxResolution" 512')
     except:
-        print "No Text Clamp"
+        print("No Text Clamp")
 
 
 # TODO: Remove hardocing
@@ -1177,7 +1177,7 @@ def sentinel_rotations_fix():
         mel.eval('setAttr "rFoot.rotateY" 6.61')
         mel.eval('setAttr "rFoot.rotateZ" 3.66')
     except:
-        print "Sentinel fix"
+        print("Sentinel fix")
 
 
 # TODO: Remove hardocing
@@ -1352,7 +1352,7 @@ def gen1_rotations_fix():
         mel.eval('setAttr "rFoot.rotateZ" -3.78')
 
     except:
-        print "Gen1RotsFix..."
+        print("Gen1RotsFix...")
 
 
 # TODO: Remove hardocing
@@ -1518,7 +1518,7 @@ def gen2_rotations_fix():
         mel.eval('setAttr "rPinky3.rotateY" 0.0')
         mel.eval('setAttr "rPinky3.rotateZ" -0.0')
     except:
-        print "Gen2RotsFix..."
+        print("Gen2RotsFix...")
 
 
 # TODO: Remove hardocing
@@ -1710,7 +1710,7 @@ def gen3_rotations_fix():
         mel.eval('setAttr "rFoot.rotateZ" -5.7')
         '''
     except:
-        print "Gen3RotsFix..."
+        print("Gen3RotsFix...")
 
 
 # TODO: Remove hardocing
@@ -1919,7 +1919,7 @@ def gen8_rotations_fix():
         mel.eval('setAttr "rFoot.rotateZ" -3.53')
         '''
     except:
-        print "Gen8RotsFix..."
+        print("Gen8RotsFix...")
 
 
 def gen8_mat_fix():
@@ -1999,7 +1999,7 @@ def eyelash_fix():
     for obj in all_objects:
         try:
             if "Lashes" in obj:
-                print "Texture: " + obj
+                print("Texture: " + obj)
             if "lash" in obj:
                 lash_mat = obj
                 conn = cmds.listConnections(lash_mat+'.'+"color", type='file')
@@ -2025,7 +2025,7 @@ def clean_mat_names():
             except:
                 pass
     except:
-        print "no std mats"
+        print("no std mats")
 
 
 def clean_namespace():
@@ -2033,15 +2033,15 @@ def clean_namespace():
     for joint in joints_list:
         if ":" in joint:
             try:
-                print "Namespace detected, try cleaning"
+                print("Namespace detected, try cleaning")
                 joint_split = joint.split(":")
                 mel.eval(
                         'namespace -mergeNamespaceWithRoot -removeNamespace %s'
                         % joint_split[0]
                     )
             except:
-                print "namespace msg finished"
-    print "namespace fix finished"
+                print("namespace msg finished")
+    print("namespace fix finished")
 
 
 def scene_renamer():
@@ -2085,7 +2085,7 @@ def auto_ik():
         pm.setAttr("defaultRenderGlobals.currentRenderer", "mayaSoftware")
         mel.eval('FrameAllInAllViews;')
     except:
-        print "Can't set Software Render"
+        print("Can't set Software Render")
 
     joints_list = mel.eval('ls -type joint')
 
@@ -2168,8 +2168,8 @@ def auto_ik():
         gen8_mat_fix()
 
         # ROTATIONS FIX-----------------------------------
-        print "------------------------------------"
-        print "------------------------------------"
+        print("------------------------------------")
+        print("------------------------------------")
         clamp_textures()
         transparency_fix()
 
@@ -2361,10 +2361,10 @@ def auto_import_daz():
     wait_dialog.show()
 
     # Refresh and import Fbx
-    print "Importing Daz..."
+    print("Importing Daz...")
     cmds.refresh()
     import_fbx(daz_file_path)
-    print "AutoIK..."
+    print("AutoIK...")
 
     try:
         pm.setAttr("defaultRenderGlobals.currentRenderer", "mayaSoftware")
@@ -2403,20 +2403,20 @@ def auto_import_daz():
     except:
         pass
 
-    print "DazToMaya Complete!"
+    print("DazToMaya Complete!")
 
 
 # --------- Initialize ----------
 
 
 def d2mstart():
-    print "d2m start"
-    print window_daz_main
+    print("d2m start")
+    print(window_daz_main)
     if "2014" in mayaversion or "2015" in mayaversion or "2016" in mayaversion or "2017" in mayaversion or "2018" in mayaversion or "2019" in mayaversion or "2020" in mayaversion:
         cmds.showWindow(window_daz_main)
         cmds.window(window_name, edit=True, widthHeight=(343, 470))
     else:
-        print "Maya Version not Supported. Please visit www.daz3d.com"
+        print("Maya Version not Supported. Please visit www.daz3d.com")
 
 
 def initialize():
@@ -2426,7 +2426,7 @@ def initialize():
     global cfg_settings
     global figure
 
-    print sys.platform
+    print(sys.platform)
     
     # Get settings configuration
     with open(txtConf, 'r') as output:
@@ -2662,7 +2662,7 @@ def btn_convert_callback():
                 pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
                 convert_all_to_arnold_daz_fixes()
             except:
-                print "can't set Arnold"
+                print("can't set Arnold")
 
         if mat_conv == "Vray":
             ConvertToVray().start_convert()
@@ -2670,7 +2670,7 @@ def btn_convert_callback():
             eyelashes_fix2()
             extra_eye_fixes()
             vray_fixes()
-            print "Convert Done"
+            print("Convert Done")
 
 
 def config_save_callback():
@@ -2970,7 +2970,7 @@ class ConvertToVray:
         shd_group = cmds.listConnections(old_shd, type="shadingEngine")
 
         if shd_group:
-            print ">>>>>>>>" + new_shd
+            print(">>>>>>>>" + new_shd)
             if "Eye" in new_shd:
                 try:
                     # CHELO LINE...
@@ -3102,12 +3102,12 @@ class ConvertToVray:
 
             #cmds.connectAttr(transpMap[0], outShd + '.opacityMap', force=True)
             try:
-                print "-*-*-*-*-*-*-"
-                print transp_map[0]
+                print("-*-*-*-*-*-*-")
+                print(transp_map[0])
                 trans_map_to_invert = transp_map[0].replace(".outTransparency", "")
                 mel.eval('setAttr "%s.invert" 1' % trans_map_to_invert)
             except:
-                print "already inv"
+                print("already inv")
 
     def convert_phong(self, in_shd, out_shd):
         cosine_power = cmds.getAttr(in_shd + '.cosinePower')
@@ -3125,7 +3125,7 @@ class ConvertToVray:
             cmds.setAttr(out_shd + '.' + "opacityMap", 1.0 - transp_r,
                          1.0 - transp_r, 1.0 - transp_b, type='double3')
         except:
-            print "map detected"
+            print("map detected")
         self.transparency_to_opacity(in_shd, out_shd)
 
     def convert_vray_mtl(self, inShd, outShd):
@@ -3207,11 +3207,11 @@ class ConvertToVray:
         try:
             pm.setAttr("defaultRenderGlobals.currentRenderer", "vray")
         except:
-            print "can't set Vray"
+            print("can't set Vray")
         try:
             mel.eval('setAttr "EyeMoisture.transparency" -type double3 1 1 1')
             mel.eval('setAttr "Cornea.transparency" -type double3 1 1 1')
         except:
             pass
-        print "Done."
+        print("Done.")
         self.convert_ui()

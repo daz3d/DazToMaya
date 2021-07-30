@@ -58,7 +58,6 @@ def create_morphs_node(morph_links):
                     cmds.connectAttr(source, dest)
                 except:
                     pass
-    print(" > create_morph_node done")
 
 
 def create_custom_template(morph_links):
@@ -97,8 +96,6 @@ def create_custom_template(morph_links):
     template_file = open(template_path, "w")
     template_file.write(template_text)
     template_file.close()
-
-    print(" > Write to file done")
 
     cmds.refreshEditorTemplates()
 
