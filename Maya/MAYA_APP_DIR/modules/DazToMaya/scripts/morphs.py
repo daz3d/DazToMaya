@@ -7,8 +7,7 @@ import maya.api.OpenMaya as om2
 import Definitions
 import DtuLoader
 
-python_version = sys.version_info[0]
-if python_version > 3:
+if int(cmds.about(v=True)) > 2020:
     import importlib
     importlib.reload(Definitions)
     importlib.reload(DtuLoader)

@@ -20,13 +20,13 @@ import morphs
 import dazmaterials as dzm
 import TextureLib
 
-python_version = sys.version_info[0]
-if python_version > 3:
+if int(cmds.about(v=True)) > 2020:
     import importlib
     importlib.reload(Definitions)
     importlib.reload(DtuLoader)
     importlib.reload(morphs)
     importlib.reload(dzm)
+    importlib.reload(TextureLib)
 else:
     reload(Definitions)
     reload(DtuLoader)
@@ -2514,7 +2514,7 @@ def open_main_window():
                                     maximizeButton=False,
                                     minimizeButton=True,
                                     sizeable=False,
-                                    title="DazToMaya v1.7"
+                                    title="DazToMaya v1.8.0"
                                 )
 
     cmds.columnLayout("columnName01", adjustableColumn=True)

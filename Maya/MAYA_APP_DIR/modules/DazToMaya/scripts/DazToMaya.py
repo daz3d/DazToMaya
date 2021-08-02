@@ -1,9 +1,10 @@
 import sys
 
+import maya.cmds as cmds
+
 import d2m
 
-python_version = sys.version_info[0]
-if python_version > 3:
+if int(cmds.about(v=True)) > 2020:
     import importlib
     importlib.reload(d2m)
 else:

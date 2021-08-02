@@ -30,7 +30,7 @@ global proc shelf_DazToMaya () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import sys\nsys.dont_write_bytecode = True  # don't write PYCs\n\nimport DazToMaya\npython_version = sys.version_info[0]\nif python_version > 3:\n\timport importlib\n\timportlib.reload(DazToMaya)\nelse:\n\treload(DazToMaya)\nDazToMaya.run()" 
+        -command "import sys\nsys.dont_write_bytecode = True  # don't write PYCs\n\nimport maya.cmds as cmds\nimport DazToMaya\nif int(cmds.about(v=True)) > 2020:\n\timport importlib\n\timportlib.reload(DazToMaya)\nelse:\n\treload(DazToMaya)\nDazToMaya.run()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
