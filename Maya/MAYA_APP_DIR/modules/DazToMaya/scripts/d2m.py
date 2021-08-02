@@ -17,6 +17,8 @@ from shutil import copyfile
 import Definitions
 import DtuLoader
 import morphs
+import dazmaterials as dzm
+import TextureLib
 
 python_version = sys.version_info[0]
 if python_version > 3:
@@ -24,10 +26,13 @@ if python_version > 3:
     importlib.reload(Definitions)
     importlib.reload(DtuLoader)
     importlib.reload(morphs)
+    importlib.reload(dzm)
 else:
     reload(Definitions)
     reload(DtuLoader)
     reload(morphs)
+    reload(dzm)
+    reload(TextureLib)
 
 
 # no delete morph, editer for user...
@@ -555,7 +560,7 @@ def convert_all_to_arnold_daz_fixes():
                 print("no obj")
 
         i = 0
-        mats = mel.eval('ls -type "aiStandardSurface"')
+        mats = mel.eval('ls -type "aiStandard"')
 
         if (mats == None):
             return
@@ -2149,7 +2154,7 @@ def auto_ik():
                 sentinel_rotations_fix()
                 daz_figure = "Sentinel"
                 break
-            if "Genesis8" in joint:
+            if "Genesis8" in joint and not "Genesis8_1" in joint:
 
                 try:
                     gen8_mat_fix()
@@ -2168,8 +2173,33 @@ def auto_ik():
                     mel.eval('setAttr "Genesis8Male.drawStyle" 2')
                 except:
                     pass
+                
                 daz_figure = "Genesis8"
                 break
+            
+            if "Genesis8" in joint and "Genesis8_1" in joint:
+
+                try:
+                    gen8_mat_fix()
+                except:
+                    pass
+                try:
+                    gen8_rotations_fix()
+                except:
+                    pass
+
+                try:
+                    mel.eval('setAttr "Genesis8_1Female.drawStyle" 2')
+                except:
+                    pass
+                try:
+                    mel.eval('setAttr "Genesis8_1Male.drawStyle" 2')
+                except:
+                    pass
+                
+                daz_figure = "Genesis8_1"
+                break
+
 
         # -----Probar forzar ojos correctos...... agregado para male3 lion-o...
         gen8_mat_fix()
@@ -2228,7 +2258,7 @@ def auto_ik():
         lash_fix_2()
         gen8_lagrimal_fix()
 
-        maya2018_fix()
+        # maya2018_fix()
 
         cmds.scriptEditorInfo(suppressWarnings=False)
         cmds.scriptEditorInfo(suppressErrors=False)
@@ -2281,7 +2311,7 @@ def group_props():
                 if len(group_childs) > 1:
                     remove_joints_if_prop(x)
                     group_stuff(x)
-                    try:
+                    try:                                                            
                         cmds.delete(x)
                     except:
                         pass
@@ -2666,11 +2696,10 @@ def btn_convert_callback():
                                     )
     else:
         if mat_conv == "Arnold":
-            try:
-                pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
-                convert_all_to_arnold_daz_fixes()
-            except:
-                print("can't set Arnold")
+            pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
+            # convert_all_to_arnold_daz_fixes()
+            dzm.DazMaterials().convert_to_arnold()
+            
 
         if mat_conv == "Vray":
             ConvertToVray().start_convert()

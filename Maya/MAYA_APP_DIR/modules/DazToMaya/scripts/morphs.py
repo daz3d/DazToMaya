@@ -36,6 +36,11 @@ def load_morph_links():
     morph_links = dtu_loader.get_morph_links_dict()
     return morph_links
 
+def clean_name(blendtarget):
+    if (blendtarget.find("__") > 1):
+        bs_split = blendtarget.split("__")
+        bs_fixed = blendtarget.replace(bs_split[0]+"__", "")
+        return bs_fixed
 
 def create_morphs_node(morph_links):
     """
@@ -52,19 +57,18 @@ def create_morphs_node(morph_links):
         cmds.setAttr(morph_node + "." + morph_label_ns, e=True, k=True)
 
     blendshapes = cmds.ls(type="blendShape")
-    for link in morph_links:
-        controlled_meshes = morph_links[link]["Controlled Meshes"]
-        morph_label_ns = morph_links[link]["Label"].replace(" ", "")
-        for blendshape in blendshapes:
-            blend_targets = cmds.listAttr(blendshape + ".w", m=True)
-            for blend_target in blend_targets:
-                if morph_label_ns not in blend_target: continue
-                source = morph_node + "." + morph_label_ns
-                dest = blendshape + "." + blend_target
-                try:
-                    cmds.connectAttr(source, dest)
-                except:
-                    pass
+    for blendshape in blendshapes:
+        blend_targets = cmds.listAttr(blendshape + ".w", m=True)
+        for blend_target in blend_targets:
+            link = clean_name(blend_target)
+            if link not in morph_links.keys(): continue
+            morph_label_ns = morph_links[link]["Label"].replace(" ", "")
+            source = morph_node + "." + morph_label_ns
+            dest = blendshape + "." + blend_target
+            try:
+                cmds.connectAttr(source, dest)
+            except:
+                pass
 
 
 def create_custom_template(morph_links):
