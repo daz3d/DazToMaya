@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <template name='AEtransform'>
+        <attribute name='Morph' type='maya.double'>
+            <label>Morph</label>
+        </attribute>
+    </template>
+    <view name='Morphs' template='AEtransform'>
+        <property name='Morph'/>
+    </view>
+</templates>
