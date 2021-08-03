@@ -70,7 +70,7 @@ class DazMaterials:
             # get assigned shapes
             members = se.members()
             
-            if members > 0:
+            if len(members) > 0:
                 split = members[0].split("Shape")
                 if len(split) > 1:
                     obj_name = split[0]
