@@ -1,0 +1,71 @@
+global proc shelf_DazToMaya () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Launches Daz To Maya import UI" 
+        -enableBackground 0
+        -align "center" 
+        -label "" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "" 
+        -overlayLabelColor 0.865193 0.865193 0.865193 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "d2m_import_logo.png" 
+        -image1 "d2m_import_logo.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "import sys\nsys.dont_write_bytecode = True  # don't write PYCs\n\nimport maya.cmds as cmds\nimport DazToMaya\nif int(cmds.about(v=True)) > 2020:\n\timport importlib\n\timportlib.reload(DazToMaya)\nelse:\n\treload(DazToMaya)\nDazToMaya.run()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Launches Daz To Maya Auto Rig Tools UI"
+        -enableBackground 0
+        -align "center"
+        -label ""
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -imageOverlayLabel "" 
+        -overlayLabelColor 0.865193 0.865193 0.865193 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "d2m_auto_rig_logo.png" 
+        -image1 "d2m_auto_rig_logo.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "import maya.mel as mel\nmel.eval('DAZTools')" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+} 
