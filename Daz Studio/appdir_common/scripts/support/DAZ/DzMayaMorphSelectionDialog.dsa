@@ -260,6 +260,7 @@
         lytAdv.addWidget( wAddConnectedMorphs, 1, 1, 1, 2 );
         
         
+        
         // Center List of morphs based on tree selection
         var wMorphSelGrpLabel = new DzLabel( wMainWgt );
         wMorphSelGrpLabel.text = 'Morphs in Group';
@@ -311,6 +312,24 @@
         wAddMorphsButton.released.connect( handleAddMorphsButton );
         wRemoveMorphsButton.released.connect( handleRemoveMorphsButton );
     };
+    /*********************************************************************/
+    // Number : Returns the amount of morphs to be used by progress bar
+    function getAmountofMorphs( oNode ){
+        var nPotentialMorphs = 0;
+        
+        oObject = oNode.getObject();
+        nPotentialMorphs += oNode.getNumProperties();
+        nPotentialMorphs += oObject.getNumModifiers();
+        for ( var i = 0; i < oNode.getNumNodeChildren(); i++ ){
+            oChildNode = oNode.getNodeChild( i );
+            if( oChildNode.inherits( "DzBone" ) ){
+                continue;
+            }
+            nPotentialMorphs += oNode.getNumProperties();
+            nPotentialMorphs += oObject.getNumModifiers();
+        }
+        return nPotentialMorphs
+    }
 
 
     /*********************************************************************/
@@ -320,7 +339,7 @@
         var oSelectedNode;
         var oParentNode;
         var oParentFigureNode;
-
+                
         oSelectedNode = s_oNode;
         // For item like clothing, create the morph list from the character
         oParentNode = oSelectedNode;
@@ -330,15 +349,27 @@
                 oSelectedNode = oParentFigureNode;
             }
         }
-        
+
+        nCounter = getAmountofMorphs( oSelectedNode ) * 2
+        startProgress( text( "Loading Available Morphs" ), nCounter, false, true );
+        App.statusLine( "Checking For Morphs in " + oSelectedNode.getLabel(), false );
         s_oMorphs = {};
 	    getAvailableMorphs( oSelectedNode );
         for ( var i = 0; i < oSelectedNode.getNumNodeChildren(); i++ ){
             oChildNode = oSelectedNode.getNodeChild( i );
+            if( oChildNode.inherits( "DzBone" ) ){
+                continue;
+            }
+            App.statusLine( "Checking For Morphs in " + oChildNode.name, false );
             getAvailableMorphs( oChildNode );
         }
+        App.statusLine( "Creating Morph Dialog", false );
         updateMorphsTree();
+        finishProgress();
         handlePresetChanged("LastUsed.csv");
+
+
+
     };
 
     /*********************************************************************/
@@ -385,10 +416,31 @@
             oShape = oObject.getCurrentShape();
         }
         for( var i = 0; i < oNode.getNumProperties(); i++ ){
+            stepProgress( 1 );
             oProperty = oNode.getProperty( i );
+            var bIsHidden = false;
+            var nMax = 1;
+            var nMin = 0;
+            var nPropValue = 0;
+            // Create Property Checks only if they exist 
+            if( oProperty ){
+                if( typeof oProperty.isHidden === "function" ){
+                    bIsHidden = oProperty.isHidden();
+                }
+                if( typeof oProperty.getMin === "function" ){
+                    nMin = oProperty.getMin();
+                }
+                if( typeof oProperty.getMax === "function" ){
+                    nMax = oProperty.getMax();
+                }
+                if( typeof oProperty.getValue === "function" ){
+                    nPropValue = oProperty.getValue();
+                }
+            }
             sPropName = oProperty.getName();
             sPropLabel = oProperty.getLabel();
             oPresentation = oProperty.getPresentation();
+        
             if (oPresentation != undefined){
                 sPath = oNode.getLabel() + "/" + oProperty.getPath();
                 sParent = sPath.split( "/" )[0];
@@ -399,11 +451,11 @@
                     oPresentation.type,
                     oProperty,
                     sParent,
-                    oProperty.isHidden(),
-                    oProperty.getMin(),
-					oProperty.getMax(),
+                    bIsHidden,
+                    nMin,
+					nMax,
                     false,
-                    oProperty.getValue(),
+                    nPropValue,
                     oNode
                 );
                 
@@ -420,12 +472,32 @@
         }
         if( oObject ){
             for( var i = 0; i < oObject.getNumModifiers(); i++ ){
+                stepProgress( 1 );
                 oModifer = oObject.getModifier( i );
                 sModName = oModifer.getName();
                 sModLabel = oModifer.getLabel();
                 if(oModifer.inherits( "DzMorph" ) ){
                     for( var j = 0; j < oModifer.getNumProperties(); j++ ){
                         oProperty = oModifer.getProperty( j );
+                        var bIsHidden = false;
+                        var nMax = 1;
+                        var nMin = 0;
+                        var nPropValue = 0;
+                        // Create Property Checks only if they exist 
+                        if( oProperty ){
+                            if( typeof oProperty.isHidden === "function" ){
+                                bIsHidden = oProperty.isHidden();
+                            }
+                            if( typeof oProperty.getMin === "function" ){
+                                nMin = oProperty.getMin();
+                            }
+                            if( typeof oProperty.getMax === "function" ){
+                                nMax = oProperty.getMax();
+                            }
+                            if( typeof oProperty.getValue === "function" ){
+                                nPropValue = oProperty.getValue();
+                            }
+                        }
                         sPropName = oProperty.getName();
                         sPropLabel = oProperty.getLabel();
                         oPresentation = oProperty.getPresentation();
@@ -439,11 +511,11 @@
                                 oPresentation.type,
                                 oProperty,
                                 sParent,
-                                oProperty.isHidden(),
-                                oProperty.getMin(),
-                                oProperty.getMax(),
+                                bIsHidden,
+                                nMin,
+                                nMax,
                                 false,
-                                oProperty.getValue(),
+                                nPropValue,
                                 oNode
                             );
                             if( !( oMorphInfo.name in s_oMorphs ) ){
@@ -460,6 +532,7 @@
                 }
             }
         }
+    
     };
     
     /*********************************************************************/
@@ -477,6 +550,7 @@
         s_oMorphsForNode = {};
         for( sParent in s_oAvailObjects ){
             for( sMorph in s_oAvailObjects[sParent] ){
+                stepProgress( 1 );
                 sPath = s_oMorphs[sMorph].path;
                 sType = s_oMorphs[sMorph].path;
                 aPathParts = sPath.split( "/" );
@@ -493,7 +567,7 @@
                         }
                     }
                     else{
-                        sPathPart_helper = ""
+                        sPathPart_helper = "";
                     }
                     // Used to Match to correct node.
                     sID = sParent + sPathPart_helper + sPathPart;
@@ -681,7 +755,7 @@
             savePresetFile( sFile );
         }
     };
-
+    
     /*********************************************************************/
     // Void : Saves out a preset.  If the path isn't supplied, it's saved as the last selection
     function savePresetFile( sFilePath )
@@ -713,6 +787,7 @@
         refreshPresetsCombo();
 
     };
+    
     /*********************************************************************/
     // Void : Check if the Morph Should be Disconnected
     function checkMorphConnections( oMorphInfo )
@@ -1201,39 +1276,39 @@
         aMorphsToAdd.push( "facs_cbs_MSL_MDL_div2" );
         aMorphsToAdd.push( "facs_cbs_MP_MF_div2" );
         aMorphsToAdd.push( "facs_cbs_MP_MC_div2" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookUp-DownRight" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookUp-DownLeft" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookSide-SideRight" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookSide-SideLeft" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookUp-DownRight" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookUp-DownLeft" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookSide-SideRight" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookSide-SideLeft" );
         // aMorphsToAdd.push( "facs_ctrl_EyeLookAuto" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookSide-Side" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeBlink" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeWide" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeSquint" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookUp-Down" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookUpRight" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookUpLeft" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookOutRight" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookOutLeft" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookInRight" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookInLeft" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookDownRight" );
-        // aMorphsToAdd.push( "facs_ctrl_EyeLookDownLeft" );
-        // aMorphsToAdd.push( "eCTRLEyesClosedR" );
-        // aMorphsToAdd.push( "eCTRLEyesClosedL" );
-        // aMorphsToAdd.push( "facs_ctrl_BrowDown" );
-        // aMorphsToAdd.push( "facs_ctrl_BrowUp" );
-        // aMorphsToAdd.push( "facs_ctrl_BrowInnerUp" );
-        // aMorphsToAdd.push( "facs_ctrl_CheekSquint" );
-        // aMorphsToAdd.push( "facs_ctrl_CheekPuff" );
-        // aMorphsToAdd.push( "facs_ctrl_MouthLowerDown" );
-        // aMorphsToAdd.push( "facs_ctrl_MouthFrown" );
-        // aMorphsToAdd.push( "facs_ctrl_MouthDimple" );
-        // aMorphsToAdd.push( "facs_ctrl_MouthSmile" );
-        // aMorphsToAdd.push( "facs_ctrl_MouthUpperUp" );
-        // aMorphsToAdd.push( "facs_ctrl_MouthStretch" );
-        // aMorphsToAdd.push( "facs_ctrl_MouthPress" );
-        // aMorphsToAdd.push( "facs_ctrl_NoseSneer" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookSide-Side" );
+        aMorphsToAdd.push( "facs_ctrl_EyeBlink" );
+        aMorphsToAdd.push( "facs_ctrl_EyeWide" );
+        aMorphsToAdd.push( "facs_ctrl_EyeSquint" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookUp-Down" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookUpRight" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookUpLeft" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookOutRight" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookOutLeft" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookInRight" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookInLeft" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookDownRight" );
+        aMorphsToAdd.push( "facs_ctrl_EyeLookDownLeft" );
+        aMorphsToAdd.push( "eCTRLEyesClosedR" );
+        aMorphsToAdd.push( "eCTRLEyesClosedL" );
+        aMorphsToAdd.push( "facs_ctrl_BrowDown" );
+        aMorphsToAdd.push( "facs_ctrl_BrowUp" );
+        aMorphsToAdd.push( "facs_ctrl_BrowInnerUp" );
+        aMorphsToAdd.push( "facs_ctrl_CheekSquint" );
+        aMorphsToAdd.push( "facs_ctrl_CheekPuff" );
+        aMorphsToAdd.push( "facs_ctrl_MouthLowerDown" );
+        aMorphsToAdd.push( "facs_ctrl_MouthFrown" );
+        aMorphsToAdd.push( "facs_ctrl_MouthDimple" );
+        aMorphsToAdd.push( "facs_ctrl_MouthSmile" );
+        aMorphsToAdd.push( "facs_ctrl_MouthUpperUp" );
+        aMorphsToAdd.push( "facs_ctrl_MouthStretch" );
+        aMorphsToAdd.push( "facs_ctrl_MouthPress" );
+        aMorphsToAdd.push( "facs_ctrl_NoseSneer" );
         for( var i = 0; i < aMorphsToAdd.length; i++ ){
             sMorphName = aMorphsToAdd[i]
             // Add the list for export

@@ -1,14 +1,17 @@
 // DAZ Studio version 4.12.0.86 filetype DAZ Script
 
-(function(){
+(function( aArgs ){
 	var s_sBridge = "Maya"
 	var s_sDazBridgeName = String( "Daz To %1" ).arg( s_sBridge )
 	var s_oFileInfo = new DzFileInfo( getScriptFileName() );
 	var s_sScriptPath = s_oFileInfo.path();
-	// To be able to use the IDE Input your absolute Path.
-	// s_sScriptPath = "D:/GitRepos/DazToMaya/Daz Studio/appdir_common/scripts/support/DAZ"	
+	if( s_sScriptPath === "" ){
+        // To be able to use the IDE Input your absolute Path.
+	    s_sScriptPath = "D:/GitRepos/DazToMaya/Daz Studio/appdir_common/scripts/support/DAZ"
+    }	
 	var s_sToolName = s_sDazBridgeName;
 	var s_sMorphDialog = String( "Dz%1MorphSelectionDialog" ).arg( s_sBridge )
+	var s_sSubdivDialog = String( "Dz%1SubdivisionDialog" ).arg( s_sBridge )
 	s_oFileInfo.deleteLater();
 
 	var s_aFigures = [];
@@ -39,8 +42,10 @@
 
 
 	var s_sRootPath = "";
+	var s_sCustomPath = "";
 	var s_sPresetPath = "";
-	var s_sConfigJSON = "";
+	var s_sConfigPath = "";
+	var s_sMorphPath = "";
 	
 	var s_sFbxPath = "";
 	var s_sMorphRules = "";
@@ -52,10 +57,6 @@
 	var s_oHeadTailData = {};
 	var s_oJointOrientation = {};
 	var s_oPoseData = {};
-
-	var s_nLenName = 0;
-	var s_nMaxName = 19;
-	var s_sAlf = "1234567890abcdefghijklmnopqrstuvwxyz";
 	
 	var s_vecDef = new DzVec3( 0, 0, 0 );
 	var s_quatDef = new DzQuat( 0, 0, 0, 1, true );
@@ -65,13 +66,20 @@
 	var s_oOrgName = {};
 
 	// Setting variables
+	var s_bSilent;
+	var s_bIncludeSubdiv;
 	var s_nSubDivLevel;
 	var s_bIncludeAnim;
+	var s_bRemoveIncompatible;
 	var s_bIncludeMorphs;
 	var s_bCollectTextures;
+	var s_bAutoWeights;
+	var s_bNewSubdiv;
 	
-	
-	
+	// Static Widgets
+	var s_wAdvWgt;
+	var wSettingsDialog;
+
 // --- START Sub Script ----
 	/**********************************************************************
 	
@@ -250,7 +258,7 @@
 	// - Minor changes for this specific use case
 	
 	// void : ...
-	function exportFBX( oNode, sName, nIdx, bAscii )
+	function exportFBX( oNode, sName, nIdx, suffix, bAscii )
 	{
 		// Get the export manager
 		var oExportMgr = App.getExportMgr();
@@ -362,12 +370,12 @@
 				oExportMgr.getExportPath() );
 			
 			var sPath = s_sRootPath + sName + "/" + sName + nIdx + "/"
-			s_sFbxPath = sName + "/" + sName + nIdx + "/";
+			s_sFbxPath = s_sRootPath + sName + "/" + sName + nIdx + "/";
 			if( bAscii ){
 				sPath += "A_" + sName + ".fbx"
 				s_sFbxPath += "A_" + sName + ".fbx"
 			} else {
-				sPath += "B_" + sName + ".fbx"
+				sPath += "B_" + sName + suffix + ".fbx"
 				s_sFbxPath += "B_" + sName + ".fbx"
 			}
 			
@@ -409,7 +417,7 @@
 	// - Minor changes for this specific use case
 	
 	// void : ...
-	function exportOBJ( oNode, sName, nIdx )
+	function exportOBJ( oNode, sName, nIdx, bSelected )
 	{
 		// Get the export manager
 		var oExportMgr = App.getExportMgr();
@@ -488,9 +496,9 @@
 			// If the version is 4.5.0.114 or newer
 			if( App.version64 >= 0x0004000500000072 ){
 				// Do not limit export to selection
-				oSettings.setBoolValue( "SelectedOnly", false );
+				oSettings.setBoolValue( "SelectedOnly", bSelected );
 				// Do not limit export to the selected roots
-				oSettings.setBoolValue( "SelectedRootsOnly", false );
+				oSettings.setBoolValue( "SelectedRootsOnly", bSelected );
 				// Do not limit export to the primary selected root;
 				// this setting overrides SelectedRootsOnly
 				oSettings.setBoolValue( "PrimaryRootOnly", false );
@@ -528,9 +536,18 @@
 					.arg( oNode.name )
 					.arg( oExporter.getExtension() ) :
 				oExportMgr.getExportPath() );
-			
-			var sPath = s_sRootPath + sName + "/" + sName + nIdx + "/" + sName+ ".obj";
-			
+			var sRootDir = s_sRootPath + sName + "/" 
+			var sDir = sRootDir + sName + nIdx + "/"
+			var sPath = sDir + sName+ ".obj";
+			var oTempDir = new DzDir( "" );
+			oTempDir.setPath( sRootDir )
+			if( !oTempDir.exists() ){
+				oTempDir.mkdir( sRootDir );
+			};
+			oTempDir.setPath( sDir )
+			if( !oTempDir.exists() ){
+				oTempDir.mkdir( sDir );
+			};
 			// If the user didn't cancel and the file doesn't already
 			// exist, or the user wants to overwrite it
 			if( sPath && MainWindow.checkExistingFile( sPath ) ){
@@ -550,20 +567,164 @@
 	};
 	
 // --- END export_obj_silent ----
+
+// --- START import_obj_silent ----
+	/**********************************************************************
 	
-	/*********************************************************************/
+		The following is derived from a work published as part of the
+		Daz Script Documentation. This portion of the script, and/or any
+		portion thereof, may only be used in accordance with the
+		following license:
+	
+		Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+		- http://creativecommons.org/licenses/by/3.0
+	
+	**********************************************************************/
+	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/export_obj_silent/start
+	
+	// - Minor changes for this specific use case
 	
 	// void : ...
-	function addBanner( wDlg, sImagePath )
+	function importOBJ( sName, nIdx )
 	{
-		var imgImage = new Image( sImagePath );
-		var pixImage = (new Pixmap()).fromImage( imgImage );
+		// Get the import manager
+	var oImportMgr = App.getImportMgr();
+	// Define the class name the for Wavefront Object (*.obj) importer
+	var sClassName = "DzObjImporter";
+	// Find the importer
+	var oImporter = oImportMgr.findImporterByClassName( sClassName );
+	// If the importer exists
+	if( oImporter ){
+		// Create a settings object
+		var oSettings = new DzFileIOSettings();
+ 
+		// Fill the settings object with the default options from the importer
+		//oImporter.getDefaultOptions( oSettings );
+ 
+		// Define whether or not to show options
+		var bShowOptions = false;
+ 
+		// Define whether or not to show options before prompting for a path;
+		// requires 4.9.3.22 or later
+		var bOptionsBeforeFile = (bShowOptions && App.version64 >= 0x0004000900030016);
+ 
+		// Get the options for the exporter
+		if( !oImporter.getOptions( oSettings, bShowOptions && bOptionsBeforeFile, "" ) ){
+			// We're done...
+			return;
+		}
+ 
+		// Debug
+		//print( oSettings.toJsonString() );
+ 
+		// Set the desired settings for the importer
+		//oSettings.setStringValue( "Preset", "Poser (1 unit = 8ft)" );
+ 
+	 	// Set the scale to read the data
+		oSettings.setFloatValue( "Scale", 100.00 );
+		// Set the lateral axis to X
+		oSettings.setStringValue( "LatAxis", "X" );
+		// Set the vertical axis to Y
+		oSettings.setStringValue( "VertAxis", "Y" );
+		// Set the depth axis to Z
+		oSettings.setStringValue( "DepthAxis", "Z" );
+		// Do not invert the lateral axis
+		oSettings.setBoolValue( "InvertLat", false );
+		// Do not invert the vertical axis
+		oSettings.setBoolValue( "InvertVert", false );
+		// Do not invert the depth axis
+		oSettings.setBoolValue( "InvertDepth", false );
+		// Read vertex textures - UVs
+		oSettings.setBoolValue( "IncludeVT", true );
+		// Read facet groups
+		oSettings.setBoolValue( "IncludeG", true );
+		// Read surface groups
+		oSettings.setBoolValue( "IncludeUsemtl", true );
+ 
+		// Read the material library if it exists
+		oSettings.setBoolValue( "IncludeMtllib", true );
+ 
+ 
+		// If the version is 4.9.3.22 or newer
+		if( App.version64 >= 0x0004000900030016 ){
+			// Show individual settings in the dialog
+			oSettings.setBoolValue( "ShowIndividualSettings", false );
+		}
+ 
+		// Define whether or not to show the options after prompting for a file
+		oSettings.setIntValue( "RunSilent", (bShowOptions && !bOptionsBeforeFile ? 0 : 1) );
+ 
+		// Debug
+		//print( oSettings.toJsonString() );
+ 
+		// Get the number of extensions supported by the importer
+		var nExtensions = oImporter.getNumExtensions();
+		// Pre-size the extensions array
+		var aExtensions = new Array( nExtensions );
+		// Iterate over the extensions, setting each element in the array
+		for( var i = 0; i < nExtensions; i += 1 ){
+			aExtensions[ i ] = String("*.%1").arg( oImporter.getExtension( i ) );
+		}
 		
-		var wLabel = new DzLabel( wDlg );
-		wLabel.pixmap = pixImage;
-		wDlg.addWidget( wLabel );
-	};
-	
+		var sPath = s_sRootPath + sName + "/" + sName + nIdx + "/" + sName+ ".obj";
+
+		// If the user didn't cancel
+		if( sPath ){
+			// Read the file using the options specified
+			oImporter.readFile( sPath, oSettings );
+		}
+ 
+		// Clean up; don't leak memory
+		oImporter.deleteLater();
+		// We didn't find an importer with the class name we wanted
+		} else {
+			// Inform the user
+			MessageBox.critical( qsTr("An importer with the class name \"%1\" " +
+				"could not be found.").arg( sClassName ),
+				qsTr("Critical Error"), qsTr("&OK") );
+		}
+	}
+// --- END import_obj_silent ----
+
+	/*********************************************************************/
+	/** 
+	* Void: initalizes any arguments passed to the silent exporter
+	*/
+    function initilizeArgs()
+    {
+        for( var i = 0, nArgs = aArgs.length; i < nArgs; i += 1 ){
+            vArg = aArgs[i];
+            if( i == 0 ){
+				s_bSilent = vArg;
+			}
+			else if( i == 1 ){
+				s_nSubDivLevel = vArg;
+			}
+			else if( i == 2 ){
+				s_bIncludeAnim = vArg;
+			}
+			else if( i == 3 ){
+				s_bRemoveIncompatible = vArg;
+			}
+			else if( i == 4 ){
+				s_bIncludeMorphs = vArg;
+			}
+			else if( i == 5 ){
+				s_bCollectTextures = vArg;
+			}
+			else if( i == 6 ){
+				s_bAutoWeights = vArg;
+			}
+			else if( i == 7 ){
+				s_sMorphPath = vArg;
+			}
+			else if( i == 8 ){
+				s_bNewSubdiv = vArg;
+			}
+        }
+
+    };
+
 	/*********************************************************************/
 	// Array<Number> : ...
 	// TODO : refactor - efficiency
@@ -703,10 +864,11 @@
 		
 		for( var i = 0; i < aTopNodes.length; i += 1 ){
 			oTopNode = aTopNodes[i];
-			if( bIsFigure && oTopNode.name != "hip" ){
+			
+			if( bIsFigure && !oTopNode.inherits( "DzBone" ) ){
 				continue;
 			}
-			
+
 			if( i == 0 ){
 				aNodes = aNodes.concat( oBaseNode, oTopNode, oTopNode.getNodeChildren( true ) );
 			} else {
@@ -715,6 +877,7 @@
 		}
 		
 		var nNodes = aNodes.length;
+
 		if( nNodes < 1 ){
 			return;
 		}
@@ -724,7 +887,7 @@
 		var vecPos;
 		var quatRot;
 		var mtxScale;
-		
+		s_oPoseData = {};
 		for( var i = 0; i < nNodes; i += 1 ){
 			oNode = aNodes[i];
 			sObjectType = getObjectType( oNode );
@@ -859,7 +1022,6 @@
 	
 	/*********************************************************************/
 	// String : ...
-	// TODO : rename
 	function getObjectType( oNode )
 	{
 		if( oNode.inherits( "DzBone" ) ){
@@ -894,38 +1056,8 @@
 	
 	/*********************************************************************/
 	// void : ...
-	// Morph names that are too long will cause an error in Blender 2.79.
-	// Note: destructive - modifies the scene contents
-	function truncateSkeletonNames( oBaseNode )
-	{
-		var oNode;
-		var sName;
-		var sTmp;
-		
-		var nCount = 0;
-		var aChildren = oBaseNode.getNodeChildren( true );
-		for( var i = 0; i < aChildren.length; i += 1 ){
-			oNode = aChildren[i];
-			sName = oNode.name;
-			if( sName.length >= s_nMaxName ){
-				sTmp = sName.substring( 0, s_nMaxName-2 );
-				nCount = nCount % 36;
-				sTmp = sTmp + "_" + s_sAlf.substr( nCount, 1 );
-				oNode.name = sTmp;
-				s_nLenName = s_nMaxName;
-				nCount = nCount + 1;
-			} else {
-				if( sName.length > s_nLenName ){
-					s_nLenName = sName.length;
-				}
-			}
-		}
-	};
-	
-	/*********************************************************************/
-	// void : ...
 	// Delete previous export
-	// TODO : Create a Config folder to Hold the User's Daz Directories
+	// ISSUE : Currently the Both Enum is handled incorrectly new logic is needed
 	function prepareForExport( nType )
 	{
 		var oDir = new DzDir( "" );
@@ -947,20 +1079,9 @@
 			sPath = s_sRootPath + aRoot[i] + "/";
 			s_sRootPath = sPath;
 
-			if ( i == 4 ){
-				s_sPresetPath = sPath;
-			}
-			if ( i == 5 ){
-				sConfigPath = sPath;
-			}
 			// Create Directories
 			oDir.setPath( sPath );
 			if( !oDir.exists() ){
-				if( i == 3 ){
-					MessageBox.information( qsTr( "You can manually locate your export files here:\n%1" ).arg( sPath ), 
-											qsTr( "Your Export Path" ), 
-											qsTr( "&Continue" ) );
-				}
 				oDir.mkdir( sPath );
 			};
 		};
@@ -969,17 +1090,20 @@
 			var sTempPath = sPath + aFolders[i] + "/";
 			if( i == 0 ){
 				s_sRootPath = sTempPath;
-				
 			}
 			if( i == 1 ){
-				sConfigPath = sTempPath;
+				s_sConfigPath = sTempPath;
 			}
 			if( i == 2 ){
 				s_sPresetPath = sTempPath;
+				if( s_sMorphPath == "" ){
+					s_sMorphPath = s_sPresetPath + "LastUsed.csv"
+				}
 			}
 			// Create Directories
 			oDir.setPath( sTempPath );
 			if( !oDir.exists() ){
+				
 				if( i == 0 ){
 					MessageBox.information( qsTr( "You can manually locate your export files here:\n%1" ).arg( sTempPath ), 
 											qsTr( "Your Export Path" ), 
@@ -998,7 +1122,12 @@
 			sPath = s_sRootPath + aSubs[1] + "/"
 			sType = aSubs[1]	
 			};	
-
+		
+		if( nType == s_oExportTypes.Both ){
+			sPath = s_sRootPath 
+			sType = aSubs[0]	
+		}
+		
 		// Create Directories
 		oDir.setPath( sPath );
 		if( !oDir.exists() ){
@@ -1006,7 +1135,16 @@
 		};
 		
 		// Find Users Daz Content Paths
-		findUsersContent( sConfigPath );
+		var aContentDir = findUsersContent( s_sConfigPath );
+		writeConfigPath( aContentDir );
+
+		// Replace RootPath if Custom Path is Enabled
+		if( useCustomPath() ){
+			sPath = sPath.replace( s_sRootPath, s_sCustomPath );
+			oDir.setPath( sPath );
+			s_sRootPath = s_sCustomPath;
+		};
+
 		var aDirs = []
 		// Delete Files
 		aFiles = oDir.getFilesFromDir( [], true );
@@ -1031,10 +1169,13 @@
 				}
 			}	
 		};
+
+		
 	};
 	/*********************************************************************/
-	// void : ...
-	function findUsersContent( sConfigPath ){
+	// Array : Find the Daz Paths where content is installed
+	function findUsersContent()
+	{
 		var oContentMgr = App.getContentMgr();
 		var nContentDirCount = oContentMgr.getNumContentDirectories();
 		var aContentDir = [];
@@ -1042,20 +1183,53 @@
 			var sContentDirPath = oContentMgr.getContentDirectoryPath( i );
 			aContentDir.push( sContentDirPath )
 		}
-		writeContentPath( sConfigPath, aContentDir )
+		return aContentDir
+		
 	}
 	/*********************************************************************/
 	// void : ...
-	function writeContentPath( sConfigPath, aContentDir ){
-		var sDazPath = sConfigPath + "daz_paths.json";
+	function writeConfigPath( aContentDir )
+	{
+		var sDazPath = s_sConfigPath + "daz_paths.json";
+		var oCurFile = new DzFile( sDazPath );
 		var oDazFile = new DzFile( sDazPath );
 		var oDazJson = {};
-		oDazJson["Content Directories"] = aContentDir;
+		oCurFile.open( DzFile.ReadOnly );
+		var sDazFile = oCurFile.read();
+		if ( sDazFile != "" ){
+			oDazJson = JSON.parse( sDazFile )
+		}
+		oCurFile.close()
 		oDazFile.open( DzFile.WriteOnly );
+
+		if( oDazJson["Custom Path"] ){
+			s_sCustomPath = oDazJson["Custom Path"];
+		}
+
+		oDazJson["Content Directories"] = aContentDir;
+		oDazJson["Default Path"] = s_sRootPath;
+		oDazJson["Custom Path"] = s_sCustomPath;
+		
 		oDazFile.write( JSON.stringify( oDazJson, null, 4 ) );
 		oDazFile.close();
 
-	}
+	};
+
+	/*********************************************************************/
+	// Boolean : Check if Custompath Should be Used.
+	function useCustomPath()
+	{
+		var sDazPath = s_sConfigPath + "daz_paths.json";
+		var oDazFile = new DzFile( sDazPath );
+		var oDazJson = {};
+		oDazFile.open( DzFile.ReadOnly );
+		var sDazFile = oDazFile.read()
+		if ( sDazFile ){
+			oDazJson = JSON.parse( sDazFile )
+		}
+		oDazFile.close();
+		return oDazJson["Use Custom Path"]
+	};
 
 	/*********************************************************************/
 	// void : ...
@@ -1075,6 +1249,7 @@
 			}
 		}
 	};
+	
 	/*********************************************************************/
 	// Bool : ...
 	// Export Settings Dialog
@@ -1083,9 +1258,9 @@
 		// Get the current style
         var oStyle = App.getStyle();
         // Get the general margin
-        var nMargin = oStyle.pixelMetric( "DZ_GeneralMargin" )
-		
-		var wSettingsDialog = new DzBasicDialog();
+        var nMargin = oStyle.pixelMetric( "DZ_GeneralMargin" );
+
+		wSettingsDialog = new DzBasicDialog();
 		wSettingsDialog.caption = s_sToolName + ": Settings";
 		if( oNode ){
 			wSettingsDialog.caption += " - " + oNode.getLabel();
@@ -1094,75 +1269,150 @@
 		var sKey = wSettingsDialog.caption.replace( / /g, "" ) + "Dlg";
 		wSettingsDialog.getWidget().objectName = sKey;
 		
-
-		// SubDivision level radio button group
-		var wSubDivGroup = new DzVButtonGroup( wSettingsDialog );
-		wSubDivGroup.columns = 1;
-		var wSubDivLbl = new DzLabel( wSubDivGroup );
-		wSubDivLbl.text = "SubDivision Level"
-		var wRadioBtn;
-		for( var i = 0; i < 3; i += 1 ){
-			wRadioBtn = new DzRadioButton( wSubDivGroup );
-			wRadioBtn.text = "Level " + i;
-		}
-		wSubDivGroup.selected = 0;
-		wSettingsDialog.addWidget( wSubDivGroup );
+		var wMainWgt = new DzWidget( wSettingsDialog );
 		
-		// Create Morph Layout
-		var lytMorphs = new DzHButtonGroup( wSettingsDialog );
+		// Create Layouts
+		var lytSettings = new DzVBoxLayout( wMainWgt );
+        lytSettings.margin = nMargin;
+        lytSettings.spacing = nMargin;
+		var lytMorphs = new DzHBoxLayout( lytSettings );
         lytMorphs.margin = nMargin;
         lytMorphs.spacing = nMargin;
-		wSettingsDialog.addWidget( lytMorphs );
-
+		var lytSubdiv = new DzHBoxLayout( lytSettings );
+        lytSubdiv.margin = nMargin;
+        lytSubdiv.spacing = nMargin;
+				
 		// Checkbox to include morph data
-		var wIncludeMorphsCbx = new DzCheckBox( lytMorphs );
-		wIncludeMorphsCbx.text = "Include Morphs";
+		var wIncludeMorphsCbx = new DzCheckBox( wMainWgt );
+		wIncludeMorphsCbx.text = "Enable Morphs";
 		wIncludeMorphsCbx.checked = false;
-		//wIncludeMorphsCbx.enabled = false;
+		lytMorphs.addWidget( wIncludeMorphsCbx );
 
 		// Button to choose morph data
-		var wChooseMorphsBut = new DzPushButton( lytMorphs );
+		var wChooseMorphsBut = new DzPushButton( wMainWgt );
 		wChooseMorphsBut.text = "Choose Morphs";
-		//wChooseMorphsBut.enabled = false;
+		wChooseMorphsBut.minWidth = 350;
+		lytMorphs.addWidget( wChooseMorphsBut );
 		
-		// Checkbox to collect textures at export
-		var wCollectTexturesCbx = new DzCheckBox( wSettingsDialog );
-		wCollectTexturesCbx.text = "Collect Textures";
-		wCollectTexturesCbx.checked = false;
-		wSettingsDialog.addWidget( wCollectTexturesCbx );
+		// Checkbox to export subdivisions
+		var wEnableSubdivCbx = new DzCheckBox( wMainWgt );
+		wEnableSubdivCbx.text = "Enable Subdivisions";
+		wEnableSubdivCbx.checked = false;
+		lytSubdiv.addWidget( wEnableSubdivCbx );
+
+		// Button to choose subdivisions
+		var wChooseSubdivBut = new DzPushButton( wMainWgt );
+		wChooseSubdivBut.text = "Choose Subdivisions";
+		wChooseSubdivBut.minWidth =  350;
+		lytSubdiv.addWidget( wChooseSubdivBut );
 
 		// Checkbox to include animation data
-		var wIncludeAnimationsCbx = new DzCheckBox( wSettingsDialog );
+		var wIncludeAnimationsCbx = new DzCheckBox( wMainWgt );
 		wIncludeAnimationsCbx.text = "Include animation data";
 		wIncludeAnimationsCbx.checked = false;
-		wSettingsDialog.addWidget( wIncludeAnimationsCbx );
+		lytSettings.addWidget( wIncludeAnimationsCbx );
+
+		// Advanced Settings
+		var wAdvanceSettings = new DzGroupBox( wMainWgt );	
+		wAdvanceSettings.title = "Advanced Settings";
+		wAdvanceSettings.checkable = true;
+		wAdvanceSettings.checked = false;
+		wAdvanceSettings.setFixedWidth( 490 );
+		lytSettings.addWidget( wAdvanceSettings )
+
+		// Create Advance Settings Layout
+		s_wAdvWgt = new DzWidget( wAdvanceSettings );
+		var lytAdvance = new DzVBoxLayout( s_wAdvWgt );
+		lytAdvance.margin = nMargin;
+        lytAdvance.spacing = nMargin;
+		s_wAdvWgt.hide();
+
+		// Checkbox to collect textures at export
+		var wCollectTexturesCbx = new DzCheckBox( s_wAdvWgt );
+		wCollectTexturesCbx.text = "Collect Textures";
+		wCollectTexturesCbx.checked = false;
+		lytAdvance.addWidget( wCollectTexturesCbx );
+
+		// Checkbox to Remove incompatible nodes
+		var wRemoveIncompatible = new DzCheckBox( s_wAdvWgt );
+		wRemoveIncompatible.text = "Remove any incompatible nodes";
+		wRemoveIncompatible.checked = false;
+		lytAdvance.addWidget( wRemoveIncompatible )
+
+		// Checkbox to Use New Subdiv Export
+		var wNewSubdiv = new DzCheckBox( s_wAdvWgt );
+		wNewSubdiv.text = "Better Subdivision Export";
+		wNewSubdiv.checked = false;
+		lytAdvance.addWidget( wNewSubdiv )
+
+		// Checkbox to use Transfer Utility
+		var wTransferUtil = new DzCheckBox( s_wAdvWgt );
+		wTransferUtil.text = "Auto-Weight";
+		wTransferUtil.checked = false;
+		lytAdvance.addWidget( wTransferUtil )
 
 		// Create Connections
 		wChooseMorphsBut.released.connect( oNode, executeMorphDialog );
+		wChooseSubdivBut.released.connect( oNode, executeSubdivDialog );
+		wAdvanceSettings.toggled.connect( wAdvanceSettings.checked, handleShowAdvancedSetting)
 
+		//Help 
+		wTransferUtil.whatsThis = "When a mesh like a button is not weighted it will not keep its location. \
+When leaving daz to deal with it we will be automatically transfer the weights from the parents."
+
+		wSettingsDialog.addWidget( wMainWgt );
+		wSettingsDialog.setFixedSize( 500, 150 )
+		wSettingsDialog.addStretch();
 		// When user Cancels the dialog
 		if( !wSettingsDialog.exec() ){
 			return false;
 		}
 		
 		// Set settings variables from the Dialog
-		s_nSubDivLevel = wSubDivGroup.selected;
+		s_bIncludeSubdiv = wEnableSubdivCbx.checked
 		s_bIncludeAnim = wIncludeAnimationsCbx.checked;
 		s_bIncludeMorphs = wIncludeMorphsCbx.checked;
 		s_bCollectTextures = wCollectTexturesCbx.checked;
+		s_bRemoveIncompatible = wRemoveIncompatible.checked;
+		s_bAutoWeights = wTransferUtil.checked;
+		s_bNewSubdiv = wNewSubdiv.checked;
 
 		// When user Accepts the dialog
 		return true;
 	};
+	/*********************************************************************/
+	// Void : Display the advanced widget.
+	function handleShowAdvancedSetting( bChecked )
+	{	
+		if( bChecked ){
+			s_wAdvWgt.show()
+			// if( wSettingsDialog.height + s_wAdvWgt.height )
+			wSettingsDialog.setFixedSize(wSettingsDialog.width,  wSettingsDialog.height + 75 )
+		}
+		else{
+			wSettingsDialog.setFixedSize(wSettingsDialog.width, wSettingsDialog.height - s_wAdvWgt.height)
+			s_wAdvWgt.hide()
+			
+		}
+		
+	};
 
 	/*********************************************************************/
-	// Bool : Executes Morph Dialog 
 	function executeMorphDialog()
 	{
 		s_aExportableProperties = executeSubScript(
 			s_sMorphDialog, 
 			[this, s_sPresetPath, s_sDazBridgeName] 
 		);
+	};
+
+	/*********************************************************************/
+	function executeSubdivDialog()
+	{
+		s_aSubdivisionCombos = executeSubScript(
+			s_sSubdivDialog, 
+			[this] 
+		)
 	};
 
 	/*********************************************************************/
@@ -1206,7 +1456,8 @@
 		var sClassName = oNode.className();
 		var oAssetMgr = App.getAssetMgr();
 		var sContentType = oAssetMgr.getTypeForNode( oNode );
-		if( sClassName == "DzFigure" ){
+		if( sClassName == "DzFigure" 
+		   || sClassName == "DzLegacyFigure" ){
 			if( sContentType == "Actor/Character" 
 				|| sContentType == "Actor" ){
 				s_aFigures.push( oNode );
@@ -1647,6 +1898,17 @@
 			setSubDivLevel( oNode, nLev );
 		}
 	};
+	/*********************************************************************/
+	function setSubdivision( oBaseNode, isHD )
+	{
+		if( s_nSubDivLevel > 0 && isHD ){
+			nLev = s_nSubDivLevel;
+		}
+		else{
+			nLev = 0;
+		}
+		setSubDivLevel( oBaseNode, nLev );
+	}
 	
 	/*********************************************************************/
 	// void : ...
@@ -1720,7 +1982,7 @@
 		} else{
 			return -1;
 		}
-	}
+	};
 
 	/*********************************************************************/
 	// Number : Get the direction of the bone's look at axis. 1 or -1
@@ -1818,16 +2080,18 @@
 	{
 		var vecAlongBone = oNode.getEndPoint().subtract( oNode.getOrigin() );
 		return vecAlongBone.length();
-	}
+	};
 
 	/*********************************************************************/
 	// Void : load bone's limits along with rotation orders
 	function loadFigureBoneData( oBaseNode )
 	{
-		if( !oBaseNode.inherits("DzFigure") ){
-			return;
+
+		if( !oBaseNode.inherits( "DzFigure" ) ){
+			if( !oBaseNode.inherits( "DzLegacyFigure" ) ){
+				return;
+			}
 		}
-		
 		var oSkeleton = oBaseNode.getSkeleton();
 		var aNodes = oSkeleton.getAllBones();
 		var numFollowers = oSkeleton.getNumFollowSkeletons();
@@ -1884,8 +2148,11 @@
 		oBaseNode.update();
 		oBaseNode.finalize();
 		var oFigure = new DzFigure();
+		
 		var oFigure = oBaseNode.getSkeleton();
-		var oSkinBinding = oFigure.getSkinBinding();
+		if ( oBaseNode.className() != "DzLegacyFigure" ){
+			var oSkinBinding = oFigure.getSkinBinding();
+		}
 		
 		for( var i = 0; i < nNodes; i += 1 ){
 			oNode = aNodes[i];
@@ -1914,9 +2181,11 @@
 			vecPrimaryAxis = getNodePrimaryAxis( oNode, nBoneLength );
 
 			vecHead = oNode.getOrigin( false );
-			oBoneBinding = oSkinBinding.findBoneBinding( oNode );
-			if( oBoneBinding ){
-				vecHead = oBoneBinding.getScaledOrigin();
+			if ( oBaseNode.className() != "DzLegacyFigure" ){
+				oBoneBinding = oSkinBinding.findBoneBinding( oNode );
+				if( oBoneBinding ){
+					vecHead = oBoneBinding.getScaledOrigin();
+				}
 			}
 			
 			vecTail = vecHead.add( vecPrimaryAxis );
@@ -1950,9 +2219,7 @@
 	};
 	
 	/*********************************************************************/	
-	// void : ...
-	// Note: Configure DTU File
-	// TO DO: Grab Subdivision info and Morphs Exporting
+	// String : Configure DTU File
 	function writeConfiguration( oNode, sFilename, sDir )
 	{
 		var sDtufilename = sFilename + ".dtu";
@@ -1968,6 +2235,7 @@
 		oDtuJson["Asset Type"] = sContentType;
 		oDtuJson["FBX File"] = s_sFbxPath;
 		oDtuJson["Materials"] = [];
+		oDtuJson["Subdivisions"] = []
 		oDtuJson["MorphLinks"] = s_oMorphLinks;
 		oDtuJson["MorphNames"] = s_aMorphNamesToExport;
 		oDtuJson["SkeletonData"] = s_oSkeletonData;
@@ -1975,7 +2243,6 @@
 		oDtuJson["JointOrientation"] = s_oJointOrientation;
 		oDtuJson["LimitData"] = s_oLimitsData;
 		oDtuJson["PoseData"] = s_oPoseData;
-		oDtuJson["Subdivision"] = s_nSubDivLevel;
 		
 		aFigureMats = writeMaterials( oNode, sDir );
 		oDtuJson["Materials"].push( aFigureMats );
@@ -1988,7 +2255,6 @@
 				}		
 			}
 		};
-		
 		function combineMaterials( key, value ){
 			var aNewMaterials = [];
 			if( key == "Materials" ){
@@ -2006,9 +2272,12 @@
 			}
 		};
 		
+		oDtuJson["Subdivisions"] = writeSubdivisions()
+
 		oDtufile.open( DzFile.WriteOnly );
 		oDtufile.write( JSON.stringify( oDtuJson, combineMaterials, 4 ) );
 		oDtufile.close();
+		return sDtufilename
 	};
 	/*********************************************************************/
 	// String : Writes Texture and returns new Path
@@ -2034,7 +2303,6 @@
 		return sRelTexture
 		
 	};
-
 
 	/*********************************************************************/	
 	// Array : ...
@@ -2143,10 +2411,26 @@
 	function getMorphString( aExportableProperties ) 
 	{
         var sMorphString
-
         if ( aExportableProperties.length == 0 ){
-            return "";
-        }
+			s_aMorphNamesToExport = [];
+            oFile = new DzFile( s_sMorphPath );
+			if( !oFile.open( DzFile.ReadOnly ) ){ 
+				print( String( "Unable to open \"%1\" for Reading." ).arg( sPresetFilePath ) );
+				return;
+			}
+			aMorphLines = oFile.readLines();
+			for( var i = 0; i < aMorphLines.length; i++ ){
+				sMorphLine = aMorphLines[i]
+				if( sMorphLine.indexOf( "\"Export\"" ) > 0 ){
+					aItems = sMorphLine.split(",");
+					sMorphName = aItems[0].replace("\"", "").replace("\"", "");
+					s_aMorphNamesToExport.push( sMorphName );
+				}	
+			}
+			sMorphString = s_aMorphNamesToExport.join( "\n1\n" );
+			sMorphString += "\n1\n.CTRLVS\n2\nAnything\n0";
+			return sMorphString
+		};
         s_aMorphNamesToExport = [];
         sMorphString = "";
         for( var i = 0; i < aExportableProperties.length; i++ ){
@@ -2247,8 +2531,11 @@
 				oOwnerNode = oOwnerNode.getOwner();
 				if( oOwnerNode.inherits( "DzBone" ) ){
 					sBoneName = oOwnerNode.name;
+					nTempCtrlMeshes = aControlledMeshes.length
 					aControlledMeshes = checkForBoneInChild( oNode, sBoneName, aControlledMeshes );
-					break
+					if( aControlledMeshes.length > nTempCtrlMeshes ){
+						break
+					}
 				}	
 			}		
 		}
@@ -2403,7 +2690,6 @@
 				for( var j = 0; j < aProperties.length; j += 1 ){
 					var oProperty = aProperties[j]
 					s_oSkeletonTransforms[oBoneNode.name][oProperty.assetId] = oProperty.getValue();
-					oProperty.setValue( 0 );
 					oProperty.setOverrideControllers( true );
 				}
 			}
@@ -2436,48 +2722,390 @@
 				}
 			}
 		}
+	};
+	/*********************************************************************/
+	/**
+	* Void : Helper function to create the temp directory if it doesn't exist
+	*/
+	function addTempDirectory()
+	{
+		sTempPath = s_sRootPath + "/" + "temp"
+		var oDir = new DzDir( "" );
+		oDir.setPath( sTempPath );
+		if( !oDir.exists() ){
+			oDir.mkdir( sTempPath );
+		};
+	};
+
+	/*********************************************************************/
+	/**  
+	* Void : Helper function to remove temporary files form a path
+	* @param  {string} sPath - Path of the temp folder used to export/import the obj
+	*/
+	function cleanUpTempFiles( sPath )
+	{
+		var oDir = new DzDir( "" );
+
+		oDir.setPath( sPath );
+
+		var aDirs = []
+		// Delete Files
+		aFiles = oDir.getFilesFromDir( [], true );
+		for( var j = 0; j < aFiles.length; j += 1 ){
+			oDir.remove( aFiles[j] );
+
+		}
+		// Delete Dirs
+		oDir.rmdir();
+	};
+
+	/*********************************************************************/
+	/** 
+	* Void : Helper function to deselect everything in the scene.
+	*/
+	function deSelectAll()
+	{
+		// Get list of nodes
+		var oSelItems = Scene.getSelectedNodeList();
+
+		// go through deselecting
+		for ( var i = 0 ; i < oSelItems.length ; i++ ) {
+			oSelItems[i].select( false );
+		}
+	};
+
+	/*********************************************************************/
+    /** 
+	* /** 
+	* Object : Helper function to deselect everything in the scene.
+	* @summary If the description is long, write your summary here. Otherwise, feel free to remove this.
+	* @param {DzNode} oNode - a given figure that has morphs
+	* @return {Object} Contains all the active morphs on the node given with its property and value
+	*/
+    function getActiveMorphs( oNode )
+    {
+        var oObject;
+        var oShape;
+        var oProperty;
+        var oPresentation;
+        var sPropName;
+        var sPropLabel;
+        oActiveMorphs = {}
+        oObject = oNode.getObject();
+        if( oObject != null ){
+            oShape = oObject.getCurrentShape();
+        }
+        for( var i = 0; i < oNode.getNumProperties(); i++ ){
+            oProperty = oNode.getProperty( i );
+            sPropName = oProperty.getName();
+            sPropLabel = oProperty.getLabel();
+            oPresentation = oProperty.getPresentation();
+            if (oPresentation != undefined){
+				if( oProperty.getValue() > 0 ){
+					oActiveMorphs[sPropName] = {}
+					oActiveMorphs[sPropName].prop = oProperty
+					oActiveMorphs[sPropName].value = oProperty.getValue()						
+				}
+            }
+        }
+        if( oObject ){
+            for( var i = 0; i < oObject.getNumModifiers(); i++ ){
+                oModifer = oObject.getModifier( i );
+                sModName = oModifer.getName();
+                sModLabel = oModifer.getLabel();
+                if(oModifer.inherits( "DzMorph" ) ){
+                    for( var j = 0; j < oModifer.getNumProperties(); j++ ){
+                        oProperty = oModifer.getProperty( j );
+                        sPropName = oProperty.getName();
+                        sPropLabel = oProperty.getLabel();
+                        oPresentation = oProperty.getPresentation();
+                        if (oPresentation != undefined){
+							if( oProperty.getValue() > 0 ){
+								oActiveMorphs[sModName] = {}
+								oActiveMorphs[sModName].prop = oProperty
+								oActiveMorphs[sModName].value = oProperty.getValue()
+							}
+                        }
+                    }
+                }
+            }
+        }
+		return oActiveMorphs
+    };
+
+	/*********************************************************************/
+	/** 
+	* Void: Applys the default values of the morphs that are active
+	* @param {Object} oActiveMorphs - All the active morphs found on the specific figure.
+	*/   
+	function zeroOutMorphs( oActiveMorphs ){
+		aSkippedMorphs = ["XScale", "YScale", "ZScale", "Scale"]
+		for( sMorph in oActiveMorphs ){
+			oProperty = oActiveMorphs[sMorph].prop
+			if( aSkippedMorphs.indexOf( sMorph ) > -1 ){
+				oProperty.setValue( 1 )
+			}
+			else{
+				oProperty.setValue( 0 )
+			}
+			
+		}
+	};
+
+	/*********************************************************************/
+    /** 
+	* Void: Applys the user input values of the morphs that are active
+	* @param {Object} oActiveMorphs - All the active morphs found on the specific figure.
+	*/  
+	function returnMorphValues( oActiveMorphs ){
+		for( sMorph in oActiveMorphs ){
+			oProperty = oActiveMorphs[sMorph].prop
+			nValue = oActiveMorphs[sMorph].value
+			oProperty.setValue( nValue )
+		}
+	};
+
+	/*********************************************************************/
+	/** 
+	*  Bool : Runs Transfer Utility and return if it was a success or not.
+	* @param {DzNode} oSource - Source Figure used to get the weights
+	* @param {DzNode} oTarget - Target prop which is unweighted and needs auto-weights
+	* @return {Boolean} Returns if the DzTransferUtility was a success or not
+	*/ 
+	function transferWeights( oSource, oTarget )
+	{
+		oTransfer = new DzTransferUtility();
+		oTransfer.assetType = DzTransferUtility.NodeAsset;
+		oTransfer.setSource( oSource );
+		oTransfer.setSourceBaseCurrent( true );
+		oTransfer.setTarget( oTarget );
+		oTransfer.setAdjustTargetBase( false );
+		oTransfer.setTransferBinding( true );
+		oTransfer.setFitToFigure( true );
+		oTransfer.setParentToFigure( true );
+		return oTransfer.doTransfer()
+	};
+
+	/*********************************************************************/
+	/** 
+	* Void: Cycles through the Children of the Parents and does loop for Auto-Weights
+	* @param {DzNode} oSource - Source Figure used to get the weights
+	* @param {DzNode} oParent - Parent Figure used for find the Children
+	*/
+	function findingPropsToWeight( oSource, oParent )
+	{
+		aRecursiveChildren = oParent.getNodeChildren( true );
+		for( var j = 0; j < aRecursiveChildren.length; j += 1 ){
+			var oChild = aRecursiveChildren[j];
+			var oObject = oChild.getObject();
+			if( !oChild.isInScene() ){
+				continue
+			}
+			if( oChild.inherits( "DzFigure" ) && oChild.getNodeParent().inherits( "DzBone" ) ){
+				oSource.removeNodeChild( oChild, inPlace = true );
+			}
+			if( !( oChild.inherits( "DzSkeleton" ) ) 
+				&& !( oChild.inherits( "DzBone" ) )
+				&& oObject != null ){
+				deSelectAll()
+				oChild.select( true )
+				sName = oChild.name
+				sLabel = oChild.getLabel()
+
+				var sPath = s_sRootPath +  "temp" + "/"  +  "temp" + sName + "/";
+				exportOBJ( oChild, "temp", sName, true )
+				var oAbvChild = oChild.getNodeParent()
+				if( oAbvChild.inherits("DzRigidFollowNode")){
+					Scene.removeNode( oChild );
+					Scene.removeNode( oAbvChild );
+				}
+				else{
+					Scene.removeNode( oChild );
+				}
+				importOBJ( "temp", sName )
+				oImport = Scene.findNodeByLabel( "temp" );
+				oImport.setName( sName )
+				oImport.setLabel( sLabel )
+				var bSuccess = transferWeights( oSource, oImport );
+				cleanUpTempFiles( sPath );
+			}
+		}
+	};
+	
+	/*********************************************************************/
+	/** 
+	* Void: Used to run the Auto-Weight logic, This is Destructive and break user's scene
+	* @param {DzNode} oBaseNode - The Top Node of the hierachy
+	*/
+	function weightObjects( oBaseNode )
+	{
+		var aChildren = oBaseNode.getNodeChildren( false );
+		oActiveMorphs = getActiveMorphs( oBaseNode )
+		zeroOutMorphs( oActiveMorphs )
+		deSelectAll()
+		addTempDirectory()
+		for( var i = 0; i < aChildren.length; i += 1 ){
+			oNode = aChildren[i];
+			var aRemoved = [];
+			if( oNode.inherits("DzBone") ){
+				findingPropsToWeight( oBaseNode, oNode )
+			}
+			else{
+				findingPropsToWeight( oNode, oNode )
+			}
+		}
+		returnMorphValues( oActiveMorphs )
+	};
+
+	/*********************************************************************/
+	/** 
+	* Void: Used to export out the subdivisions chosen by user. 
+	* @param {Boolean} bSubdivEnabled - Based on user's input to export out Subdivisions.
+	*/
+    function lockSubdivisionProperties( bSubdivEnabled )
+    {
+        for( var i = 0; i < s_aSubdivisionCombos.length; i++ ){
+            var oSubdivInfo = s_aSubdivisionCombos[i]
+            oNode = oSubdivInfo.node;
+            oObject = oNode.getObject();
+            if( oObject ){
+                oShape = oObject.getCurrentShape();
+                oGeo = oShape.getGeometry();
+                if( oGeo ){
+                    nVertCount = oGeo.getNumVertices();
+                    for( var i = 0; i < oShape.getNumProperties(); i++ ){
+                        oProperty = oShape.getProperty( i );
+                        oPropName = oProperty.getName();
+						if( oPropName == "lodlevel" ){
+                            if( bSubdivEnabled ){
+                                oProperty.setValue( 1 )
+                            }
+                            else{
+                                oProperty.setValue( 0 )
+                            }
+                        }
+                        if( oPropName == "SubDIALevel" ){
+                            oProperty.lock( false );
+                            if( bSubdivEnabled ){
+                                var nTargetValue = oSubdivInfo.currentItem;
+                                oProperty.setDoubleValue( nTargetValue )
+                            }
+                            else{
+                                oProperty.setDoubleValue( 0.0 )
+                            }
+                            oProperty.lock( true )
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    /*********************************************************************/
+	/** 
+	* Void: Writes out the subdivision levels that were chosen by the user to the DTU
+	* @return {Array} Contains the data that will be added to the DTU
+	*/
+    function writeSubdivisions()
+    {
+        aSubdivisions = []
+        for( var i = 0; i < s_aSubdivisionCombos.length; i++ ){
+            var oSubdivInfo = s_aSubdivisionCombos[i]
+            var sNodeName = oSubdivInfo.name + ".Shape";
+            var nTargetValue = oSubdivInfo.currentItem;
+            oSubdivision = {
+                "Version" : 1,
+                "Asset Name" : sNodeName,
+                "Value" : nTargetValue
+                }
+            aSubdivisions.push( oSubdivision )
+        }
+        return aSubdivisions
+    };
+
+	/*********************************************************************/
+	/** 
+	* Void: Used to run the DzFBXBridges and allow the skin weights to be transferred
+	* @param {String} sDtufilename - Path for the DTU File
+	*/ 
+	function processFBX( sDtufilename )
+	{
+		oProcess = new DzProcess()
+		oProcess.communication = DzProcess.Stdin | DzProcess.Stdout | DzProcess.Stderr;	
+		oProcess.arguments = [String( '"%2/dzBridgeUtils/DzFBXBridges.exe" "%1"' ).arg( sDtufilename ).arg( s_sScriptPath ) ];
+		print(String( '"%2/dzBridgeUtils/DzFBXBridges.exe" "%1"' ).arg( sDtufilename ).arg( s_sScriptPath ))
+		connect( oProcess, "readyReadStdout()", this, "readStdout" );
+		connect( oProcess, "readyReadStderr()", this, "readStderr" );
+		oProcess.start()
+	};
+	
+ 
+	/*********************************************************************/
+	/** 
+	* Void: Used to check if the fbx sdk 2020 exists in the path needed
+	*/
+	function isSubdivPrereq()
+	{
+		if( s_bNewSubdiv ){
+			oFileInfo = new DzFileInfo( String( '%1/dzBridgeUtils/libfbxsdk.dll' ).arg( s_sScriptPath ) );
+			if( !oFileInfo.exists() && MessageBox.warning(
+				qsTr( "To use subdivision the FBX SDK 2020 is needed." ),
+				s_sToolName, qsTr( "&OK" ), qsTr( "&Cancel" ) ) == 1 ){
+				return;
+			}
+			else{
+				return true
+			}
+		}
+		else{
+			return
+		}
 	}
 
 	/*********************************************************************/
-
 	// void : ...
 	function main()
 	{
 		var bDebugFBX = false;
-		
+		initilizeArgs()
 		buildRootLists();
 		
-		if( s_aFigures.length > 2 ){
-			if( MessageBox.warning(
-				qsTr( "Transferring 3 or more figures with clothing or hair may freeze and stop." ),
-				s_sToolName, qsTr( "&OK" ), qsTr( "&Cancel" ) ) == 1 ){
+		if( !s_bSilent ){
+			if( s_aFigures.length > 2 ){
+				if( MessageBox.warning(
+					qsTr( "Transferring 3 or more figures with clothing or hair may freeze and stop." ),
+					s_sToolName, qsTr( "&OK" ), qsTr( "&Cancel" ) ) == 1 ){
+					return;
+				}
+			}
+			
+			if( s_aFigures.length == 0 && s_aEnvProp.length == 0 ){
+				return;
+			} else if( s_aFigures.length > 0 && s_aEnvProp.length > 0 ){
+				s_nExportType = s_oExportTypes.Both;
+			} else if( s_aEnvProp.length == 0 ){
+				s_nExportType = s_oExportTypes.Figure;
+			} else if( s_aFigures.length == 0 ){
+				s_nExportType = s_oExportTypes.EnvProp;
+			}
+			
+			if( s_nExportType == s_oExportTypes.Both ){
+				s_nExportType = promptExportType();
+			}
+			
+			if( s_nExportType == s_oExportTypes.None ){
 				return;
 			}
 		}
-		
-		if( s_aFigures.length == 0 && s_aEnvProp.length == 0 ){
-			return;
-		} else if( s_aFigures.length > 0 && s_aEnvProp.length > 0 ){
-			s_nExportType = s_oExportTypes.Both;
-		} else if( s_aEnvProp.length == 0 ){
-			s_nExportType = s_oExportTypes.Figure;
-		} else if( s_aFigures.length == 0 ){
-			s_nExportType = s_oExportTypes.EnvProp;
+		else{
+			s_nExportType= s_oExportTypes.Both
 		}
-		
-		if( s_nExportType == s_oExportTypes.Both ){
-			s_nExportType = promptExportType();
-		}
-		
-		if( s_nExportType == s_oExportTypes.None ){
-			return;
-		}
-		
 		prepareForExport( s_nExportType );
 		
 		var sFileBasename;
 		var sBaseDirectory; 
 
+		
 		if( s_nExportType == s_oExportTypes.Both
 		|| s_nExportType == s_oExportTypes.Figure ){
 			setHideRoot( false, false );
@@ -2485,17 +3113,29 @@
 			var oFigure;
 			for( var i = 0; i < s_aFigures.length; i += 1 ){
 				oFigure = s_aFigures[i];
+				
 				for( var j = 0; j < s_aFigures.length; j += 1 ){
 					setVisible( s_aFigures[j], i == j );
 				}
-				
-				if( !promptSettings( oFigure ) ){
-					continue;
+				if( !s_bSilent ){
+					if( !promptSettings( oFigure ) ){
+						continue;
+					}
 				}
-				
+				if( s_bAutoWeights ){ 
+					if( !s_bSilent ){
+						if( MessageBox.warning(
+							qsTr( "Transfering the Weights will destroy the current state of your scene save your scene before exporting." ),
+							s_sToolName, qsTr( "&Continue" ), qsTr( "&Cancel" ) ) == 1 ){
+							return;
+						}
+					};
+					weightObjects( oFigure )
+				}
+
 				setLock( oFigure, true, true );
 				makeEndDir( i, s_sFig );
-				setSubDivLevelAll( oFigure );
+				
 				
 				// Morph Export
 				if( s_bIncludeMorphs ){
@@ -2507,24 +3147,50 @@
 				// Export Figure
 				loadFigureBoneData( oFigure );
 				loadPoseData( oFigure, true );
-				setEyelashVisibility( oFigure, false );
-				exportOBJ( oFigure, s_sFig, i );
-				setEyelashVisibility( oFigure, true );
-				removeIncompatibleNodes( oFigure );
-				exportFBX( oFigure, s_sFig, i , bDebugFBX );
+				
+				if( s_bRemoveIncompatible ){
+					removeIncompatibleNodes( oFigure );
+				}
+				if( s_bIncludeSubdiv && isSubdivPrereq() ){
+					lockSubdivisionProperties( true );
+					setEyelashVisibility( oFigure, false );
+					exportOBJ( oFigure, s_sFig, i, false );
+					setEyelashVisibility( oFigure, true );
+					exportFBX( oFigure, s_sFig, i , "_HD" , bDebugFBX );
+					lockSubdivisionProperties( false );
+					exportFBX( oFigure, s_sFig, i , "_base" , bDebugFBX );
+				}
+				else if( s_bIncludeSubdiv ){
+					lockSubdivisionProperties( true );
+					setEyelashVisibility( oFigure, false );
+					exportOBJ( oFigure, s_sFig, i, false );
+					setEyelashVisibility( oFigure, true );
+					exportFBX( oFigure, s_sFig, i , "" ,bDebugFBX );
+				}
+				else{
+					lockSubdivisionProperties( false );
+					setEyelashVisibility( oFigure, false );
+					exportOBJ( oFigure, s_sFig, i, false );
+					setEyelashVisibility( oFigure, true );
+					exportFBX( oFigure, s_sFig, i , "" ,bDebugFBX );
+				}
 				setLock( oFigure, false, true );
 				restorePose( oFigure );
 				reparentFigure( oFigure );
 				if ( s_bIncludeMorphs ){
 					reconnectMorphs( s_aExportableProperties );
-					// reconnectSkeleton( oFigure )
+					// reconnectSkeleton( oFigure );
 				}
 
 				// Write data
 				sFileBasename = String( "%1%2/%2%3/%2" ).arg( s_sRootPath ).arg( s_sFig ).arg( i );
 				sBaseDirectory = String( "%1%2/%2%3" ).arg( s_sRootPath ).arg( s_sFig ).arg( i );
 				writeParentingData( oFigure, sFileBasename + ".dat" );
-				writeConfiguration( oFigure, sFileBasename, sBaseDirectory );
+				sDtufilename = writeConfiguration( oFigure, sFileBasename, sBaseDirectory );
+				if( s_bIncludeSubdiv && s_bNewSubdiv ){
+					processFBX( sDtufilename )
+				}
+				
 
 			}
 		}
@@ -2537,9 +3203,10 @@
 			var sEnvPath;
 			var sPoseFilename;
 			var sFileBasename;
+			
 			for( var i = 0; i < s_aEnvProp.length; i += 1 ){
 				oNode = s_aEnvProp[i];
-				
+
 				for( var j = 0; j < s_aEnvProp.length; j += 1 ){
 					setVisible( s_aEnvProp[j], i == j );
 				}
@@ -2548,8 +3215,10 @@
 				if( bIsBone ){
 					flattenObjectHierarchy( oNode );
 				}
+				else{
+					setLock( oNode, true, false );
+				}
 				
-				setLock( oNode, true, false );
 				
 				setSubDivLevelAll( oNode, 0 );
 				
@@ -2569,15 +3238,17 @@
 				
 				if( bIsBone ){
 					loadFigureBoneData( oNode );
+					loadPoseData( oNode, true );
 				} else {
-					loadPoseData( oNode, sPoseFilename, false );
+					loadPoseData( oNode, false );
 					writeMemo( sEnvPath + "nobone.txt", "not skeleton" );
+					setLock( oNode, false, false );
 				}
 				updateName( oNode );
 				
 				writeConfiguration( oNode, sFileBasename );
 
-				setLock( oNode, false, false );
+				
 			}
 		}
 		
@@ -2588,4 +3259,4 @@
 	/*********************************************************************/
 	main();
 
-})();
+})( getArguments() );
