@@ -1,19 +1,36 @@
 // DAZ Studio version 4.12.0.86 filetype DAZ Script
 
-(function( aArgs ){
-	var s_sBridge = "Maya"
-	var s_sDazBridgeName = String( "Daz To %1" ).arg( s_sBridge )
-	var s_oFileInfo = new DzFileInfo( getScriptFileName() );
-	var s_sScriptPath = s_oFileInfo.path();
-	if( s_sScriptPath === "" ){
-        // To be able to use the IDE Input your absolute Path.
-	    s_sScriptPath = "D:/GitRepos/DazToMaya/Daz Studio/appdir_common/scripts/support/DAZ"
-    }	
-	var s_sToolName = s_sDazBridgeName;
-	var s_sMorphDialog = String( "Dz%1MorphSelectionDialog" ).arg( s_sBridge )
-	var s_sSubdivDialog = String( "Dz%1SubdivisionDialog" ).arg( s_sBridge )
-	s_oFileInfo.deleteLater();
+// Global Variables
+var g_sBridge = "Maya"
+var g_sDazBridgeName = String( "Daz To %1" ).arg( g_sBridge )
+var g_oFileInfo = new DzFileInfo( getScriptFileName() );
+var g_sScriptPath = g_oFileInfo.path();
+if( g_sScriptPath === "" ){
+	// To be able to use the IDE Input your absolute Path.
+	g_sScriptPath = "D:/GitRepos/DazToMaya/Daz Studio/appdir_common/scripts/support/DAZ"
+}	
+g_oFileInfo.deleteLater();
 
+// Global Includes
+var g_sBridgeHelpers = String( "%2/dzBridgeUtils/Dz%1Helpers.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
+var g_sBridgeMorphs = String( "%2/dzBridgeUtils/Dz%1Morphs.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
+var g_sBridgeAutoWeight = String( "%2/dzBridgeUtils/Dz%1AutoWeight.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
+var g_sBridgeExporter = String( "%2/dzBridgeUtils/Dz%1BridgeExporter.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
+
+include( g_sBridgeHelpers ); // Dependencies : ...
+include( g_sBridgeMorphs ); // Dependencies : DzBridgeHelper
+include( g_sBridgeAutoWeight ); // Dependencies : DzBridgeHelper
+include( g_sBridgeExporter ); // Dependencies : DzBridgeHelper, DzBridgeMorphs
+
+
+(function( aArgs ){
+	var s_oBridgeExporter;
+	var s_oBridgeAutoWeights;
+
+	var s_sToolName = g_sDazBridgeName;
+	var s_sMorphDialog = String( "/dzBridgeUtils/Dz%1MorphSelectionDialog" ).arg( g_sBridge )
+	var s_sSubdivDialog = String( "/dzBridgeUtils/Dz%1SubdivisionDialog" ).arg( g_sBridge )
+	
 	var s_aFigures = [];
 	var s_aEnvProp = [];
 	
@@ -46,13 +63,10 @@
 	var s_sPresetPath = "";
 	var s_sConfigPath = "";
 	var s_sMorphPath = "";
-	
 	var s_sFbxPath = "";
-	var s_sMorphRules = "";
-	var s_oMorphLinks = {};
-	var s_aMorphNamesToExport = [];
+	
+	var s_aSubdivisionCombos = [];
 	var s_oSkeletonData = {};
-	var s_oSkeletonTransforms = {}
 	var s_oLimitsData = {};
 	var s_oHeadTailData = {};
 	var s_oJointOrientation = {};
@@ -80,611 +94,6 @@
 	var s_wAdvWgt;
 	var wSettingsDialog;
 
-// --- START Sub Script ----
-	/**********************************************************************
-	
-		The following is derived from a work published as part of the
-		Daz Script Documentation. This portion of the script, and/or any
-		portion thereof, may only be used in accordance with the
-		following license:
-	
-		Creative Commons Attribution 3.0 Unported (CC BY 3.0)
-		- http://creativecommons.org/licenses/by/3.0
-	
-	**********************************************************************/
-	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/remote_operation/sub_script/start
- 	
- 	// - Extracted functions
-	// - Returns Scripts Paramater
- 	// - Adjusted to be used within bridge
-	/*********************************************************************/
-	// Object? 
-	function executeSubScript( sScript, aArgs ){
- 
-		/*********************************************************************/
-		// String : A function for retrieving a translation if one exists
-		function text( sText )
-		{
-			// If the version of the application supports qsTr()
-			if( typeof( qsTr ) != "undefined" ){
-				// Return the translated (if any) text
-				return qsTr( sText );
-			}
-	 
-			// Return the original text
-			return sText;
-		};
-	 
-		/*********************************************************************/
-		// Declare working variables
-		var sTitle, sMessage;
-	 
-		// Define common strings
-		var sButton = text( "&OK" );
-	 
-		// Define the base path of the script we'll call; without the file extension
-		var sBasePath = String( "%1/%2" ).arg( s_sScriptPath ).arg( sScript );
-		
-		// Create a script object
-		var oScript = new DzScript();
-	 
-		// Attempt to find our script; doing it this way, we can debug with an
-		// ascii file and distribute a binary [encrypted] file with the same name...
-		// without having to update the contents of the script or manually handle
-		// the file extensions; requires 3.0.1.5 or newer
-		var sScriptPath = oScript.getScriptFile( sBasePath );
-	 
-		// If a script is found
-		if( !sScriptPath.isEmpty() ){
-			// If the script loads
-			if( oScript.loadFromFile( sScriptPath ) ){
-				// Execute the script; pass in an array of arguments;
-				// passing in arguments requires 2.2.2.17 or newer
-				oScript.execute( aArgs );
-				return oScript.result();
-			// If the script doesn't load
-			} else {
-				// Define text variables for the message
-				sTitle = text( "Read Error" );
-				sMessage = text( "The '%1' file could not be loaded." ).arg( sScriptPath );
-				// Inform the user
-				MessageBox.information( sMessage, sTitle, sButton );
-			}
-		// If a script is not found
-		} else {
-			// Define text variables for the message
-			sTitle = text( "File Not Found" );
-			sMessage = text( "A '%1.ds(a|b|e)' file could not be found." ).arg( sBasePath );
-			// Inform the user
-			MessageBox.information( sMessage, sTitle, sButton );
-		}
-	};
-
-// --- END Sub Script ----
-	
-// --- START node_properties ----
-	/**********************************************************************
-	
-		The following is derived from a work published as part of the
-		Daz Script Documentation. This portion of the script, and/or any
-		portion thereof, may only be used in accordance with the
-		following license:
-	
-		Creative Commons Attribution 3.0 Unported (CC BY 3.0)
-		- http://creativecommons.org/licenses/by/3.0
-	
-	**********************************************************************/
-	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/properties/node_properties/start
- 	
- 	// - Extraccted functions
-
-	/*********************************************************************/
-	// Array<DzProperty> : A function for getting a list of the properties in a group
-	function getGroupProperties( oGroup, bTraverse, bRecurse )
-	{
-		// Declare an array to hold properties
-		var aProperties = [];
-		
-		// If a group is not passed in
-		if( !oGroup ){
-			// We are done, return an empty array
-			return aProperties;
-		}
-		
-		// Get the number of proeprties in the group
-		var nProperties = oGroup.getNumProperties();
-		// Pre-size the properties array
-		aProperties = new Array( nProperties );
-		// Iterate over the properties, setting each element in the array
-		for( var i = 0; i < nProperties; i += 1 ){
-			// Assign the property to the position in the array
-			aProperties[ i ] = oGroup.getProperty( i );
-		}
-		
-		// If we are recursing
-		if( bRecurse ){
-			// Concatenate the properties array from child groups
-			aProperties = aProperties.concat(
-				getGroupProperties( oGroup.getFirstChild(), true, bRecurse ) );
-		}
-		
-		// If we are traversing
-		if( bTraverse ){
-			// Concatenate the properties array from sibling groups
-			aProperties = aProperties.concat(
-				getGroupProperties( oGroup.getNextSibling(), bTraverse, bRecurse ) );
-		}
- 		
-		// Return the array of properties
-		return aProperties;
-	};
-	
-	/*********************************************************************/
-	// Array<DzProperty> : A function for getting the list properties for an element
-	function getElementProperties( oElement, bTraverse, bRecurse )
-	{
-		// Get the property group tree for the element
-		var oPropertyGroupTree = oElement.getPropertyGroups();
-		
-		// If the application version is 4.9.4.101 or newer and we want all properties
-		if( App.version64 >= 0x0004000900040065 && bTraverse && bRecurse ){
-			// Return the properties for the element
-			return oPropertyGroupTree.getAllProperties();
-		}
-		
-		// Get the first group in the tree
-		var oPropertyGroup = oPropertyGroupTree.getFirstChild();
-		// Return the properties for the element
-		return getGroupProperties( oPropertyGroup, bTraverse, bRecurse );
-	};
-
-// --- END node_properties ----
-	
-	
-// --- START export_fbx_silent ----
-	/**********************************************************************
-	
-		The following is derived from a work published as part of the
-		Daz Script Documentation. This portion of the script, and/or any
-		portion thereof, may only be used in accordance with the
-		following license:
-	
-		Creative Commons Attribution 3.0 Unported (CC BY 3.0)
-		- http://creativecommons.org/licenses/by/3.0
-	
-	**********************************************************************/
-	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/export_fbx_silent/start
-	
-	// - Minor changes for this specific use case
-	
-	// void : ...
-	function exportFBX( oNode, sName, nIdx, suffix, bAscii )
-	{
-		// Get the export manager
-		var oExportMgr = App.getExportMgr();
-		// Define the class name the for Autodesk Filmbox (*.fbx) exporter
-		var sClassName = "DzFbxExporter";
-		// Find the exporter
-		var oExporter = oExportMgr.findExporterByClassName( sClassName );
-		// If the exporter exists
-		if( oExporter ){
-			// Create a settings object
-			var oSettings = new DzFileIOSettings();
-			
-			// Define whether or not to show options
-			var bShowOptions = false;
-			
-			// Define whether or not to show options before prompting for a path;
-			// requires 4.9.3.22 or later
-			var bOptionsBeforeFile = (bShowOptions && App.version64 >= 0x0004000900030016);
-			
-			// Get the options for the exporter
-			if( !oExporter.getOptions( oSettings, bShowOptions && bOptionsBeforeFile, "" ) ){
-				// We're done...
-				return;
-			}
-			
-			// Selected
-			oSettings.setBoolValue( "doSelected", false );
-			// No Hidden
-			oSettings.setBoolValue( "doVisible", true );
-			// Figures
-			oSettings.setBoolValue( "doFigures", true );
-			
-			var bIsEnv = sName.startsWith( s_sEnv );
-			// Props
-			oSettings.setBoolValue( "doProps", bIsEnv );
-			// Lights
-			oSettings.setBoolValue( "doLights", bIsEnv );
-			// Cameras
-			oSettings.setBoolValue( "doCameras", bIsEnv );
-			
-			// Animations
-			oSettings.setBoolValue( "doAnims", s_bIncludeAnim );
-			// Morphs
-			oSettings.setBoolValue( "doMorphs", true );
-			
-			// Fps
-			oSettings.setBoolValue( "doFps", true );
-			
-			// Morph Rules
-			// Format for rules is "Match1\nAction1\nMatch2\nAction2\nMatch3\nAction3",
-			// where Match# is a string to search for and Action# is one of Bake|Export|Ignore
-			// The names of the morphs are in the form: node_name.parameter_name
-			// The default action is to Bake
-			// So "FBMHeavy\nExport\nThin\nExport" would export all morphs that have FBMHeavy and all morphs that have Thin in the name
-			oSettings.setStringValue( "rules", s_sMorphRules );
-			
-			// Format
-			// Format for format is "Year# -- Type",
-			// where Year# is one of 2006|2009|2010|2011|2012|2013|2014 and
-			// Type is one of Ascii|Binary
-			if( bAscii ){
-				oSettings.setStringValue( "format", "FBX 2014 -- Ascii" );
-			} else {
-				oSettings.setStringValue( "format", "FBX 2014 -- Binary" );
-			}
-			
-			// Embed Textures
-			oSettings.setBoolValue( "doEmbed", false );
-			// Collect Textures To Folder
-			oSettings.setBoolValue( "doCopyTextures", false );
-			// Merge Diffuse and Opacity Textures
-			oSettings.setBoolValue( "doDiffuseOpacity", false );
-			// Merge Clothing Into Figure Skeleton
-			oSettings.setBoolValue( "doMergeClothing", true );
-			// Convert Clothing to Static Geometry
-			oSettings.setBoolValue( "doStaticClothing", false );
-			// Allow Degraded Skinning
-			oSettings.setBoolValue( "degradedSkinning", false );
-			// Allow Degraded Scaling
-			oSettings.setBoolValue( "degradedScaling", false );
-			// SubD Information
-			oSettings.setBoolValue( "doSubD", false );
-			// Collapse UV Tiles
-			//oSettings.setBoolValue( "doCollapseUVTiles", false );
-			
-			oSettings.setBoolValue( "doLocks", false );
-			oSettings.setBoolValue( "doLimits", false );
-			oSettings.setBoolValue( "doBaseFigurePoseOnly", false );
-			oSettings.setBoolValue( "doHelperScriptScripts", false );
-			oSettings.setBoolValue( "doMentalRayMaterials", false );
-			
-			// If the version is 4.9.3.22 or newer
-			if( App.version64 >= 0x0004000900030016 ){
-				// Define whether or not to show the options after prompting for a file;
-				// prior to 4.9.3.22 this exporter ignored this option entirely,
-				// running silent was implied by virtue of being run via script
-				oSettings.setIntValue( "RunSilent", (bShowOptions && !bOptionsBeforeFile ? 0 : 1) );
-			}
-			
-			// If we've got a node, construct the path using the
-			// exporter's last path, the node's name, and the
-			// exporter's extension...
-			// Otherwise, just use the exporter's last path
-			var sInitialPath = ( oNode ?
-				String( "%1/%2.%3" )
-					.arg( oExportMgr.getExportPath() )
-					.arg( oNode.name )
-					.arg( oExporter.getExtension() ) :
-				oExportMgr.getExportPath() );
-			
-			var sPath = s_sRootPath + sName + "/" + sName + nIdx + "/"
-			s_sFbxPath = s_sRootPath + sName + "/" + sName + nIdx + "/";
-			if( bAscii ){
-				sPath += "A_" + sName + ".fbx"
-				s_sFbxPath += "A_" + sName + ".fbx"
-			} else {
-				sPath += "B_" + sName + suffix + ".fbx"
-				s_sFbxPath += "B_" + sName + ".fbx"
-			}
-			
-			// If the user didn't cancel and the file doesn't already
-			// exist, or the user wants to overwrite it
-			if( sPath && MainWindow.checkExistingFile( sPath ) ){
-				// Write the file using the options specified
-				oExporter.writeFile( sPath, oSettings );
-			}
-			// Clean up; don't leak memory
-			oExporter.deleteLater();
-			
-		// We didn't find an exporter with the class name we wanted
-		} else {
-			// Inform the user
-			MessageBox.critical( qsTr( "An exporter with the class name \"%1\" " +
-				"could not be found." ).arg( sClassName ),
-				s_sToolName, qsTr( "&OK" ) );
-		}
-	};
-	
-// --- END export_fbx_silent ----
-	
-	
-// --- START export_obj_silent ----
-	/**********************************************************************
-	
-		The following is derived from a work published as part of the
-		Daz Script Documentation. This portion of the script, and/or any
-		portion thereof, may only be used in accordance with the
-		following license:
-	
-		Creative Commons Attribution 3.0 Unported (CC BY 3.0)
-		- http://creativecommons.org/licenses/by/3.0
-	
-	**********************************************************************/
-	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/export_obj_silent/start
-	
-	// - Minor changes for this specific use case
-	
-	// void : ...
-	function exportOBJ( oNode, sName, nIdx, bSelected )
-	{
-		// Get the export manager
-		var oExportMgr = App.getExportMgr();
-		// Define the class name the for Wavefront Object (*.obj) exporter
-		var sClassName = "DzObjExporter";
-		// Find the exporter
-		var oExporter = oExportMgr.findExporterByClassName( sClassName );
-		// If the exporter exists
-		if( oExporter ){
-			// Create a settings object
-			var oSettings = new DzFileIOSettings();
-			
-			// Define whether or not to show options
-			var bShowOptions = false;
-			
-			// Define whether or not to show options before prompting for a path;
-			// requires 4.9.3.22 or later
-			var bOptionsBeforeFile = (bShowOptions && App.version64 >= 0x0004000900030016);
-			
-			// Get the options for the exporter
-			if( !oExporter.getOptions( oSettings, bShowOptions && bOptionsBeforeFile, "" ) ){
-				// We're done...
-				return;
-			}
-			
-			// Set the scale to write the data
-			oSettings.setFloatValue( "Scale", 100.0 );
-			// Set the lateral axis to X
-			oSettings.setStringValue( "LatAxis", "X" );
-			// Set the vertical axis to Y
-			oSettings.setStringValue( "VertAxis", "Y" );
-			// Set the depth axis to Z
-			oSettings.setStringValue( "DepthAxis", "Z" );
-			// Do not invert the lateral axis
-			oSettings.setBoolValue( "InvertLat", false );
-			// Do not invert the vertical axis
-			oSettings.setBoolValue( "InvertVert", false );
-			// Do not invert the depth axis
-			oSettings.setBoolValue( "InvertDepth", false );
-			// Do not ignore the geometry of invisible nodes
-			oSettings.setBoolValue( "IgnoreInvisible", true );
-			// Do not weld seams between parent and child bones on legacy figures - deprecated
-			oSettings.setBoolValue( "WeldSeams", false );
-			// Do not remove vertices that are floating, connected to nothing - i.e. LOD
-			oSettings.setBoolValue( "RemoveUnusedVerts", true );
-			// Write vertex textures - UVs
-			oSettings.setBoolValue( "WriteVT", true );
-			// Do not write vertex normals
-			oSettings.setBoolValue( "WriteVN", false );
-			// Do not write object statements for each root node - i.e. figures, props
-			oSettings.setBoolValue( "WriteO", false );
-			
-			// Write facet groups
-			oSettings.setBoolValue( "WriteG", false );
-			// Write facet groups according to whatever the geometry already has
-			oSettings.setBoolValue( "GroupGeom", false );
-			// Do not write facet groups according to the node it is associated with
-			oSettings.setBoolValue( "GroupNodes", false );
-			// Do not write facet groups according to surface groups
-			oSettings.setBoolValue( "GroupSurfaces", false );
-			// Do not write one facet group
-			oSettings.setBoolValue( "GroupSingle", false );
-			
-			// Write surface groups
-			oSettings.setBoolValue( "WriteUsemtl", true );
-			
-			// Do not write a material library
-			oSettings.setBoolValue( "WriteMtllib", true );
-			
-			oSettings.setBoolValue( "OriginalMaps", true );
-			// Do not collect texture maps
-			oSettings.setBoolValue( "CollectMaps", false );
-			// Do not convert texture maps
-			oSettings.setBoolValue( "ConvertMaps", false );
-			
-			// If the version is 4.5.0.114 or newer
-			if( App.version64 >= 0x0004000500000072 ){
-				// Do not limit export to selection
-				oSettings.setBoolValue( "SelectedOnly", bSelected );
-				// Do not limit export to the selected roots
-				oSettings.setBoolValue( "SelectedRootsOnly", bSelected );
-				// Do not limit export to the primary selected root;
-				// this setting overrides SelectedRootsOnly
-				oSettings.setBoolValue( "PrimaryRootOnly", false );
-				// Do not export items that are parented to the selection
-				oSettings.setBoolValue( "IncludeParented", false );
-				// Do not triangulate n-gons
-				oSettings.setBoolValue( "TriangulateNgons", false );
-			}
-			
-			// If the version is 4.9.3.22 or newer
-			if( App.version64 >= 0x0004000900030016 ){
-				// Do not collapse UVs Tiles
-				oSettings.setBoolValue( "CollapseUVTiles", false );
-				
-				// Show individual settings in the dialog
-				oSettings.setBoolValue( "ShowIndividualSettings", false );
-			}
-			
-			// If the version is 4.10.0.73 or newer
-			if( App.version64 >= 0x0004000a00000049 ){
-				// Set floating point precision; default is 8
-				oSettings.setIntValue( "FloatPrecision", 6 );
-			}
-			
-			// Define whether or not to show the options after prompting for a file
-			oSettings.setIntValue( "RunSilent", (bShowOptions && !bOptionsBeforeFile ? 0 : 1) );
-			
-			// If we've got a node, construct the path using the
-			// exporter's last path, the node's name, and the
-			// exporter's extension...
-			// Otherwise, just use the exporter's last path
-			var sInitialPath = ( oNode ?
-				String( "%1/%2.%3" )
-					.arg( oExportMgr.getExportPath() )
-					.arg( oNode.name )
-					.arg( oExporter.getExtension() ) :
-				oExportMgr.getExportPath() );
-			var sRootDir = s_sRootPath + sName + "/" 
-			var sDir = sRootDir + sName + nIdx + "/"
-			var sPath = sDir + sName+ ".obj";
-			var oTempDir = new DzDir( "" );
-			oTempDir.setPath( sRootDir )
-			if( !oTempDir.exists() ){
-				oTempDir.mkdir( sRootDir );
-			};
-			oTempDir.setPath( sDir )
-			if( !oTempDir.exists() ){
-				oTempDir.mkdir( sDir );
-			};
-			// If the user didn't cancel and the file doesn't already
-			// exist, or the user wants to overwrite it
-			if( sPath && MainWindow.checkExistingFile( sPath ) ){
-				// Write the file using the options specified
-				oExporter.writeFile( sPath, oSettings );
-			}
-			
-			// Clean up; don't leak memory
-			oExporter.deleteLater();
-		// We didn't find an exporter with the class name we wanted
-		} else {
-			// Inform the user
-			MessageBox.critical( qsTr( "An exporter with the class name \"%1\" " +
-				"could not be found." ).arg( sClassName ),
-				s_sToolName, qsTr( "&OK" ) );
-		}
-	};
-	
-// --- END export_obj_silent ----
-
-// --- START import_obj_silent ----
-	/**********************************************************************
-	
-		The following is derived from a work published as part of the
-		Daz Script Documentation. This portion of the script, and/or any
-		portion thereof, may only be used in accordance with the
-		following license:
-	
-		Creative Commons Attribution 3.0 Unported (CC BY 3.0)
-		- http://creativecommons.org/licenses/by/3.0
-	
-	**********************************************************************/
-	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/export_obj_silent/start
-	
-	// - Minor changes for this specific use case
-	
-	// void : ...
-	function importOBJ( sName, nIdx )
-	{
-		// Get the import manager
-	var oImportMgr = App.getImportMgr();
-	// Define the class name the for Wavefront Object (*.obj) importer
-	var sClassName = "DzObjImporter";
-	// Find the importer
-	var oImporter = oImportMgr.findImporterByClassName( sClassName );
-	// If the importer exists
-	if( oImporter ){
-		// Create a settings object
-		var oSettings = new DzFileIOSettings();
- 
-		// Fill the settings object with the default options from the importer
-		//oImporter.getDefaultOptions( oSettings );
- 
-		// Define whether or not to show options
-		var bShowOptions = false;
- 
-		// Define whether or not to show options before prompting for a path;
-		// requires 4.9.3.22 or later
-		var bOptionsBeforeFile = (bShowOptions && App.version64 >= 0x0004000900030016);
- 
-		// Get the options for the exporter
-		if( !oImporter.getOptions( oSettings, bShowOptions && bOptionsBeforeFile, "" ) ){
-			// We're done...
-			return;
-		}
- 
-		// Debug
-		//print( oSettings.toJsonString() );
- 
-		// Set the desired settings for the importer
-		//oSettings.setStringValue( "Preset", "Poser (1 unit = 8ft)" );
- 
-	 	// Set the scale to read the data
-		oSettings.setFloatValue( "Scale", 100.00 );
-		// Set the lateral axis to X
-		oSettings.setStringValue( "LatAxis", "X" );
-		// Set the vertical axis to Y
-		oSettings.setStringValue( "VertAxis", "Y" );
-		// Set the depth axis to Z
-		oSettings.setStringValue( "DepthAxis", "Z" );
-		// Do not invert the lateral axis
-		oSettings.setBoolValue( "InvertLat", false );
-		// Do not invert the vertical axis
-		oSettings.setBoolValue( "InvertVert", false );
-		// Do not invert the depth axis
-		oSettings.setBoolValue( "InvertDepth", false );
-		// Read vertex textures - UVs
-		oSettings.setBoolValue( "IncludeVT", true );
-		// Read facet groups
-		oSettings.setBoolValue( "IncludeG", true );
-		// Read surface groups
-		oSettings.setBoolValue( "IncludeUsemtl", true );
- 
-		// Read the material library if it exists
-		oSettings.setBoolValue( "IncludeMtllib", true );
- 
- 
-		// If the version is 4.9.3.22 or newer
-		if( App.version64 >= 0x0004000900030016 ){
-			// Show individual settings in the dialog
-			oSettings.setBoolValue( "ShowIndividualSettings", false );
-		}
- 
-		// Define whether or not to show the options after prompting for a file
-		oSettings.setIntValue( "RunSilent", (bShowOptions && !bOptionsBeforeFile ? 0 : 1) );
- 
-		// Debug
-		//print( oSettings.toJsonString() );
- 
-		// Get the number of extensions supported by the importer
-		var nExtensions = oImporter.getNumExtensions();
-		// Pre-size the extensions array
-		var aExtensions = new Array( nExtensions );
-		// Iterate over the extensions, setting each element in the array
-		for( var i = 0; i < nExtensions; i += 1 ){
-			aExtensions[ i ] = String("*.%1").arg( oImporter.getExtension( i ) );
-		}
-		
-		var sPath = s_sRootPath + sName + "/" + sName + nIdx + "/" + sName+ ".obj";
-
-		// If the user didn't cancel
-		if( sPath ){
-			// Read the file using the options specified
-			oImporter.readFile( sPath, oSettings );
-		}
- 
-		// Clean up; don't leak memory
-		oImporter.deleteLater();
-		// We didn't find an importer with the class name we wanted
-		} else {
-			// Inform the user
-			MessageBox.critical( qsTr("An importer with the class name \"%1\" " +
-				"could not be found.").arg( sClassName ),
-				qsTr("Critical Error"), qsTr("&OK") );
-		}
-	}
-// --- END import_obj_silent ----
 
 	/*********************************************************************/
 	/** 
@@ -742,7 +151,7 @@
 		var sLabel;
 		var sName;
 		
-		var aProperties = getElementProperties( oNode, true, true );
+		var aProperties = s_oBridgeExporter.getElementProperties( oNode, true, true );
 		for( var i = 0; i < aProperties.length; i += 1 ){
 			oProperty = aProperties[i];
 			oOwner = oProperty.getOwner();
@@ -1069,7 +478,7 @@
 		var sDelPath;
 		var oDelDir = new DzDir( "" );
 		
-		var aRoot = ["Documents","DAZ 3D", "Bridges", s_sDazBridgeName] 
+		var aRoot = ["Documents","DAZ 3D", "Bridges", s_sToolName] 
 		var aFolders = ["Exports", "Config", "Presets"];
 		var aSubs = [s_sEnv, s_sFig]
 
@@ -1400,16 +809,16 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 	/*********************************************************************/
 	function executeMorphDialog()
 	{
-		s_aExportableProperties = executeSubScript(
+		s_aExportableProperties = s_oBridgeExporter.executeSubScript(
 			s_sMorphDialog, 
-			[this, s_sPresetPath, s_sDazBridgeName] 
+			[this, s_sPresetPath, s_sToolName] 
 		);
 	};
 
 	/*********************************************************************/
 	function executeSubdivDialog()
 	{
-		s_aSubdivisionCombos = executeSubScript(
+		s_aSubdivisionCombos = s_oBridgeExporter.executeSubScript(
 			s_sSubdivDialog, 
 			[this] 
 		)
@@ -1538,6 +947,7 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 			}
 		}
 	};
+
 	/*********************************************************************/
 	// void : ...
 	function reparentFigure( oFigure )
@@ -1847,36 +1257,6 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 	
 	/*********************************************************************/
 	// void : ...
-	// TODO : remove - not used
-	// Note: destructive - modifies the scene contents
-	function lockNodeTransforms( oNode )
-	{
-		oNode.getToolXRotControl().lock( true );
-		oNode.getToolYRotControl().lock( true );
-		oNode.getToolZRotControl().lock( true );
-		oNode.getOrientXControl().lock( true );
-		oNode.getOrientYControl().lock( true );
-		oNode.getOrientZControl().lock( true );
-	};
-	
-	/*********************************************************************/
-	// String : ...
-	// TODO : remove - not used
-	function getTransformAsCSV( oNode, vecPos, mtxScale )
-	{
-		var sResult = vecPos.x + "," + vecPos.y + "," + vecPos.z + ",";
-		
-		sResult += oNode.getXRotControl().getLocalValue() + ",";
-		sResult += oNode.getYRotControl().getLocalValue() + ",";
-		sResult += oNode.getZRotControl().getLocalValue() + ",";
-		
-		sResult += mtxScale.m11 + "," + mtxScale.m22 + "," + mtxScale.m33;
-		
-		return sResult;
-	};
-	
-	/*********************************************************************/
-	// void : ...
 	// Apply subdivision levels to figures and genitals.
 	function setSubDivLevelAll( oBaseNode )
 	{
@@ -1898,17 +1278,6 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 			setSubDivLevel( oNode, nLev );
 		}
 	};
-	/*********************************************************************/
-	function setSubdivision( oBaseNode, isHD )
-	{
-		if( s_nSubDivLevel > 0 && isHD ){
-			nLev = s_nSubDivLevel;
-		}
-		else{
-			nLev = 0;
-		}
-		setSubDivLevel( oBaseNode, nLev );
-	}
 	
 	/*********************************************************************/
 	// void : ...
@@ -2063,7 +1432,7 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 					var oErcLink = new DzERCLink();
 					oErcLink = oProperty.getController( j );
 					var oControllerProp = oErcLink.getProperty();
-					sControllerName = getPropertyName(oControllerProp);
+					sControllerName = s_oBridgeExporter.getPropertyName(oControllerProp);
 					if( oControllerProp.getDoubleValue() != 0 ){
 						vecOffset.y += oErcLink.scalar * oControllerProp.getDoubleValue();
 					};
@@ -2233,11 +1602,11 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 		oDtuJson["Asset Name"] = oNode.getLabel();
 		oDtuJson["Import Name"] = oNode.getName();
 		oDtuJson["Asset Type"] = sContentType;
-		oDtuJson["FBX File"] = s_sFbxPath;
+		oDtuJson["FBX File"] = s_oBridgeExporter.sFbxPath;
 		oDtuJson["Materials"] = [];
 		oDtuJson["Subdivisions"] = []
-		oDtuJson["MorphLinks"] = s_oMorphLinks;
-		oDtuJson["MorphNames"] = s_aMorphNamesToExport;
+		oDtuJson["MorphLinks"] = s_oBridgeExporter.oMorphLinks;
+		oDtuJson["MorphNames"] = s_oBridgeExporter.aMorphNamesToExport;
 		oDtuJson["SkeletonData"] = s_oSkeletonData;
 		oDtuJson["HeadTailData"] = s_oHeadTailData;
 		oDtuJson["JointOrientation"] = s_oJointOrientation;
@@ -2395,569 +1764,6 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 	};
 
 	/*********************************************************************/
-	// String : Get the name of the Property
-	function getPropertyName( oProperty )
-	{
-		var sPropertyName = oProperty.name;
-		var oOwnerProperty = oProperty.getOwner();
-		if( oOwnerProperty.inherits( "DzMorph" ) ){
-			sPropertyName = oOwnerProperty.name;
-		}
-		return sPropertyName;
-	};
-
-	/*********************************************************************/
-	// String : Returns the morph rules to be used at Export
-	function getMorphString( aExportableProperties ) 
-	{
-        var sMorphString
-        if ( aExportableProperties.length == 0 ){
-			s_aMorphNamesToExport = [];
-            oFile = new DzFile( s_sMorphPath );
-			if( !oFile.open( DzFile.ReadOnly ) ){ 
-				print( String( "Unable to open \"%1\" for Reading." ).arg( sPresetFilePath ) );
-				return;
-			}
-			aMorphLines = oFile.readLines();
-			for( var i = 0; i < aMorphLines.length; i++ ){
-				sMorphLine = aMorphLines[i]
-				if( sMorphLine.indexOf( "\"Export\"" ) > 0 ){
-					aItems = sMorphLine.split(",");
-					sMorphName = aItems[0].replace("\"", "").replace("\"", "");
-					s_aMorphNamesToExport.push( sMorphName );
-				}	
-			}
-			sMorphString = s_aMorphNamesToExport.join( "\n1\n" );
-			sMorphString += "\n1\n.CTRLVS\n2\nAnything\n0";
-			return sMorphString
-		};
-        s_aMorphNamesToExport = [];
-        sMorphString = "";
-        for( var i = 0; i < aExportableProperties.length; i++ ){
-            oMorphInfo = aExportableProperties[i]
-            s_aMorphNamesToExport.push( oMorphInfo.name );
-        }
-        sMorphString = s_aMorphNamesToExport.join("\n1\n");
-        sMorphString += "\n1\n.CTRLVS\n2\nAnything\n0";
-        return sMorphString;
-    };
-	
-	/*********************************************************************/
-	// Object : Returns the Keyed Data
-	function getErcKeyed( oErc, nIdx )
-	{
-		var oKey = {}
-		oKey["Rotate"] = oErc.getKey( nIdx );
-		oKey["Value"] = oErc.getKeyValue( nIdx );
-		
-		return oKey
-	};
-
-	/*********************************************************************/
-	// Array : Find if Morph Exists on Children, Useful for FACS
-	function checkForMorphOnChild( oNode, aControlledMeshes, sMorphName )
-	{
-		for ( var i = 0; i < oNode.getNumNodeChildren(); i++ ){
-			oChildNode = oNode.getNodeChild( i );
-			if( oChildNode.inherits( "DzFigure" ) ){
-				oObject = oChildNode.getObject();
-				if( oObject ){
-					oModifer = oObject.findModifier( sMorphName );
-					if( oModifer ){
-						aControlledMeshes.pushIfNotExists( oChildNode.name + ".Shape" );
-					}
-				}
-			}
-		}
-		return aControlledMeshes
-
-	}
-	/*********************************************************************/
-	// Array : Find if Bone Exists on Children Objects
-	// Check if Bone has skin weights on object
-	function checkForBoneInChild( oNode, sBoneName, aControlledMeshes )
-	{
-		for ( var i = 0; i < oNode.getNumNodeChildren(); i++ ){
-			oChildNode = oNode.getNodeChild( i );
-			if( oChildNode.inherits( "DzFigure" ) ){
-				oSkeleton = oChildNode.getSkeleton();
-				oChildBone = oSkeleton.findBone( sBoneName );
-				if( !oChildBone ){
-					continue
-				}
-				// get the weight map Handler
-				var oWeightMapHandler = oSkeleton.getWeightMapHandler();
-				var oSkinBinding= oWeightMapHandler.getSkinBinding();	
-				var oBoneBinding = oSkinBinding.findBoneBinding( sBoneName );    
-				if( oBoneBinding ){
-					aControlledMeshes.pushIfNotExists( oChildNode.name + ".Shape" );
-				}
-			}
-		}
-		return aControlledMeshes
-	};
-
-	/*********************************************************************/
-	// Array : Check the alias of the morph to find the bone
-	function checkForBoneInAlias( oNode, oMorphProperty, aControlledMeshes )
-	{
-		for( var l = 0; l < oMorphProperty.getNumAliases(); l++ ){
-			var oAlias = oMorphProperty.getAlias( l );
-			var oBone = oAlias.getOwner();
-			var sBoneName;
-			if( oBone.inherits("DzBone") ){
-				sBoneName = oBone.name;
-				aControlledMeshes = checkForBoneInChild( oNode, sBoneName, aControlledMeshes );
-			}
-		}
-		return aControlledMeshes
-	}
-	
-	/*********************************************************************/
-	// Array : Check the bone being controled by the morphs
-	function checkMorphControlsChildren( oNode, oMorphProperty )
-	{
-		var aControlledMeshes = [];
-		var sBoneName;
-		var oOwnerNode;
-		var oSlaveControler;
-
-		aControlledMeshes.push(oNode.name + ".Shape");
-		var nSlaveControllerCount = oMorphProperty.getNumSlaveControllers();
-		for( var j = 0; j < nSlaveControllerCount; j ++ ){
-			oSlaveControler = oMorphProperty.getSlaveController( j );
-			oOwnerNode = oSlaveControler.getOwner();
-			if( oOwnerNode ){
-				oOwnerNode = oOwnerNode.getOwner();
-				if( oOwnerNode.inherits( "DzBone" ) ){
-					sBoneName = oOwnerNode.name;
-					nTempCtrlMeshes = aControlledMeshes.length
-					aControlledMeshes = checkForBoneInChild( oNode, sBoneName, aControlledMeshes );
-					if( aControlledMeshes.length > nTempCtrlMeshes ){
-						break
-					}
-				}	
-			}		
-		}
-		if( !sBoneName ){
-			aControlledMeshes = checkForBoneInAlias( oNode, oMorphProperty, aControlledMeshes )
-		}	
-		return aControlledMeshes
-	};
-
-	/*********************************************************************/
-	// Void : Load morph links that are directly controlled by skeleton bones
-	function loadMorphLinks( aExportableProperties, oNode )
-	{
-		// Load all the controller links on the properties
-		for( var i = 0; i < aExportableProperties.length; i += 1 ){
-			var oMorphInfo = aExportableProperties[i]
-			var oMorphProperty = oMorphInfo.property;
-			var nControllerCount = oMorphProperty.getNumControllers();
-			var aLinks = [];
-			var aSubLinks = []
-			var sBoneName;
-			var oOwnerNode;
-
-			// Keep Morphs that are control bone placement 
-			var aControlledMeshes = checkMorphControlsChildren( oNode, oMorphProperty );
-			// Keep for the Children Nodes' Morphs
-			var oMorphInfoNode = oMorphInfo.node;
-			if( oMorphInfoNode != undefined ){
-				if( oMorphInfoNode.name != oNode.name ){
-					aControlledMeshes.pushIfNotExists( oMorphInfo.node.name + ".Shape" );
-				}
-			}
-			// Check if Morph has its own version on Children
-			aControlledMeshes = checkForMorphOnChild( oNode, aControlledMeshes, oMorphInfo.name )
-			
-			for( var j = 0; j < nControllerCount; j += 1 ){
-				var oErcLink = new DzERCLink();
-				oErcLink = oMorphProperty.getController( j );
-				var oControllerProp = oErcLink.getProperty();
-				
-				var oLink = {
-					"Bone": "None",
-					"Property": getPropertyName( oControllerProp ),
-					"Type": oErcLink.type,
-					"Scalar": oErcLink.scalar,
-					"Addend": oErcLink.addend,
-					
-				};
-				if( oErcLink.type == 6 ){
-					oLink["Key Type"] = oErcLink.keyInterpolation;
-					var oKeys = {}
-					for( var k = 0; k < oErcLink.getNumKeyValues(); k++ ){
-						oKey = getErcKeyed( oErcLink, k );
-						
-						sKey = String( "%1 %2" ).arg( "Key" ).arg( k );
-						oKeys[sKey] = oKey;
-					}
-					oLink["Keys"] = oKeys;
-				}
-				oOwnerNode = oControllerProp.getOwner();
-				if( oOwnerNode.inherits( "DzBone" ) ){
-					sBoneName = oOwnerNode.name 
-					aControlledMeshes = checkForBoneInChild( oNode, sBoneName, aControlledMeshes )
-					oLink["Bone"] = oOwnerNode.name
-				}
-				aLinks.push( oLink );
-			}
-
-			var nSlaveControllerCount = oMorphProperty.getNumSlaveControllers();
-			for( var j = 0; j < nSlaveControllerCount; j ++ ){
-				var oErcLink = new DzERCLink()
-				oErcLink = oMorphProperty.getSlaveController( j );
-				oOwnerNode = oErcLink.getOwner();
-				if ( oOwnerNode ){
-					oBoneNode = oOwnerNode.getOwner();
-					if( oBoneNode.inherits( "DzBone" ) ){
-						var oLink = {
-							"Bone": oBoneNode.name,
-							"Property": oOwnerNode.name,
-							"Type": oErcLink.type,
-							"Scalar": oErcLink.scalar,
-							"Addend": oErcLink.addend,
-							
-						};
-						aSubLinks.push( oLink );
-					}	
-				}
-					
-			}
-
-			var oMorphLinkObj = {
-					"Label": oMorphProperty.getLabel(),
-					"Links": aLinks,
-					"SubLinks" : aSubLinks,
-					"Minimum": oMorphInfo.min,
-					"Maximum": oMorphInfo.max,
-					"isHidden": oMorphInfo.hidden,
-					"Path": oMorphInfo.path,
-					"Controlled Meshes" : aControlledMeshes
-			};
-			s_oMorphLinks[getPropertyName( oMorphProperty )] = oMorphLinkObj;
-		}
-		
-		return;		
-	};
-	/*********************************************************************/
-	// Void: ...
-	function disconnectMorphs( aExportableProperties )
-	{
-		for( var i = 0; i < aExportableProperties.length; i += 1 ){
-			var oMorphInfo = aExportableProperties[i]
-			var oMorphProperty = oMorphInfo.property;
-			
-			if( oMorphInfo.disable == true){
-				oMorphProperty.setValue( 0 );
-				oMorphProperty.setOverrideControllers( true );
-			}
-		}
-	}
-	
-	/*********************************************************************/
-	// Void: ...
-	function reconnectMorphs( aExportableProperties )
-	{
-		for( var i = 0; i < aExportableProperties.length; i += 1 ){
-			var oMorphInfo = aExportableProperties[i]
-			var oMorphProperty = oMorphInfo.property;
-			if( oMorphInfo.disable ){
-				oMorphProperty.setOverrideControllers( false );
-				oMorphProperty.setValue( oMorphInfo.value );
-			}
-		}
-	}
-
-	/*********************************************************************/
-	// Void: ...
-	function disconnectSkeleton( oNode )
-	{
-		if( oNode.inherits( "DzSkeleton" ) ){
-			var oSkeleton = oNode.getSkeleton();
-			var aNodes = oSkeleton.getAllBones();
-			for( var i = 0; i < aNodes.length; i += 1 ){
-				var oBoneNode = aNodes[i]
-				oXpos = oBoneNode.getXPosControl();	
-				oXrot = oBoneNode.getXRotControl();
-				oYpos = oBoneNode.getYPosControl();
-				oYrot = oBoneNode.getYRotControl();
-				oZpos = oBoneNode.getZPosControl();
-				oZrot = oBoneNode.getZRotControl();
-				s_oSkeletonTransforms[oBoneNode.name] = {}
-				aProperties = [oXpos, oXrot, oYpos, oYrot, oZpos, oZrot];
-				for( var j = 0; j < aProperties.length; j += 1 ){
-					var oProperty = aProperties[j]
-					s_oSkeletonTransforms[oBoneNode.name][oProperty.assetId] = oProperty.getValue();
-					oProperty.setOverrideControllers( true );
-				}
-			}
-		}
-		
-	}
-	
-	/*********************************************************************/
-	// Void: ...
-	function reconnectSkeleton( oNode )
-	{
-		if( oNode.inherits( "DzSkeleton" ) ){
-			var oSkeleton = oNode.getSkeleton();
-			var aNodes = oSkeleton.getAllBones();
-			var oAssetMgr = App.getAssetMgr();
-			for( var i = 0; i < aNodes.length; i += 1 ){
-				var oBoneNode = aNodes[i]
-				oXpos = oBoneNode.getXPosControl();	
-				oXrot = oBoneNode.getXRotControl();
-				oYpos = oBoneNode.getYPosControl();
-				oYrot = oBoneNode.getYRotControl();
-				oZpos = oBoneNode.getZPosControl();
-				oZrot = oBoneNode.getZRotControl();
-
-				aProperties = [oXpos, oXrot, oYpos, oYrot, oZpos, oZrot,];
-				for( var j = 0; j < aProperties.length; j += 1 ){
-					var oProperty = aProperties[j]
-					oProperty.setOverrideControllers( false );
-					oProperty.setValue( s_oSkeletonTransforms[oBoneNode.name][oProperty.assetId] );
-				}
-			}
-		}
-	};
-	/*********************************************************************/
-	/**
-	* Void : Helper function to create the temp directory if it doesn't exist
-	*/
-	function addTempDirectory()
-	{
-		sTempPath = s_sRootPath + "/" + "temp"
-		var oDir = new DzDir( "" );
-		oDir.setPath( sTempPath );
-		if( !oDir.exists() ){
-			oDir.mkdir( sTempPath );
-		};
-	};
-
-	/*********************************************************************/
-	/**  
-	* Void : Helper function to remove temporary files form a path
-	* @param  {string} sPath - Path of the temp folder used to export/import the obj
-	*/
-	function cleanUpTempFiles( sPath )
-	{
-		var oDir = new DzDir( "" );
-
-		oDir.setPath( sPath );
-
-		var aDirs = []
-		// Delete Files
-		aFiles = oDir.getFilesFromDir( [], true );
-		for( var j = 0; j < aFiles.length; j += 1 ){
-			oDir.remove( aFiles[j] );
-
-		}
-		// Delete Dirs
-		oDir.rmdir();
-	};
-
-	/*********************************************************************/
-	/** 
-	* Void : Helper function to deselect everything in the scene.
-	*/
-	function deSelectAll()
-	{
-		// Get list of nodes
-		var oSelItems = Scene.getSelectedNodeList();
-
-		// go through deselecting
-		for ( var i = 0 ; i < oSelItems.length ; i++ ) {
-			oSelItems[i].select( false );
-		}
-	};
-
-	/*********************************************************************/
-    /** 
-	* /** 
-	* Object : Helper function to deselect everything in the scene.
-	* @summary If the description is long, write your summary here. Otherwise, feel free to remove this.
-	* @param {DzNode} oNode - a given figure that has morphs
-	* @return {Object} Contains all the active morphs on the node given with its property and value
-	*/
-    function getActiveMorphs( oNode )
-    {
-        var oObject;
-        var oShape;
-        var oProperty;
-        var oPresentation;
-        var sPropName;
-        var sPropLabel;
-        oActiveMorphs = {}
-        oObject = oNode.getObject();
-        if( oObject != null ){
-            oShape = oObject.getCurrentShape();
-        }
-        for( var i = 0; i < oNode.getNumProperties(); i++ ){
-            oProperty = oNode.getProperty( i );
-            sPropName = oProperty.getName();
-            sPropLabel = oProperty.getLabel();
-            oPresentation = oProperty.getPresentation();
-            if (oPresentation != undefined){
-				if( oProperty.getValue() > 0 ){
-					oActiveMorphs[sPropName] = {}
-					oActiveMorphs[sPropName].prop = oProperty
-					oActiveMorphs[sPropName].value = oProperty.getValue()						
-				}
-            }
-        }
-        if( oObject ){
-            for( var i = 0; i < oObject.getNumModifiers(); i++ ){
-                oModifer = oObject.getModifier( i );
-                sModName = oModifer.getName();
-                sModLabel = oModifer.getLabel();
-                if(oModifer.inherits( "DzMorph" ) ){
-                    for( var j = 0; j < oModifer.getNumProperties(); j++ ){
-                        oProperty = oModifer.getProperty( j );
-                        sPropName = oProperty.getName();
-                        sPropLabel = oProperty.getLabel();
-                        oPresentation = oProperty.getPresentation();
-                        if (oPresentation != undefined){
-							if( oProperty.getValue() > 0 ){
-								oActiveMorphs[sModName] = {}
-								oActiveMorphs[sModName].prop = oProperty
-								oActiveMorphs[sModName].value = oProperty.getValue()
-							}
-                        }
-                    }
-                }
-            }
-        }
-		return oActiveMorphs
-    };
-
-	/*********************************************************************/
-	/** 
-	* Void: Applys the default values of the morphs that are active
-	* @param {Object} oActiveMorphs - All the active morphs found on the specific figure.
-	*/   
-	function zeroOutMorphs( oActiveMorphs ){
-		aSkippedMorphs = ["XScale", "YScale", "ZScale", "Scale"]
-		for( sMorph in oActiveMorphs ){
-			oProperty = oActiveMorphs[sMorph].prop
-			if( aSkippedMorphs.indexOf( sMorph ) > -1 ){
-				oProperty.setValue( 1 )
-			}
-			else{
-				oProperty.setValue( 0 )
-			}
-			
-		}
-	};
-
-	/*********************************************************************/
-    /** 
-	* Void: Applys the user input values of the morphs that are active
-	* @param {Object} oActiveMorphs - All the active morphs found on the specific figure.
-	*/  
-	function returnMorphValues( oActiveMorphs ){
-		for( sMorph in oActiveMorphs ){
-			oProperty = oActiveMorphs[sMorph].prop
-			nValue = oActiveMorphs[sMorph].value
-			oProperty.setValue( nValue )
-		}
-	};
-
-	/*********************************************************************/
-	/** 
-	*  Bool : Runs Transfer Utility and return if it was a success or not.
-	* @param {DzNode} oSource - Source Figure used to get the weights
-	* @param {DzNode} oTarget - Target prop which is unweighted and needs auto-weights
-	* @return {Boolean} Returns if the DzTransferUtility was a success or not
-	*/ 
-	function transferWeights( oSource, oTarget )
-	{
-		oTransfer = new DzTransferUtility();
-		oTransfer.assetType = DzTransferUtility.NodeAsset;
-		oTransfer.setSource( oSource );
-		oTransfer.setSourceBaseCurrent( true );
-		oTransfer.setTarget( oTarget );
-		oTransfer.setAdjustTargetBase( false );
-		oTransfer.setTransferBinding( true );
-		oTransfer.setFitToFigure( true );
-		oTransfer.setParentToFigure( true );
-		return oTransfer.doTransfer()
-	};
-
-	/*********************************************************************/
-	/** 
-	* Void: Cycles through the Children of the Parents and does loop for Auto-Weights
-	* @param {DzNode} oSource - Source Figure used to get the weights
-	* @param {DzNode} oParent - Parent Figure used for find the Children
-	*/
-	function findingPropsToWeight( oSource, oParent )
-	{
-		aRecursiveChildren = oParent.getNodeChildren( true );
-		for( var j = 0; j < aRecursiveChildren.length; j += 1 ){
-			var oChild = aRecursiveChildren[j];
-			var oObject = oChild.getObject();
-			if( !oChild.isInScene() ){
-				continue
-			}
-			if( oChild.inherits( "DzFigure" ) && oChild.getNodeParent().inherits( "DzBone" ) ){
-				oSource.removeNodeChild( oChild, inPlace = true );
-			}
-			if( !( oChild.inherits( "DzSkeleton" ) ) 
-				&& !( oChild.inherits( "DzBone" ) )
-				&& oObject != null ){
-				deSelectAll()
-				oChild.select( true )
-				sName = oChild.name
-				sLabel = oChild.getLabel()
-
-				var sPath = s_sRootPath +  "temp" + "/"  +  "temp" + sName + "/";
-				exportOBJ( oChild, "temp", sName, true )
-				var oAbvChild = oChild.getNodeParent()
-				if( oAbvChild.inherits("DzRigidFollowNode")){
-					Scene.removeNode( oChild );
-					Scene.removeNode( oAbvChild );
-				}
-				else{
-					Scene.removeNode( oChild );
-				}
-				importOBJ( "temp", sName )
-				oImport = Scene.findNodeByLabel( "temp" );
-				oImport.setName( sName )
-				oImport.setLabel( sLabel )
-				var bSuccess = transferWeights( oSource, oImport );
-				cleanUpTempFiles( sPath );
-			}
-		}
-	};
-	
-	/*********************************************************************/
-	/** 
-	* Void: Used to run the Auto-Weight logic, This is Destructive and break user's scene
-	* @param {DzNode} oBaseNode - The Top Node of the hierachy
-	*/
-	function weightObjects( oBaseNode )
-	{
-		var aChildren = oBaseNode.getNodeChildren( false );
-		oActiveMorphs = getActiveMorphs( oBaseNode )
-		zeroOutMorphs( oActiveMorphs )
-		deSelectAll()
-		addTempDirectory()
-		for( var i = 0; i < aChildren.length; i += 1 ){
-			oNode = aChildren[i];
-			var aRemoved = [];
-			if( oNode.inherits("DzBone") ){
-				findingPropsToWeight( oBaseNode, oNode )
-			}
-			else{
-				findingPropsToWeight( oNode, oNode )
-			}
-		}
-		returnMorphValues( oActiveMorphs )
-	};
-
-	/*********************************************************************/
 	/** 
 	* Void: Used to export out the subdivisions chosen by user. 
 	* @param {Boolean} bSubdivEnabled - Based on user's input to export out Subdivisions.
@@ -3032,8 +1838,8 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 	{
 		oProcess = new DzProcess()
 		oProcess.communication = DzProcess.Stdin | DzProcess.Stdout | DzProcess.Stderr;	
-		oProcess.arguments = [String( '"%2/dzBridgeUtils/DzFBXBridges.exe" "%1"' ).arg( sDtufilename ).arg( s_sScriptPath ) ];
-		print(String( '"%2/dzBridgeUtils/DzFBXBridges.exe" "%1"' ).arg( sDtufilename ).arg( s_sScriptPath ))
+		oProcess.arguments = [String( '"%2/dzBridgeUtils/DzFBXBridges.exe" "%1"' ).arg( sDtufilename ).arg( g_sScriptPath ) ];
+		print(String( '"%2/dzBridgeUtils/DzFBXBridges.exe" "%1"' ).arg( sDtufilename ).arg( g_sScriptPath ))
 		connect( oProcess, "readyReadStdout()", this, "readStdout" );
 		connect( oProcess, "readyReadStderr()", this, "readStderr" );
 		oProcess.start()
@@ -3047,7 +1853,7 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 	function isSubdivPrereq()
 	{
 		if( s_bNewSubdiv ){
-			oFileInfo = new DzFileInfo( String( '%1/dzBridgeUtils/libfbxsdk.dll' ).arg( s_sScriptPath ) );
+			oFileInfo = new DzFileInfo( String( '%1/dzBridgeUtils/libfbxsdk.dll' ).arg( g_sScriptPath ) );
 			if( !oFileInfo.exists() && MessageBox.warning(
 				qsTr( "To use subdivision the FBX SDK 2020 is needed." ),
 				s_sToolName, qsTr( "&OK" ), qsTr( "&Cancel" ) ) == 1 ){
@@ -3105,7 +1911,12 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 		var sFileBasename;
 		var sBaseDirectory; 
 
-		
+		// Instantiate Classes and add dependencies
+		s_oBridgeExporter = new DzBridgeExporter( s_sToolName, 
+												  g_sScriptPath,
+												  s_sRootPath,
+												  s_sFbxPath );
+		s_oBridgeAutoWeights = new DzBridgeAutoWeight( s_sRootPath );
 		if( s_nExportType == s_oExportTypes.Both
 		|| s_nExportType == s_oExportTypes.Figure ){
 			setHideRoot( false, false );
@@ -3121,6 +1932,7 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 					if( !promptSettings( oFigure ) ){
 						continue;
 					}
+					s_oBridgeExporter.bIncludeAnim = s_bIncludeAnim;
 				}
 				if( s_bAutoWeights ){ 
 					if( !s_bSilent ){
@@ -3130,7 +1942,7 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 							return;
 						}
 					};
-					weightObjects( oFigure )
+					s_oBridgeAutoWeights.weightObjects( oFigure )
 				}
 
 				setLock( oFigure, true, true );
@@ -3139,10 +1951,9 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 				
 				// Morph Export
 				if( s_bIncludeMorphs ){
-					s_sMorphRules = getMorphString( s_aExportableProperties );
-					loadMorphLinks( s_aExportableProperties, oFigure );
-					disconnectMorphs( s_aExportableProperties );
-					// disconnectSkeleton( oFigure );
+					s_oBridgeExporter.getMorphString( s_aExportableProperties );
+					s_oBridgeExporter.loadMorphLinks( s_aExportableProperties, oFigure );
+					s_oBridgeExporter.disconnectMorphs( s_aExportableProperties );
 				};	
 				// Export Figure
 				loadFigureBoneData( oFigure );
@@ -3154,31 +1965,31 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 				if( s_bIncludeSubdiv && isSubdivPrereq() ){
 					lockSubdivisionProperties( true );
 					setEyelashVisibility( oFigure, false );
-					exportOBJ( oFigure, s_sFig, i, false );
+					s_oBridgeExporter.exportOBJ( oFigure, s_sFig, i, false );
 					setEyelashVisibility( oFigure, true );
-					exportFBX( oFigure, s_sFig, i , "_HD" , bDebugFBX );
+					s_oBridgeExporter.exportFBX( oFigure, s_sFig, i , "_HD" , bDebugFBX );
 					lockSubdivisionProperties( false );
-					exportFBX( oFigure, s_sFig, i , "_base" , bDebugFBX );
+					s_oBridgeExporter.exportFBX( oFigure, s_sFig, i , "_base" , bDebugFBX );
 				}
 				else if( s_bIncludeSubdiv ){
 					lockSubdivisionProperties( true );
 					setEyelashVisibility( oFigure, false );
-					exportOBJ( oFigure, s_sFig, i, false );
+					s_oBridgeExporter.exportOBJ( oFigure, s_sFig, i, false );
 					setEyelashVisibility( oFigure, true );
-					exportFBX( oFigure, s_sFig, i , "" ,bDebugFBX );
+					s_oBridgeExporter.exportFBX( oFigure, s_sFig, i , "" ,bDebugFBX );
 				}
 				else{
 					lockSubdivisionProperties( false );
 					setEyelashVisibility( oFigure, false );
-					exportOBJ( oFigure, s_sFig, i, false );
+					s_oBridgeExporter.exportOBJ( oFigure, s_sFig, i, false );
 					setEyelashVisibility( oFigure, true );
-					exportFBX( oFigure, s_sFig, i , "" ,bDebugFBX );
+					s_oBridgeExporter.exportFBX( oFigure, s_sFig, i , "" ,bDebugFBX );
 				}
 				setLock( oFigure, false, true );
 				restorePose( oFigure );
 				reparentFigure( oFigure );
 				if ( s_bIncludeMorphs ){
-					reconnectMorphs( s_aExportableProperties );
+					s_oBridgeExporter.reconnectMorphs( s_aExportableProperties );
 					// reconnectSkeleton( oFigure );
 				}
 
@@ -3231,7 +2042,7 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 				
 				updateName( oNode );
 				
-				exportFBX( oNode, s_sEnv, i, bDebugFBX );
+				s_oBridgeExporter.exportFBX( oNode, s_sEnv, i, bDebugFBX );
 				
 				sFileBasename = sEnvPath + s_sEnv;
 				sPoseFilename = sFileBasename + ".transforms";

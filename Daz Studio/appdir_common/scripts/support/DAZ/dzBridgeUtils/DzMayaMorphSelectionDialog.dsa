@@ -64,7 +64,7 @@
 
     /*********************************************************************/
     // void : ...
-    function morphInfo( sName, sLabel, sPath, sType, oProperty, sParent, bHidden, nMin, nMax, bDisable, nCurrentValue, oNode )
+    function DzMorphInfo( sName, sLabel, sPath, sType, oProperty, sParent, bHidden, nMin, nMax, bDisable, nCurrentValue, oNode )
     {
         this.name = sName;
         this.label = sLabel;
@@ -444,7 +444,7 @@
             if (oPresentation != undefined){
                 sPath = oNode.getLabel() + "/" + oProperty.getPath();
                 sParent = sPath.split( "/" )[0];
-                oMorphInfo = new morphInfo(
+                oMorphInfo = new DzMorphInfo(
                     sPropName,
                     sPropLabel,
                     sPath,
@@ -504,7 +504,7 @@
                         if (oPresentation != undefined){
                             sPath = oNode.getLabel() + "/" + oProperty.getPath();
                             sParent = sPath.split( "/" )[0];
-                            oMorphInfo = new morphInfo(
+                            oMorphInfo = new DzMorphInfo(
                                 sModName,
                                 sPropLabel,
                                 sPath,

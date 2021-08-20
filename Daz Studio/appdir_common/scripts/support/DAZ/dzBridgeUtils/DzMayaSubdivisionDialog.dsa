@@ -27,7 +27,7 @@
     /** 
 	* Void: Constructor used to store the Subdivision info per Object
 	*/
-    function subdivInfo( wComboBox, oNode, sNodeName, nCurrentItem )
+    function DzSubdivInfo( wComboBox, oNode, sNodeName, nCurrentItem )
     {
         this.widget = wComboBox;
         this.node = oNode;
@@ -115,7 +115,7 @@
             wSubdivComboBox.addItem( "0" );
             wSubdivComboBox.addItem( "1" );
             wSubdivComboBox.addItem( "2" );
-            oSubdivInfo = new subdivInfo( wSubdivComboBox, oNode, oNode.getName(), wSubdivComboBox.currentItem )
+            oSubdivInfo = new DzSubdivInfo( wSubdivComboBox, oNode, oNode.getName(), wSubdivComboBox.currentItem )
             s_aSubdivisionCombos.push( oSubdivInfo );
             s_lytSubdivItemGrid.addWidget( wSubdivComboBox, nRow, 1);
             

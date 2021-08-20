@@ -1,0 +1,30 @@
+
+
+DzBridgeExporter.prototype = Object.create( DzBridgeMorphs.prototype )
+DzBridgeExporter.constructor = DzBridgeExporter
+DzBridgeExporter.superclass = DzBridgeMorphs.prototype
+
+function DzBridgeExporter( sDazBridgeName, 
+                           sScriptPath,
+                           sRootPath,
+                           sFbxPath )
+{  
+    this.init( sDazBridgeName, 
+               sScriptPath,
+               sRootPath,
+               sFbxPath  );
+};
+
+DzBridgeExporter.prototype.init = function( sDazBridgeName, 
+                                            sScriptPath,
+                                            sRootPath,
+                                            sFbxPath )
+{
+    DzBridgeExporter.superclass.init.call( this,
+                                           sDazBridgeName, 
+                                           sScriptPath,
+                                           sRootPath,
+                                           sFbxPath );
+};
+
+
