@@ -1,12 +1,19 @@
 
-DzBridgePose.prototype = Object.create( DzBridgeHelpers.prototype )
-DzBridgePose.constructor = DzBridgePose
-DzBridgePose.superclass = DzBridgeHelpers.prototype
 
+/** 
+* Constructs the data of the Pose to be Exported out of Daz.
+* @class
+* @constructor
+*/
 function DzBridgePose()
 {
     this.init()
 };
+
+	/*********************************************************************/
+	DzBridgePose.prototype = Object.create( DzBridgeHelpers.prototype )
+	DzBridgePose.constructor = DzBridgePose
+	DzBridgePose.superclass = DzBridgeHelpers.prototype
 
     /*********************************************************************/
     DzBridgePose.prototype.init = function()

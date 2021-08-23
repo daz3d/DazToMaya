@@ -1,11 +1,18 @@
-DzBridgeFigure.prototype = Object.create( DzBridgeHelpers.prototype )
-DzBridgeFigure.constructor = DzBridgeFigure
-DzBridgeFigure.superclass = DzBridgeHelpers.prototype
 
+/** 
+* Constructs any data needed for Figures and Helper Functions for Export
+* @class
+* @constructor
+* @param {DzNode} oFigure
+*/
 function DzBridgeFigure( oFigure )
 {
     this.init( oFigure )
 };
+	/*********************************************************************/
+	DzBridgeFigure.prototype = Object.create( DzBridgeHelpers.prototype )
+	DzBridgeFigure.constructor = DzBridgeFigure
+	DzBridgeFigure.superclass = DzBridgeHelpers.prototype
 
     /*********************************************************************/
     DzBridgeFigure.prototype.init = function( oFigure )

@@ -1,15 +1,21 @@
-DzBridgeDialog.prototype = Object.create( DzBridgeHelpers.prototype )
-DzBridgeDialog.constructor = DzBridgeDialog
-DzBridgeDialog.superclass = DzBridgeHelpers.prototype
 
 var g_sBridge = "Maya"
-
+/** 
+* Contains the Dialogs for the User to Control
+* @class
+* @constructor
+* @param {DzBridgeExporter} oBridgeExporter
+*/
 function DzBridgeDialog( oBridgeExporter )
 {
     this.init( oBridgeExporter )
 };
 
-    
+	/*********************************************************************/
+    DzBridgeDialog.prototype = Object.create( DzBridgeHelpers.prototype )
+	DzBridgeDialog.constructor = DzBridgeDialog
+	DzBridgeDialog.superclass = DzBridgeHelpers.prototype
+
     /*********************************************************************/
     DzBridgeDialog.prototype.init = function( oBridgeExporter )
     {

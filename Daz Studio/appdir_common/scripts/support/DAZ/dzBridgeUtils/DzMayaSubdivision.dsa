@@ -1,3 +1,10 @@
+/** 
+* Handles the changes of Subdivision for Daz and the new Export Method.
+* @class
+* @constructor
+* @param {String} sScriptPath
+* @param {DzBridgeDialog} oBridgeDialog
+*/
 function DzBridgeSubdivision( sScriptPath, oBridgeDialog )
 {
     this.init( sScriptPath, oBridgeDialog )

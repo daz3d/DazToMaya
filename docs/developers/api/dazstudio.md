@@ -5,9 +5,23 @@
 <dd></dd>
 <dt><a href="#DzBridgeExporter">DzBridgeExporter</a></dt>
 <dd></dd>
+<dt><a href="#DzBridgeDialog">DzBridgeDialog</a></dt>
+<dd></dd>
+<dt><a href="#DzBridgeEnvironment">DzBridgeEnvironment</a></dt>
+<dd></dd>
+<dt><a href="#DzBridgeFigure">DzBridgeFigure</a></dt>
+<dd></dd>
 <dt><a href="#DzBridgeHelpers">DzBridgeHelpers</a></dt>
 <dd></dd>
+<dt><a href="#DzBridgeMorphs">DzBridgeMorphs</a></dt>
+<dd></dd>
+<dt><a href="#DzBridgePose">DzBridgePose</a></dt>
+<dd></dd>
 <dt><a href="#DzBridgeScene">DzBridgeScene</a></dt>
+<dd></dd>
+<dt><a href="#DzBridgeSubdivision">DzBridgeSubdivision</a></dt>
+<dd></dd>
+<dt><a href="#DzBridgeWriter">DzBridgeWriter</a></dt>
 <dd></dd>
 </dl>
 
@@ -199,6 +213,43 @@ Void : Delete previous export and recreate directories if neededISSUE : Current
 | Param | Type |
 | --- | --- |
 | oBridgeScene | [<code>DzBridgeScene</code>](#DzBridgeScene) | 
+
+<a name="DzBridgeDialog"></a>
+
+## DzBridgeDialog
+**Kind**: global class  
+<a name="new_DzBridgeDialog_new"></a>
+
+### new DzBridgeDialog(oBridgeExporter)
+Contains the Dialogs for the User to Control
+
+
+| Param | Type |
+| --- | --- |
+| oBridgeExporter | [<code>DzBridgeExporter</code>](#DzBridgeExporter) | 
+
+<a name="DzBridgeEnvironment"></a>
+
+## DzBridgeEnvironment
+**Kind**: global class  
+<a name="new_DzBridgeEnvironment_new"></a>
+
+### new DzBridgeEnvironment()
+Edits needed to export out Environements and Props.TODO: Change logic to match Unreal Export
+
+<a name="DzBridgeFigure"></a>
+
+## DzBridgeFigure
+**Kind**: global class  
+<a name="new_DzBridgeFigure_new"></a>
+
+### new DzBridgeFigure(oFigure)
+Constructs any data needed for Figures and Helper Functions for Export
+
+
+| Param | Type |
+| --- | --- |
+| oFigure | <code>DzNode</code> | 
 
 <a name="DzBridgeHelpers"></a>
 
@@ -515,6 +566,183 @@ Number  : ...
 | --- | --- |
 | oNode | <code>DzNode</code> | 
 
+<a name="DzBridgeMorphs"></a>
+
+## DzBridgeMorphs
+**Kind**: global class  
+
+* [DzBridgeMorphs](#DzBridgeMorphs)
+    * [new DzBridgeMorphs(sDazBridgeName, sScriptPath, sRootPath, sFbxPath)](#new_DzBridgeMorphs_new)
+    * [.getMorphString(aExportableProperties)](#DzBridgeMorphs+getMorphString) ⇒ <code>String</code>
+    * [.getErcKeyed(oErc, nIdx)](#DzBridgeMorphs+getErcKeyed) ⇒ <code>Object</code>
+    * [.checkForMorphOnChild(oNode, aControlledMeshes, sMorphName)](#DzBridgeMorphs+checkForMorphOnChild) ⇒ <code>Array.&lt;String&gt;</code>
+    * [.checkForBoneInChild(oNode, sBoneName, aControlledMeshes)](#DzBridgeMorphs+checkForBoneInChild) ⇒ <code>Array.&lt;String&gt;</code>
+    * [.checkForBoneInAlias(oNode, oMorphProperty, aControlledMeshes)](#DzBridgeMorphs+checkForBoneInAlias) ⇒ <code>Array.&lt;String&gt;</code>
+    * [.checkMorphControlsChildren(oNode, oMorphProperty)](#DzBridgeMorphs+checkMorphControlsChildren) ⇒ <code>Array.&lt;String&gt;</code>
+    * [.loadMorphLinks(aExportableProperties, oNode)](#DzBridgeMorphs+loadMorphLinks)
+    * [.disconnectMorphs(aExportableProperties)](#DzBridgeMorphs+disconnectMorphs)
+    * [.reconnectMorphs(aExportableProperties)](#DzBridgeMorphs+reconnectMorphs)
+    * [.disconnectSkeleton(oNode)](#DzBridgeMorphs+disconnectSkeleton)
+    * [.reconnectSkeleton(oNode)](#DzBridgeMorphs+reconnectSkeleton)
+
+<a name="new_DzBridgeMorphs_new"></a>
+
+### new DzBridgeMorphs(sDazBridgeName, sScriptPath, sRootPath, sFbxPath)
+Constructs the data of Morphs to be exported out of Daz.
+
+
+| Param | Type |
+| --- | --- |
+| sDazBridgeName | <code>String</code> | 
+| sScriptPath | <code>String</code> | 
+| sRootPath | <code>String</code> | 
+| sFbxPath | <code>String</code> | 
+
+<a name="DzBridgeMorphs+getMorphString"></a>
+
+### dzBridgeMorphs.getMorphString(aExportableProperties) ⇒ <code>String</code>
+String : Converts the user's chosen morphs to a string for the fbx exporter
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+**Returns**: <code>String</code> - Contains all the active morphs on the node given with its property and value  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| aExportableProperties | <code>Array.&lt;DzMorphInfo&gt;</code> | contains the info needed to export the morphs out of Daz |
+
+<a name="DzBridgeMorphs+getErcKeyed"></a>
+
+### dzBridgeMorphs.getErcKeyed(oErc, nIdx) ⇒ <code>Object</code>
+Object : Used to get the necessary data from the erclink for keyed data
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+**Returns**: <code>Object</code> - Contains the Keyed Data Rotation and Value  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| oErc | <code>DzERCLink</code> | ERCLink to the Morph Property |
+| nIdx | <code>Number</code> | index for key value of the ERCLink |
+
+<a name="DzBridgeMorphs+checkForMorphOnChild"></a>
+
+### dzBridgeMorphs.checkForMorphOnChild(oNode, aControlledMeshes, sMorphName) ⇒ <code>Array.&lt;String&gt;</code>
+Array : Find if Morph Exists on Children, Useful for FACS as they have their own versions.
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+**Returns**: <code>Array.&lt;String&gt;</code> - the Recieved Array with any objects found to contain the morph  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| oNode | <code>DzNode</code> | the Root Node/ Character that owns the morph |
+| aControlledMeshes | <code>Array.&lt;String&gt;</code> | an Array for the morph that contains the current Objects that should have the morph. |
+| sMorphName | <code>String</code> | Name of the Morph we are checking for |
+
+<a name="DzBridgeMorphs+checkForBoneInChild"></a>
+
+### dzBridgeMorphs.checkForBoneInChild(oNode, sBoneName, aControlledMeshes) ⇒ <code>Array.&lt;String&gt;</code>
+Array : Find if Bone exists on Children and if it is weighted to see if we should export the morph on it
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+**Returns**: <code>Array.&lt;String&gt;</code> - the Recieved Array with any objects found to contain the morph  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| oNode | <code>DzNode</code> | the Root Node/ Character that owns the morph |
+| sBoneName | <code>String</code> | the bone from the skeleton of the Root Node |
+| aControlledMeshes | <code>Array.&lt;String&gt;</code> | an Array for the morph that contains the current Objects that should have the morph. |
+
+<a name="DzBridgeMorphs+checkForBoneInAlias"></a>
+
+### dzBridgeMorphs.checkForBoneInAlias(oNode, oMorphProperty, aControlledMeshes) ⇒ <code>Array.&lt;String&gt;</code>
+Array : Check if the bone is an alias on the morph property
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+**Returns**: <code>Array.&lt;String&gt;</code> - the Recieved Array with any objects found to contain the morph  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| oNode | <code>DzNode</code> | the Root Node/ Character that owns the morph |
+| oMorphProperty | <code>DzProperty</code> | - |
+| aControlledMeshes | <code>Array.&lt;String&gt;</code> | an Array for the morph that contains the current Objects that should have the morph. |
+
+<a name="DzBridgeMorphs+checkMorphControlsChildren"></a>
+
+### dzBridgeMorphs.checkMorphControlsChildren(oNode, oMorphProperty) ⇒ <code>Array.&lt;String&gt;</code>
+Array : Used as the main driver to find if we should include the morph on the child mesh.
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+**Returns**: <code>Array.&lt;String&gt;</code> - the Array with any objects found to contain the morph  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| oNode | <code>DzNode</code> | the Root Node/ Character that owns the morph |
+| oMorphProperty | <code>DzProperty</code> | - |
+
+<a name="DzBridgeMorphs+loadMorphLinks"></a>
+
+### dzBridgeMorphs.loadMorphLinks(aExportableProperties, oNode)
+Void : Load morph links to be exported out of the DTU
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| aExportableProperties | <code>Array.&lt;DzMorphInfo&gt;</code> | contains the info needed to export the morphs out of Daz |
+| oNode | <code>DzNode</code> | the Root Node/Character that owns the morph |
+
+<a name="DzBridgeMorphs+disconnectMorphs"></a>
+
+### dzBridgeMorphs.disconnectMorphs(aExportableProperties)
+Void : disconnect the controllers from driving other morphs
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| aExportableProperties | <code>Array.&lt;DzMorphInfo&gt;</code> | contains the info needed to export the morphs out of Daz |
+
+<a name="DzBridgeMorphs+reconnectMorphs"></a>
+
+### dzBridgeMorphs.reconnectMorphs(aExportableProperties)
+Void : reconnect the controllers from driving other morphs
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| aExportableProperties | <code>Array.&lt;DzMorphInfo&gt;</code> | contains the info needed to export the morphs out of Daz |
+
+<a name="DzBridgeMorphs+disconnectSkeleton"></a>
+
+### dzBridgeMorphs.disconnectSkeleton(oNode)
+Void : Disconnect the skeleton so their arent driven by morphs
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| oNode | <code>DzNode</code> | the Root Node/Character |
+
+<a name="DzBridgeMorphs+reconnectSkeleton"></a>
+
+### dzBridgeMorphs.reconnectSkeleton(oNode)
+Void : Reconnect the skeleton so their arent driven by morphs
+
+**Kind**: instance method of [<code>DzBridgeMorphs</code>](#DzBridgeMorphs)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| oNode | <code>DzNode</code> | the Root Node/Character |
+
+<a name="DzBridgePose"></a>
+
+## DzBridgePose
+**Kind**: global class  
+<a name="new_DzBridgePose_new"></a>
+
+### new DzBridgePose()
+Constructs the data of the Pose to be Exported out of Daz.
+
 <a name="DzBridgeScene"></a>
 
 ## DzBridgeScene
@@ -553,3 +781,82 @@ Based on user's input we will remove the type of export they do not want.
 | --- | --- | --- |
 | nExportType | <code>Number</code> | The type recieve from DzBridgeDialog.promptExportType |
 
+<a name="DzBridgeSubdivision"></a>
+
+## DzBridgeSubdivision
+**Kind**: global class  
+
+* [DzBridgeSubdivision](#DzBridgeSubdivision)
+    * [new DzBridgeSubdivision(sScriptPath, oBridgeDialog)](#new_DzBridgeSubdivision_new)
+    * [.lockSubdivisionProperties(bSubdivEnabled)](#DzBridgeSubdivision+lockSubdivisionProperties)
+    * [.processFBX(sDtufilename)](#DzBridgeSubdivision+processFBX)
+    * [.isSubdivPrereq()](#DzBridgeSubdivision+isSubdivPrereq)
+
+<a name="new_DzBridgeSubdivision_new"></a>
+
+### new DzBridgeSubdivision(sScriptPath, oBridgeDialog)
+Handles the changes of Subdivision for Daz and the new Export Method.
+
+
+| Param | Type |
+| --- | --- |
+| sScriptPath | <code>String</code> | 
+| oBridgeDialog | [<code>DzBridgeDialog</code>](#DzBridgeDialog) | 
+
+<a name="DzBridgeSubdivision+lockSubdivisionProperties"></a>
+
+### dzBridgeSubdivision.lockSubdivisionProperties(bSubdivEnabled)
+Void: Used to export out the subdivisions chosen by user.
+
+**Kind**: instance method of [<code>DzBridgeSubdivision</code>](#DzBridgeSubdivision)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| bSubdivEnabled | <code>Boolean</code> | Based on user's input to export out Subdivisions. |
+
+<a name="DzBridgeSubdivision+processFBX"></a>
+
+### dzBridgeSubdivision.processFBX(sDtufilename)
+Void: Used to run the DzFBXBridges and allow the skin weights to be transferred
+
+**Kind**: instance method of [<code>DzBridgeSubdivision</code>](#DzBridgeSubdivision)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sDtufilename | <code>String</code> | Path for the DTU File |
+
+<a name="DzBridgeSubdivision+isSubdivPrereq"></a>
+
+### dzBridgeSubdivision.isSubdivPrereq()
+Void: Used to check if the fbx sdk 2020 exists in the path needed
+
+**Kind**: instance method of [<code>DzBridgeSubdivision</code>](#DzBridgeSubdivision)  
+<a name="DzBridgeWriter"></a>
+
+## DzBridgeWriter
+**Kind**: global class  
+
+* [DzBridgeWriter](#DzBridgeWriter)
+    * [new DzBridgeWriter(oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog)](#new_DzBridgeWriter_new)
+    * [.writeSubdivisions()](#DzBridgeWriter+writeSubdivisions) ⇒ <code>Array.&lt;Object&gt;</code>
+
+<a name="new_DzBridgeWriter_new"></a>
+
+### new DzBridgeWriter(oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog)
+Handles the changes of Subdivision for Daz and the new Export Method.
+
+
+| Param | Type |
+| --- | --- |
+| oBridgeExporter | [<code>DzBridgeExporter</code>](#DzBridgeExporter) | 
+| oBridgeFigure | [<code>DzBridgeFigure</code>](#DzBridgeFigure) | 
+| oBridgePose | [<code>DzBridgePose</code>](#DzBridgePose) | 
+| oBridgeDialog | [<code>DzBridgeDialog</code>](#DzBridgeDialog) | 
+
+<a name="DzBridgeWriter+writeSubdivisions"></a>
+
+### dzBridgeWriter.writeSubdivisions() ⇒ <code>Array.&lt;Object&gt;</code>
+Void: Writes out the subdivision levels that were chosen by the user to the DTU
+
+**Kind**: instance method of [<code>DzBridgeWriter</code>](#DzBridgeWriter)  
+**Returns**: <code>Array.&lt;Object&gt;</code> - Contains the data that will be added to the DTU  

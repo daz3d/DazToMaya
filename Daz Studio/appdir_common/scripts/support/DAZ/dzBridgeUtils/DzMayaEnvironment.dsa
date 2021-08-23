@@ -1,5 +1,10 @@
 
-
+/** 
+* Edits needed to export out Environements and Props.
+* TODO: Change logic to match Unreal Export
+* @class
+* @constructor
+*/
 function DzBridgeEnvironment()
 {
     this.init()

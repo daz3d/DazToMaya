@@ -1,8 +1,13 @@
 
-DzBridgeMorphs.prototype = Object.create( DzBridgeHelpers.prototype )
-DzBridgeMorphs.constructor = DzBridgeMorphs
-DzBridgeMorphs.superclass = DzBridgeHelpers.prototype
-
+/** 
+* Constructs the data of Morphs to be exported out of Daz.
+* @class
+* @constructor
+* @param {String} sDazBridgeName
+* @param {String} sScriptPath
+* @param {String} sRootPath
+* @param {String} sFbxPath
+*/
 function DzBridgeMorphs(sDazBridgeName, 
                         sScriptPath,
                         sRootPath,
@@ -14,6 +19,10 @@ function DzBridgeMorphs(sDazBridgeName,
               sFbxPath ) 
     
 };
+	/*********************************************************************/
+	DzBridgeMorphs.prototype = Object.create( DzBridgeHelpers.prototype )
+	DzBridgeMorphs.constructor = DzBridgeMorphs
+	DzBridgeMorphs.superclass = DzBridgeHelpers.prototype
 
     /*********************************************************************/
     DzBridgeMorphs.prototype.init = function( sDazBridgeName, 

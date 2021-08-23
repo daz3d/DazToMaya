@@ -1,12 +1,21 @@
-
-DzBridgeWriter.prototype = Object.create( DzBridgeHelpers.prototype )
-DzBridgeWriter.constructor = DzBridgeWriter
-DzBridgeWriter.superclass = DzBridgeHelpers.prototype
-
-function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, aSubdivisionCombos )
+/** 
+* Handles the changes of Subdivision for Daz and the new Export Method.
+* @class
+* @constructor
+* @param {DzBridgeExporter} oBridgeExporter
+* @param {DzBridgeFigure} oBridgeFigure
+* @param {DzBridgePose} oBridgePose
+* @param {DzBridgeDialog} oBridgeDialog
+*/
+function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
 {
-    this.init( oBridgeExporter, oBridgeFigure, oBridgePose, aSubdivisionCombos )
+    this.init( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
 };
+	/**********************************************************************/
+	DzBridgeWriter.prototype = Object.create( DzBridgeHelpers.prototype )
+	DzBridgeWriter.constructor = DzBridgeWriter
+	DzBridgeWriter.superclass = DzBridgeHelpers.prototype
+
     /**********************************************************************/
     DzBridgeWriter.prototype.init = function( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
     {   

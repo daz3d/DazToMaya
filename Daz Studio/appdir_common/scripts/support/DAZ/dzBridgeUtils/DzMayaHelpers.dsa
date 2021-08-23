@@ -635,8 +635,7 @@ function DzBridgeHelpers( sDazBridgeName,
 		- http://creativecommons.org/licenses/by/3.0
 	
 	**********************************************************************/
-	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/export_obj_silent/start
-	
+	http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/import_obj_silent/start	
 	// - Minor changes for this specific use case
 	/** 
 	* Void : Silently imports OBJ
