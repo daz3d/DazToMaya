@@ -313,7 +313,7 @@ Types of Meshes
 <a name="DzBridgeHelpers+oExportTypes"></a>
 
 ### dzBridgeHelpers.oExportTypes
-Types of Meshes
+Types of Exports
 
 **Kind**: instance property of [<code>DzBridgeHelpers</code>](#DzBridgeHelpers)  
 **Properties**

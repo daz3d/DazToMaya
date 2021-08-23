@@ -17,6 +17,7 @@ DzBridgeScene.superclass = DzBridgeHelpers.prototype;
         this.aFigures = [];
         this.aEnvProp = [];
 		this.aToReparent = [];
+		DzBridgeScene.superclass.init.call( this )
     };
 
     /*********************************************************************/
@@ -62,7 +63,7 @@ DzBridgeScene.superclass = DzBridgeHelpers.prototype;
 				oChildNode = aChildren[j]
 				sContentType = this.checkChildType( oChildNode );
 				if( sContentType == "Actor/Character"
-					|| sContentType == "Actor"){
+					|| sContentType == "Actor" && oChildNode.findNodeChild( "hip", false )){
 					aChildFigures.push( oChildNode )
 				}
 			}
@@ -168,9 +169,14 @@ DzBridgeScene.superclass = DzBridgeHelpers.prototype;
 	{	
 		if( nExportType == this.oExportTypes.Figure){
 			this.EnvProp = [];
+			return
+		}
+		else if( nExportType == this.oExportTypes.Both ){
+			return
 		}
 		else{
 			this.Figure = [];
+			return
 		}
 	};
 

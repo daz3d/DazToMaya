@@ -12,8 +12,9 @@ if( g_sScriptPath === "" ){
 g_oFileInfo.deleteLater();
 
 // Global Includes
-var g_sBridgeScene = String( "%2/dzBridgeUtils/Dz%1Scene.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
 var g_sBridgeHelpers = String( "%2/dzBridgeUtils/Dz%1Helpers.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
+var g_sBridgeEnv = String( "%2/dzBridgeUtils/Dz%1Environment.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
+var g_sBridgeScene = String( "%2/dzBridgeUtils/Dz%1Scene.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
 var g_sBridgePose = String( "%2/dzBridgeUtils/Dz%1Morphs.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
 var g_sBridgeMorphs = String( "%2/dzBridgeUtils/Dz%1Pose.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
 var g_sBridgeAutoWeight = String( "%2/dzBridgeUtils/Dz%1AutoWeight.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
@@ -24,6 +25,7 @@ var g_sBridgeFigure = String( "%2/dzBridgeUtils/Dz%1Figure.dsa" ).arg( g_sBridge
 var g_sBridgeSubdiv = String( "%2/dzBridgeUtils/Dz%1Subdivision.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
 
 include( g_sBridgeHelpers ); // Dependencies : ...
+include( g_sBridgeEnv );  // Dependencies : DzBridgeHelper
 include( g_sBridgeWriter ); // Dependencies : DzBridgeHelper
 include( g_sBridgeFigure ); // Dependencies : DzBridgeHelper
 include( g_sBridgeSubdiv ); // Dependencies : DzBridgeHelper
@@ -35,203 +37,106 @@ include( g_sBridgeExporter ); // Dependencies : DzBridgeHelper, DzBridgeMorphs
 include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 
 (function( aArgs ){
-	var s_aEnvProp = [];
-
-	var s_sFig = "FIG";
-	var s_sEnv = "ENV";
-
-	
-	var s_oMeshTypes = {
-		"Figure" :3,
-		"Mesh" : 1,
-		"Other" : 0,
-		"Bone" : -1,
-		"NoFacets" : -2,
-		"Empty" : -3
-	};
-	
-	var s_oExportTypes = {
-		"Both" : 2,
-		"Figure" : 1,
-		"EnvProp" : 0,
-		"None" : -1
-	};
-
-	var s_sRootPath = "";
-	var s_sCustomPath = "";
-	var s_sPresetPath = "";
-	var s_sConfigPath = "";
-	var s_sMorphPath = "";
-	var s_sFbxPath = "";
-	
-	var s_aSubdivisionCombos = [];
-
-	var s_quatDef = new DzQuat( 0, 0, 0, 1, true );
-
-	var s_aPoseData = [];
-	var s_oOrgName = {};
-
-	// Setting variables
-	var s_bSilent;
-	var s_bIncludeSubdiv;
 	var s_nSubDivLevel;
-	var s_bIncludeAnim;
-	var s_bRemoveIncompatible;
-	var s_bIncludeMorphs;
-	var s_bCollectTextures;
-	var s_bAutoWeights;
-	var s_bNewSubdiv;
 
 	/*********************************************************************/
 	/** 
 	* Void: initalizes any arguments passed to the silent exporter
 	*/
-    function initilizeArgs()
+    function initilizeArgs( oBridgeDialog )
     {
         for( var i = 0, nArgs = aArgs.length; i < nArgs; i += 1 ){
             vArg = aArgs[i];
             if( i == 0 ){
-				s_bSilent = vArg;
+				oBridgeDialog.bSilent = vArg;
 			}
 			else if( i == 1 ){
 				s_nSubDivLevel = vArg;
 			}
 			else if( i == 2 ){
-				s_bIncludeAnim = vArg;
+				oBridgeDialog.bIncludeAnim = vArg;
 			}
 			else if( i == 3 ){
-				s_bRemoveIncompatible = vArg;
+				oBridgeDialog.bRemoveIncompatible = vArg;
 			}
 			else if( i == 4 ){
-				s_bIncludeMorphs = vArg;
+				oBridgeDialog.bIncludeMorphs = vArg;
 			}
 			else if( i == 5 ){
-				s_bCollectTextures = vArg;
+				oBridgeDialog.bCollectTextures = vArg;
 			}
 			else if( i == 6 ){
-				s_bAutoWeights = vArg;
+				oBridgeDialog.bAutoWeights = vArg;
 			}
 			else if( i == 7 ){
-				s_sMorphPath = vArg;
+				oBridgeDialog.sMorphPath = vArg;
 			}
 			else if( i == 8 ){
-				s_bNewSubdiv = vArg;
+				oBridgeDialog.bNewSubdiv = vArg;
 			}
         }
 
     };
 
-	
-	/*********************************************************************/
-	// void : ...
-	// Apply subdivision levels to figures and genitals.
-	function setSubDivLevelAll( oBaseNode )
-	{
-		var bIsBody;
-		var bIsGen;
-		var nLev;
-		var oNode;
-		
-		var aNodes = Scene.getNodeList();
-		for( var i = 0; i < aNodes.length; i += 1 ){
-			oNode = aNodes[i];
-			bIsBody = oNode == oBaseNode;
-			bIsGen = !bIsBody && oNode.getNodeParent() == oBaseNode && isGenital( oNode );
-			nLev = 0;
-			if( bIsBody || bIsGen ){
-				nLev = s_nSubDivLevel;
-			}
-			
-			setSubDivLevel( oNode, nLev );
-		}
-	};
-	
-	/*********************************************************************/
-	// void : ...
-	function setSubDivLevel( oNode, nLevel )
-	{
-		var aProps = [ "lodlevel", "SubDIALevel" ];
-		var oObject = oNode.getObject();
-		if( !oObject ){
-			return;
-		}
-		
-		var oShape = oObject.getCurrentShape();
-		if( !oShape ){
-			return;
-		}
-		
-		var oProp;
-		for( var i = 0; i < aProps.length; i += 1 ){
-			oProp = oShape.findProperty( aProps[i] );
-			if( oProp ){
-				if( oProp.isLocked() ){
-					oProp.lock( false );
-				}
-				
-				if( i == 0 && nLevel == 0 ){
-					oProp.setValue( "Basic" );
-				} else {
-					oProp.setValue( nLevel );
-				}
-				
-				if( nLevel > 0 ){
-					oProp.lock( true );
-				}
-			}
-		}
-	};
-	
 	/*********************************************************************/
 	// void : ...
 	function main()
 	{
 		var bDebugFBX = false;
-		initilizeArgs()
+
 		var oBridgeScene = new DzBridgeScene();
 		
 		oBridgeScene.buildRootLists();
-		if( !s_bSilent ){
+		var oBridgeExporter = new DzBridgeExporter( g_sDazBridgeName, 
+													g_sScriptPath,
+													oBridgeScene
+												   );
+		var oBridgeDialog = new DzBridgeDialog( oBridgeExporter );
+		
+		// initilizeArgs( oBridgeDialog )
+
+		if( !oBridgeDialog.bSilent ){
 			switch( oBridgeScene.getExportType() ){
 				case 2:
 					nExportType = oBridgeDialog.promptExportType();
+					if( nExportType == oBridgeDialog.oExportTypes.None ){
+						return
+					}
 					oBridgeScene.overrideExportType( nExportType );
+					break
 				case -1:
 					return
+				case 0:
+					break
+				case 1:
+					break
 			}
 		}
-
-		var oBridgeExporter = new DzBridgeExporter( g_sDazBridgeName, 
-												  g_sScriptPath,
-												  oBridgeScene
-												);
 		var oBridgeAutoWeights = new DzBridgeAutoWeight( oBridgeExporter.sRootPath );
-		var oBridgeDialog = new DzBridgeDialog( oBridgeExporter );
-		
+		var oBridgePose = new DzBridgePose();
+		var oBridgeEnvironment = new DzBridgeEnvironment()
 		var sFileBasename;
 		var sBaseDirectory; 
 		var nExportType = oBridgeScene.getExportType()
-		
 		if( nExportType == oBridgeScene.oExportTypes.Both
 		|| nExportType == oBridgeScene.oExportTypes.Figure ){
 			oBridgeScene.setHideRoot( false, false );
 			
 			var oFigure;
-			for( var i = 0; i < oBridgeScene.aFigures.length; i += 1 ){
+			for( var i = 0; i < oBridgeScene.aFigures.length; i++ ){
 				oFigure = oBridgeScene.aFigures[i];
 				
-				for( var j = 0; j < oBridgeScene.aFigures.length; j += 1 ){
+				for( var j = 0; j < oBridgeScene.aFigures.length; j++ ){
 					oBridgeScene.setVisible( oBridgeScene.aFigures[j], i == j );
 				}
-				if( !s_bSilent ){
+				if( !oBridgeDialog.bSilent ){
 					if( !oBridgeDialog.promptSettings( oFigure ) ){
 						continue;
 					}
 					oBridgeExporter.bIncludeAnim = oBridgeDialog.bIncludeAnim;
-					
-				}
+				};
 				if( oBridgeDialog.bAutoWeights ){ 
-					if( !s_bSilent ){
+					if( !oBridgeDialog.bSilent ){
 						if( MessageBox.warning(
 							qsTr( "Transfering the Weights will destroy the current state of your scene save your scene before exporting." ),
 							g_sDazBridgeName, qsTr( "&Continue" ), qsTr( "&Cancel" ) ) == 1 ){
@@ -254,7 +159,6 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 				// Export Figure
 				var oBridgeFigure = new DzBridgeFigure( oFigure );
 				var oBridgeSubdiv = new DzBridgeSubdivision( g_sScriptPath, oBridgeDialog );
-				var oBridgePose = new DzBridgePose();
 
 				oBridgeFigure.loadFigureBoneData();
 				oBridgePose.loadPoseData( oFigure, true );
@@ -262,7 +166,6 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 				if( oBridgeDialog.bRemoveIncompatible ){
 					oBridgeFigure.removeIncompatibleNodes( oFigure );
 				}
-
 				if( oBridgeDialog.bIncludeSubdiv && oBridgeSubdiv.isSubdivPrereq() ){
 					oBridgeSubdiv.lockSubdivisionProperties( true );
 					oBridgeFigure.setEyelashVisibility( oFigure, false );
@@ -299,7 +202,7 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 				sFileBasename = String( "%1%2/%2%3/%2" ).arg( oBridgeExporter.sRootPath ).arg( oBridgeScene.sFig ).arg( i );
 				sBaseDirectory = String( "%1%2/%2%3" ).arg( oBridgeExporter.sRootPath ).arg( oBridgeScene.sFig ).arg( i );
 				
-				oBridgeWriter = new DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog.aSubdivisionCombos )
+				oBridgeWriter = new DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
 				oBridgeWriter.bCollectTextures = oBridgeDialog.bCollectTextures
 				oBridgeWriter.writeParentingData( oFigure, sFileBasename + ".dat" );
 				sDtufilename = oBridgeWriter.writeConfiguration( oFigure, sFileBasename, sBaseDirectory );
@@ -310,59 +213,57 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 
 			}
 		}
-		s_nExportType = 1
-		if( s_nExportType != s_oExportTypes.Figure ){
-			setHideRoot( true, false );
+
+		if( nExportType != oBridgeScene.oExportTypes.Figure ){
+			oBridgeScene.setHideRoot( true, false );
 			
 			var oNode;
 			var bIsBone;
 			var sEnvPath;
-			var sPoseFilename;
 			var sFileBasename;
 			
-			for( var i = 0; i < s_aEnvProp.length; i += 1 ){
-				oNode = s_aEnvProp[i];
+			for( var i = 0; i < oBridgeScene.aEnvProp.length; i += 1 ){
+				oNode = oBridgeScene.aEnvProp[i];
 
-				for( var j = 0; j < s_aEnvProp.length; j += 1 ){
-					setVisible( s_aEnvProp[j], i == j );
+				for( var j = 0; j < oBridgeScene.aEnvProp.length; j += 1 ){
+					oBridgeScene.setVisible( oBridgeScene.aEnvProp[j], i == j );
 				}
 				
 				bIsBone = oNode.getSkeleton() != null;
 				if( bIsBone ){
-					flattenObjectHierarchy( oNode );
+					oBridgeEnvironment.flattenObjectHierarchy( oNode );
 				}
 				else{
-					setLock( oNode, true, false );
+					oBridgeExporter.setLock( oNode, true, false );
 				}
 				
+				oBridgeSubdiv = new DzBridgeSubdivision( g_sScriptPath, {} )
+				oBridgeSubdiv.setSubDivLevelAll( oNode, 0 );
 				
-				setSubDivLevelAll( oNode, 0 );
+				sEnvPath = String( "%1%2/%2%3/" ).arg( oBridgeExporter.sRootPath ).arg( oBridgeScene.sEnv ).arg( i );
+				oBridgeExporter.makeEndDir( i, oBridgeScene.sEnv );
 				
-				sEnvPath = String( "%1%2/%2%3/" ).arg( s_sRootPath ).arg( s_sEnv ).arg( i );
-				makeEndDir( i, s_sEnv );
+				oBridgeEnvironment.updateName( oNode );
 				
-				updateName( oNode );
+				oBridgeExporter.exportFBX( oNode, oBridgeScene.sEnv, i, "", bDebugFBX );
 				
-				oBridgeExporter.exportFBX( oNode, s_sEnv, i, bDebugFBX );
-				
-				sFileBasename = sEnvPath + s_sEnv;
-				sPoseFilename = sFileBasename + ".transforms";
+				sFileBasename = sEnvPath + oBridgeScene.sEnv;
 				
 				if( bIsBone ){
-					oFigureBoneData = new DzBridgeFigure( oFigure );
-					oFigureBoneData.loadFigureBoneData();
-					loadPoseData( oNode, true );
+					oBridgeFigure = new DzBridgeFigure( oNode );
+					oBridgeFigure.loadFigureBoneData();
+					oBridgePose.loadPoseData( oNode, true );
+					oBridgeWriter = new DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
 				} else {
-					loadPoseData( oNode, false );
-					writeMemo( sEnvPath + "nobone.txt", "not skeleton" );
-					setLock( oNode, false, false );
+					oBridgePose.loadPoseData( oNode, false );
+					oBridgeWriter = new DzBridgeWriter( oBridgeExporter, {}, oBridgePose, oBridgeDialog )
+					oBridgeWriter.writeMemo( sEnvPath + "nobone.txt", "not skeleton" );
+					oBridgeExporter.setLock( oNode, false, false );
 				}
-				updateName( oNode );
-				oBridgeWriter = new DzBridgeWriter( oBridgeExporter, oFigureBoneData, s_aSubdivisionCombos )
-				//oBridgeWriter.bCollectTextures = s_bCollectTextures
+				oBridgeEnvironment.updateName( oNode );
+				
 				oBridgeWriter.writeConfiguration( oNode, sFileBasename );
 
-				
 			}
 		}
 		

@@ -8,12 +8,13 @@ function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, aSubdivisi
     this.init( oBridgeExporter, oBridgeFigure, oBridgePose, aSubdivisionCombos )
 };
     /**********************************************************************/
-    DzBridgeWriter.prototype.init = function( oBridgeExporter, oBridgeFigure, oBridgePose, aSubdivisionCombos )
+    DzBridgeWriter.prototype.init = function( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
     {   
         this.bCollectTextures = true;
 		this.oBridgeExporter = oBridgeExporter;
 		this.oBridgeFigure = oBridgeFigure;
-		this.aSubdivisionCombos = aSubdivisionCombos
+		this.aSubdivisionCombos = oBridgeDialog.aSubdivisionCombos;
+		this.bCollectTextures = oBridgeDialog.bCollectTextures;
 		this.oBridgePose = oBridgePose;
 		DzBridgeWriter.superclass.init.call( this );
     };
@@ -296,5 +297,5 @@ function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, aSubdivisi
 	// void : ...
 	DzBridgeWriter.prototype.writeMemo = function( sFilename, sMemo )
 	{
-		writeDataFile( [ sMemo ], sFilename );
+		this.writeDataFile( [ sMemo ], sFilename );
 	};

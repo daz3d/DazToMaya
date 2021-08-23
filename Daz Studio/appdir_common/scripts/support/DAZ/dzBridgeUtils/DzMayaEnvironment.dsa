@@ -1,16 +1,20 @@
 
-DzBridgeEnvironment.prototype = Object.create( DzBridgeHelpers.prototype )
-DzBridgeEnvironment.constructor = DzBridgeEnvironment
-DzBridgeEnvironment.superclass = DzBridgeHelpers.prototype
 
 function DzBridgeEnvironment()
 {
     this.init()
-}
+};	
+
+	/*********************************************************************/
+	DzBridgeEnvironment.prototype = Object.create( DzBridgeHelpers.prototype )
+	DzBridgeEnvironment.constructor = DzBridgeEnvironment
+	DzBridgeEnvironment.superclass = DzBridgeHelpers.prototype
+
     /*********************************************************************/
     DzBridgeEnvironment.prototype.init = function()
     {
-
+		this.oOrgName = {}
+		DzBridgeEnvironment.superclass.init.call( this )
     };
 
     /*********************************************************************/
@@ -51,11 +55,11 @@ function DzBridgeEnvironment()
 			oNode = aNodes[i];
 			sLabel =oNode.getLabel();
 			sName = oNode.name;
-			if( sLabel in s_oOrgName ){
-				oNode.setName(s_oOrgName[sLabel])
+			if( sLabel in this.oOrgName ){
+				oNode.setName(this.oOrgName[sLabel])
 			}
 			else{
-				s_oOrgName[sLabel] = sName
+				this.oOrgName[sLabel] = sName
 				oNode.setName( sLabel )
 			}
 			

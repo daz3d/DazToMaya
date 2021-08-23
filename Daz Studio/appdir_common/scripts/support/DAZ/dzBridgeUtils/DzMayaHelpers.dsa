@@ -1,5 +1,5 @@
 /** 
-* @class
+* @class 
 * @constructor
 * @param {String} sDazBridgeName
 * @param {String} sScriptPath
@@ -89,7 +89,7 @@ function DzBridgeHelpers( sDazBridgeName,
 			"Empty" : -3
 		};
 		/** 
-		*Types of Meshes
+		*Types of Exports
 		* @property {Number} Both
 		* @property {Number} Figure
 		* @property {Number} EnvProp
@@ -852,29 +852,29 @@ function DzBridgeHelpers( sDazBridgeName,
 			}
 			// Translations
 			oTransform = oNode.getXPosControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			oTransform = oNode.getYPosControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			oTransform = oNode.getZPosControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			
 			// Rotations
 			oTransform = oNode.getXRotControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			oTransform = oNode.getYRotControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			oTransform = oNode.getZRotControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			
 			// Scale
 			oTransform = oNode.getScaleControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			oTransform = oNode.getXScaleControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			curTransform = oNode.getYScaleControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 			curTransform = oNode.getZScaleControl();
-			this.changelock( oTransform, bLock );
+			this.changeLock( oTransform, bLock );
 		}
 	};
 	

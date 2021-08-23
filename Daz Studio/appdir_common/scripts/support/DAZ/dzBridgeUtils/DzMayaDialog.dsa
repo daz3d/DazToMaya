@@ -13,6 +13,7 @@ function DzBridgeDialog( oBridgeExporter )
     /*********************************************************************/
     DzBridgeDialog.prototype.init = function( oBridgeExporter )
     {
+		this.bSilent;
         this.bIncludeSubdiv;
 		this.bIncludeAnim;
 		this.bIncludeMorphs;
@@ -166,7 +167,6 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 		this.bRemoveIncompatible = wRemoveIncompatible.checked;
 		this.bAutoWeights = wTransferUtil.checked;
 		this.bNewSubdiv = wNewSubdiv.checked;
-
 		// When user Accepts the dialog
 		return true;
 	};

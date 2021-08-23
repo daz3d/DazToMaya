@@ -93,3 +93,57 @@ function DzBridgeSubdivision( sScriptPath, oBridgeDialog )
 			return
 		}
 	};
+
+    /*********************************************************************/
+	// void : ...
+	// Apply subdivision levels to figures and genitals.
+	DzBridgeSubdivision.prototype.setSubDivLevelAll = function( oBaseNode )
+	{
+		var bIsBody;
+		var bIsGen;
+		var nLev;
+		var oNode;
+		
+		var aNodes = Scene.getNodeList();
+		for( var i = 0; i < aNodes.length; i += 1 ){
+			oNode = aNodes[i];
+			this.setSubDivLevel( oNode, nLev );
+		}
+	};
+	
+	/*********************************************************************/
+	// void : ...
+	DzBridgeSubdivision.prototype.setSubDivLevel = function( oNode, nLevel )
+	{
+		var aProps = [ "lodlevel", "SubDIALevel" ];
+		var oObject = oNode.getObject();
+		if( !oObject ){
+			return;
+		}
+		
+		var oShape = oObject.getCurrentShape();
+		if( !oShape ){
+			return;
+		}
+		
+		var oProp;
+		for( var i = 0; i < aProps.length; i += 1 ){
+			oProp = oShape.findProperty( aProps[i] );
+			if( oProp ){
+				if( oProp.isLocked() ){
+					oProp.lock( false );
+				}
+				
+				if( i == 0 && nLevel == 0 ){
+					oProp.setValue( "Basic" );
+				} else {
+					oProp.setValue( nLevel );
+				}
+				
+				if( nLevel > 0 ){
+					oProp.lock( true );
+				}
+			}
+		}
+	};
+	
