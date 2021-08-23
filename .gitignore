@@ -3,3 +3,7 @@ venv
 __pycache__
 .vscode
 *.pyc
+*.dll
+*.xml
+*.xml
+node_modules

@@ -1,3 +1,11 @@
+/** 
+* @class
+* @constructor
+* @param {String} sDazBridgeName
+* @param {String} sScriptPath
+* @param {String} sRootPath
+* @param {String} sFbxPath
+*/
 function DzBridgeHelpers( sDazBridgeName, 
 						  sScriptPath,
 						  sRootPath,
@@ -8,22 +16,91 @@ function DzBridgeHelpers( sDazBridgeName,
 				sRootPath,
 				sFbxPath  );
 };
+
+	/**********************************************************************/
+	/** 
+	* Void : Initilizes Variables
+	* @param {String} sDazBridgeName
+	* @param {String} sScriptPath
+	* @param {String} sRootPath
+	* @param {String} sFbxPath
+	*/
 	DzBridgeHelpers.prototype.init = function(  sDazBridgeName, 
 												sScriptPath,
 												sRootPath,
 												sFbxPath )
 	{
-	this.sDazBridgeName = sDazBridgeName
-	this.sRootPath = sRootPath;
-	this.sScriptPath = sScriptPath;
-	this.sFbxPath = sFbxPath;
+		/** 
+		* Name of Bridge 
+		* @type {String}
+		*/
+		this.sDazBridgeName = sDazBridgeName
+		/** 
+		* Path to the Export Directory
+		* @type {String}
+		*/
+		this.sRootPath = sRootPath;
+		/** 
+		* Path to where the executed script is located.
+		* @type {String}
+		*/
+		this.sScriptPath = sScriptPath;
+		/** 
+		* Path to FBX File
+		* @type {String}
+		*/
+		this.sFbxPath = sFbxPath;
+		/** 
+		* Keyword for Figure Exports
+		* @type {String}
+		*/
+		this.sFig = "FIG";
+		/** 
+		* Keyword for Env/Prop Exports
+		* @type {String}
+		*/
+		this.sEnv = "ENV";
+		/** 
+		* Used for the FBX Exporter to export user's Morphs
+		* @type {String}
+		*/
+		this.sMorphRules = "";
+		/** 
+		* Enable or Disable Animation Export
+		* @type {Boolean}
+		*/
+		this.bIncludeAnim;
 
-	this.sFig = "FIG";
-	this.sEnv = "ENV";
-
-	this.sMorphRules = "";
-	this.bIncludeAnim;
-
+		/** 
+		*Types of Meshes
+		* @property {Number} Figure
+		* @property {Number} Mesh
+		* @property {Number} Other
+		* @property {Number} Bone
+		* @property {Number} NoFacets
+		* @property {Number} Empty
+		*/
+		this.oMeshTypes = {
+			"Figure" :3,
+			"Mesh" : 1,
+			"Other" : 0,
+			"Bone" : -1,
+			"NoFacets" : -2,
+			"Empty" : -3
+		};
+		/** 
+		*Types of Meshes
+		* @property {Number} Both
+		* @property {Number} Figure
+		* @property {Number} EnvProp
+		* @property {Number} None
+		*/
+		this.oExportTypes = {
+			"Both" : 2,
+			"Figure" : 1,
+			"EnvProp" : 0,
+			"None" : -1
+		};
 	};
 
 // --- START Sub Script ----
@@ -44,7 +121,13 @@ function DzBridgeHelpers( sDazBridgeName,
 	// - Returns Scripts Paramater
  	// - Adjusted to be used within bridge
 	/*********************************************************************/
-	// Object? 
+	/** 
+	* Object : Executes a Script with a given script name
+	* @param {String} sScript
+	* @param {Array} aArgs
+	* @return {Object} 
+	* @memberof DzBridgeHelpers
+	*/
 	DzBridgeHelpers.prototype.executeSubScript = function( sScript, aArgs ){
  
 		/*********************************************************************/
@@ -124,7 +207,14 @@ function DzBridgeHelpers( sDazBridgeName,
  	// - Extraccted functions
 
 	/*********************************************************************/
-	// Array<DzProperty> : A function for getting a list of the properties in a group
+	/** 
+	* Array<DzProperty> : A function for getting a list of the properties in a group
+	* @param {DzNode} oGroup
+	* @param {Boolean} bTraverse
+	* @param {Boolean} bRecurse
+	* @return {Array<DzProperty>} 
+	* @memberof DzBridgeHelpers
+	*/
 	DzBridgeHelpers.prototype.getGroupProperties = function( oGroup, bTraverse, bRecurse )
 	{
 		// Declare an array to hold properties
@@ -165,7 +255,14 @@ function DzBridgeHelpers( sDazBridgeName,
 	};
 	
 	/*********************************************************************/
-	// Array<DzProperty> : A function for getting the list properties for an element
+	/** 
+	* Array<DzProperty> : A function for getting the list properties for an element
+	* @param {DzNode} oGroup
+	* @param {Boolean} bTraverse
+	* @param {Boolean} bRecurse
+	* @return {Array<DzProperty>} 
+	* @memberof DzBridgeHelpers
+	*/
 	DzBridgeHelpers.prototype.getElementProperties = function( oElement, bTraverse, bRecurse )
 	{
 		// Get the property group tree for the element
@@ -201,9 +298,16 @@ function DzBridgeHelpers( sDazBridgeName,
 	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/export_fbx_silent/start
 	
 	// - Minor changes for this specific use case
-	
-	// void : ...
-	DzBridgeHelpers.prototype.exportFBX = function( oNode, sName, nIdx, suffix, bAscii )
+	/** 
+	* Void : Silently exports FBX
+	* @param {DzNode} oNode
+	* @param {String} sName
+	* @param {Number} nIdx
+	* @param {String} sSuffix
+	* @param {Boolean} bAscii
+	* @memberof DzBridgeHelpers
+	*/
+	DzBridgeHelpers.prototype.exportFBX = function( oNode, sName, nIdx, sSuffix, bAscii )
 	{
 		// Get the export manager
 		var oExportMgr = App.getExportMgr();
@@ -320,7 +424,7 @@ function DzBridgeHelpers( sDazBridgeName,
 				sPath += "A_" + sName + ".fbx"
 				this.sFbxPath += "A_" + sName + ".fbx"
 			} else {
-				sPath += "B_" + sName + suffix + ".fbx"
+				sPath += "B_" + sName + sSuffix + ".fbx"
 				this.sFbxPath += "B_" + sName + ".fbx"
 			}
 			
@@ -360,8 +464,14 @@ function DzBridgeHelpers( sDazBridgeName,
 	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/export_obj_silent/start
 	
 	// - Minor changes for this specific use case
-	
-	// void : ...
+	/** 
+	* Void : Silently exports OBJ
+	* @param {DzNode} oNode
+	* @param {String} sName
+	* @param {Number} nIdx
+	* @param {Boolean} bSelected
+	* @memberof DzBridgeHelpers
+	*/
 	DzBridgeHelpers.prototype.exportOBJ = function( oNode, sName, nIdx, bSelected )
 	{
 		// Get the export manager
@@ -528,8 +638,12 @@ function DzBridgeHelpers( sDazBridgeName,
 	// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/file_io/export_obj_silent/start
 	
 	// - Minor changes for this specific use case
-	
-	// void : ...
+	/** 
+	* Void : Silently imports OBJ
+	* @param {String} sName
+	* @param {Number} nIdx
+	* @memberof DzBridgeHelpers
+	*/
 	DzBridgeHelpers.prototype.importOBJ = function( sName, nIdx )
 	{
 		// Get the import manager
@@ -698,3 +812,195 @@ function DzBridgeHelpers( sDazBridgeName,
 			oSelItems[i].select( false );
 		}
 	};
+
+	/*********************************************************************/
+	/** 
+	* Void : Change lock based on given Boolean
+	* @param {DzProperty} oProperty
+	* @param {Boolean} bLock
+	* @memberof DzBridgeHelpers
+	*/
+	DzBridgeHelpers.prototype.changeLock = function( oProperty, bLock ) {
+		if ( ! oProperty ) {
+			return;
+		}
+		oProperty.lock( bLock );
+	}
+
+	/*********************************************************************/
+	/** 
+	* Void : Set lock for a node and all it's childen
+	* @param {DzNode} oBaseNode
+	* @param {Boolean} bLock
+	* @param {Boolean} bIsFigure
+	* @memberof DzBridgeHelpers
+	*/
+	DzBridgeHelpers.prototype.setLock = function( oBaseNode, bLock, bIsFigure )
+	{
+		var aNodes = oBaseNode.getNodeChildren( true );
+		if( !bIsFigure ){
+			aNodes.push( oBaseNode );
+		}
+				
+		var oNode;
+		var oTransform;
+
+		for( var i = 0; i < aNodes.length; i += 1 ){
+			oNode = aNodes[i];
+			if( this.getObjectType( oNode ) == 'BONE' ){
+				continue;
+			}
+			// Translations
+			oTransform = oNode.getXPosControl();
+			this.changelock( oTransform, bLock );
+			oTransform = oNode.getYPosControl();
+			this.changelock( oTransform, bLock );
+			oTransform = oNode.getZPosControl();
+			this.changelock( oTransform, bLock );
+			
+			// Rotations
+			oTransform = oNode.getXRotControl();
+			this.changelock( oTransform, bLock );
+			oTransform = oNode.getYRotControl();
+			this.changelock( oTransform, bLock );
+			oTransform = oNode.getZRotControl();
+			this.changelock( oTransform, bLock );
+			
+			// Scale
+			oTransform = oNode.getScaleControl();
+			this.changelock( oTransform, bLock );
+			oTransform = oNode.getXScaleControl();
+			this.changelock( oTransform, bLock );
+			curTransform = oNode.getYScaleControl();
+			this.changelock( oTransform, bLock );
+			curTransform = oNode.getZScaleControl();
+			this.changelock( oTransform, bLock );
+		}
+	};
+	
+	/*********************************************************************/
+	/** 
+	* String : Find out what type of Object we have
+	* @param {DzNode} oNode
+	* @return {String} Object Type
+	* @memberof DzBridgeHelpers
+	*/
+	DzBridgeHelpers.prototype.getObjectType = function( oNode )
+	{
+		if( oNode.inherits( "DzBone" ) ){
+			return "BONE";
+		}
+		
+		if( oNode.inherits( "DzLight" ) ){
+			return "LIGHT";
+		}
+		
+		if( oNode.inherits( "DzCamera" ) ){
+			return "CAMERA";
+		}
+		
+		var oObject = oNode.getObject();
+		if( !oObject ){
+			return "EMPTY";
+		}
+		
+		var oShape = oObject.getCurrentShape();
+		if( !oShape ){
+			return "EMPTY";
+		}
+		
+		var oMesh = oShape.getGeometry();
+		if( !oMesh ){
+			return "EMPTY";
+		}
+		
+		return "MESH";
+	};
+
+	/*********************************************************************/
+	/** 
+	* Array<String> : ...
+	* @param {DzNode} oParentNode
+	* @param {DzNode} oBaseNode
+	* @return {Array<String>} Parented nodes names
+	* @memberof DzBridgeHelpers
+	*/
+	DzBridgeHelpers.prototype.getParentingData = function( oParentNode, oBaseNode )
+	{
+		var aData = [];
+		
+		var oNode;
+		var sName;
+		
+		var aNodes = oBaseNode.getNodeChildren( true );
+		aNodes.push( oBaseNode );
+		for( var i = 0; i < aNodes.length; i += 1 ){
+			oNode = aNodes[i];
+			if( this.getMeshType( oNode ) <= this.oMeshTypes.Other ){
+				continue;
+			}
+			
+			sName = oNode.name;
+			for( var j = 1; j <= 10; j += 1 ){
+				if( !oNode.getLabel().endsWith( " (" + j + ")" ) ){
+					continue;
+				}
+				
+				sName += "_dup_" + j;
+			}
+			
+			aData.push( oParentNode.name + "," + sName );
+		}
+		
+		return aData;
+	};
+
+	/*********************************************************************/
+	/** 
+	* Number  : ...
+	* @param {DzNode} oNode
+	* @return {Number} Mesh Type
+	* @memberof DzBridgeHelpers
+	*/
+	DzBridgeHelpers.prototype.getMeshType = function( oNode )
+	{
+		if( !oNode ){
+			return this.oMeshTypes.Other; //0
+		}
+		
+		if( oNode.inherits( "DzBone" ) ){
+			return this.oMeshTypes.Bone; //-1
+		}
+		
+		var oObject = oNode.getObject();
+		if( !oObject ){
+			return this.oMeshTypes.Empty; //-3
+		}
+		
+		var oShape = oObject.getCurrentShape();
+		if( !oShape ){
+			return this.oMeshTypes.Other; //0
+		}
+		
+		var oMesh = oShape.getGeometry();
+		if( !oMesh ){
+			return this.oMeshTypes.Other; //0
+		}
+		
+		var nFacets = oMesh.getNumFacets();
+		if( nFacets < 1 && oMesh.name.toLowerCase().indexOf( "eyebrow" ) < 0 ){
+			return this.oMeshTypes.NoFacets; //-2
+		}
+		
+		if( nFacets > 14000 ){
+			return this.oMeshTypes.Figure; //3
+		}
+		
+		if( oNode.isRootNode() ){
+			return this.oMeshTypes.Other; //0
+		}
+		
+		return this.oMeshTypes.Mesh; //1
+	};
+
+	

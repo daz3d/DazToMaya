@@ -1,11 +1,17 @@
-DzBridgeAutoWeight.prototype = Object.create( DzBridgeHelpers.prototype )
-DzBridgeAutoWeight.constructor = DzBridgeAutoWeight
-DzBridgeAutoWeight.superclass = DzBridgeHelpers.prototype
-
+/** 
+* Used to weight non-skinned geometry on Nodes with a skeleton
+* @class
+* @constructor
+* @param {String} sRootPath
+*/
 function DzBridgeAutoWeight( sRootPath )
 {
     this.init( sRootPath )
 };
+DzBridgeAutoWeight.prototype = Object.create( DzBridgeHelpers.prototype )
+DzBridgeAutoWeight.constructor = DzBridgeAutoWeight
+DzBridgeAutoWeight.superclass = DzBridgeHelpers.prototype
+
     /*********************************************************************/
     DzBridgeAutoWeight.prototype.init = function( sRootPath )
     {
@@ -16,6 +22,7 @@ function DzBridgeAutoWeight( sRootPath )
 	* Object : Helper function to deselect everything in the scene.
 	* @param {DzNode} oNode - a given figure that has morphs
 	* @return {DzNode} Contains all the active morphs on the node given with its property and value
+	* @memberof DzBridgeAutoWeight
 	*/
     DzBridgeAutoWeight.prototype.getActiveMorphs = function( oNode )
     {
@@ -72,6 +79,7 @@ function DzBridgeAutoWeight( sRootPath )
 	/** 
 	* Void: Applys the default values of the morphs that are active
 	* @param {Object} oActiveMorphs - All the active morphs found on the specific figure.
+	* @memberof DzBridgeAutoWeight
 	*/   
 	DzBridgeAutoWeight.prototype.zeroOutMorphs = function( oActiveMorphs ){
 		aSkippedMorphs = ["XScale", "YScale", "ZScale", "Scale"]
@@ -91,6 +99,7 @@ function DzBridgeAutoWeight( sRootPath )
     /** 
 	* Void: Applys the user input values of the morphs that are active
 	* @param {Object} oActiveMorphs - All the active morphs found on the specific figure.
+	* @memberof DzBridgeAutoWeight
 	*/  
 	DzBridgeAutoWeight.prototype.returnMorphValues = function( oActiveMorphs ){
 		for( sMorph in oActiveMorphs ){
@@ -106,6 +115,7 @@ function DzBridgeAutoWeight( sRootPath )
 	* @param {DzNode} oSource - Source Figure used to get the weights
 	* @param {DzNode} oTarget - Target prop which is unweighted and needs auto-weights
 	* @return {Boolean} Returns if the DzTransferUtility was a success or not
+	* @memberof DzBridgeAutoWeight
 	*/ 
 	DzBridgeAutoWeight.prototype.transferWeights = function( oSource, oTarget )
 	{
@@ -126,6 +136,7 @@ function DzBridgeAutoWeight( sRootPath )
 	* Void: Cycles through the Children of the Parents and does loop for Auto-Weights
 	* @param {DzNode} oSource - Source Figure used to get the weights
 	* @param {DzNode} oParent - Parent Figure used for find the Children
+	* @memberof DzBridgeAutoWeight
 	*/
 	DzBridgeAutoWeight.prototype.findingPropsToWeight = function( oSource, oParent )
 	{
@@ -171,6 +182,7 @@ function DzBridgeAutoWeight( sRootPath )
 	/** 
 	* Void: Used to run the Auto-Weight logic, This is Destructive and break user's scene
 	* @param {DzNode} oBaseNode - The Top Node of the hierachy
+	* @memberof DzBridgeAutoWeight
 	*/
 	DzBridgeAutoWeight.prototype.weightObjects = function( oBaseNode )
 	{
@@ -190,3 +202,4 @@ function DzBridgeAutoWeight( sRootPath )
 		}
 		this.returnMorphValues( oActiveMorphs )
 	};
+    

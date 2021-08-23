@@ -3,7 +3,6 @@
 (function( aArgs ){
     // Imported Arguments
     var s_oNode;
-    var s_sDazBridgeName = "";
     var s_sPresetPath = "";
 
     // Returned Values
@@ -53,9 +52,6 @@
             else{
                 if( vArg.indexOf( "Documents" ) > 0 ){
                     s_sPresetPath = vArg;
-                }
-                else{
-                    s_sDazBridgeName = vArg;
                 }
             }
         }
