@@ -3,19 +3,19 @@
 * @class
 * @constructor
 * @param {String} sScriptPath
-* @param {DzBridgeDialog} oBridgeDialog
+* @param {Object} oExportInfo
 */
-function DzBridgeSubdivision( sScriptPath, oBridgeDialog )
+function DzBridgeSubdivision( sScriptPath, oExportInfo )
 {
-    this.init( sScriptPath, oBridgeDialog )
+    this.init( sScriptPath, oExportInfo )
 };
 
     /*********************************************************************/
-    DzBridgeSubdivision.prototype.init = function( sScriptPath, oBridgeDialog )
+    DzBridgeSubdivision.prototype.init = function( sScriptPath, oExportInfo )
     {
         this.sScriptPath = sScriptPath;
-        this.bNewSubdiv = oBridgeDialog.bNewSubdiv;
-        this.aSubdivisionCombos = oBridgeDialog.aSubdivisionCombos;
+        this.bNewSubdiv = oExportInfo.bNewSubdiv;
+        this.aSubdivisionCombos = oExportInfo.aSubdivisionCombos;
     };
 
     /*********************************************************************/

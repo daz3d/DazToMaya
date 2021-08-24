@@ -95,185 +95,133 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 		
 		// initilizeArgs( oBridgeDialog )
 
-		if( !oBridgeDialog.bSilent ){
-			switch( oBridgeScene.getExportType() ){
-				case 2:
-					nExportType = oBridgeDialog.promptExportType();
-					print(nExportType)
-					if( nExportType == oBridgeDialog.oExportTypes.None ){
-						return
-					}
-					oBridgeScene.overrideExportType( nExportType );
-					break
-				case -1:
-					return
-				case 0:
-					break
-				case 1:
-					break
-			}
-		}
-		var nExportType = oBridgeScene.getExportType();
-		oBridgeExporter.createTypeDir( nExportType );
 		oBridgeExporter.writeConfigPath();
 		oBridgeExporter.clearExportDir();
 
+		if( !oBridgeDialog.bSilent ){
+			if( !oBridgeDialog.prepareExportDialog( oBridgeScene ) ){
+				return
+			}
+		}
+		
 		var oBridgeAutoWeights = new DzBridgeAutoWeight( oBridgeExporter.sRootPath );
 		var oBridgePose = new DzBridgePose();
 		var oBridgeEnvironment = new DzBridgeEnvironment();
 		var sFileBasename;
 		var sBaseDirectory; 
 		
-		if( nExportType == oBridgeScene.oExportTypes.Both
-		|| nExportType == oBridgeScene.oExportTypes.Figure ){
-			oBridgeScene.setHideRoot( false, false );
-			
-			var oFigure;
-			for( var i = 0; i < oBridgeScene.aFigures.length; i++ ){
-				oFigure = oBridgeScene.aFigures[i];
-				
-				for( var j = 0; j < oBridgeScene.aFigures.length; j++ ){
-					oBridgeScene.setVisible( oBridgeScene.aFigures[j], i == j );
-				}
-				if( !oBridgeDialog.bSilent ){
-					if( !oBridgeDialog.promptSettings( oFigure ) ){
-						continue;
-					}
-					oBridgeExporter.bIncludeAnim = oBridgeDialog.bIncludeAnim;
-				};
+		for( nElementId in oBridgeScene.oToExport ){
+			var oExportInfo = oBridgeScene.oToExport[nElementId]
+			var oNode = oExportInfo.oNode;
+			var nExportType = oExportInfo.nExportType;
+			var sCleanedName = oNode.getLabel().replace(/[^a-zA-Z0-9_]/g, "" )
+			var bEnable = oExportInfo.bEnable;
+			var bIncludeSubdiv = oExportInfo.bIncludeSubdiv;
+			var bIncludeAnim = oExportInfo.bIncludeAnim;
+			var bIncludeMorphs = oExportInfo.bIncludeMorphs;
+			var bCollectTextures = oExportInfo.bCollectTextures;
+			var bRemoveIncompatible = oExportInfo.bRemoveIncompatible;
+			var bAutoWeights = oExportInfo.bAutoWeights;
+			var bNewSubdiv = oExportInfo.bNewSubdiv;
+			bIsBone = oNode.getSkeleton() != null;
 
-				if( oBridgeDialog.bAutoWeights ){ 
-					if( !oBridgeDialog.bSilent ){
-						if( MessageBox.warning(
-							qsTr( "Transfering the Weights will destroy the current state of your scene save your scene before exporting." ),
-							g_sDazBridgeName, qsTr( "&Continue" ), qsTr( "&Cancel" ) ) == 1 ){
-							return;
-						}
-					};
-					oBridgeAutoWeights.weightObjects( oFigure )
-				}
-
-				oBridgeExporter.setLock( oFigure, true, true );
-				oBridgeExporter.makeEndDir( i, oBridgeScene.sFig );
-				
-				// Morph Export
-				if( oBridgeDialog.bIncludeMorphs ){
-					oBridgeExporter.getMorphString( oBridgeDialog.aExportableProperties );
-					oBridgeExporter.loadMorphLinks( oBridgeDialog.aExportableProperties, oFigure );
-					oBridgeExporter.disconnectMorphs( oBridgeDialog.aExportableProperties );
-					// oBridgeExporter.disconnectSkeleton( oFigure );
-				};	
-				// Export Figure
-				var oBridgeFigure = new DzBridgeFigure( oFigure );
-				var oBridgeSubdiv = new DzBridgeSubdivision( g_sScriptPath, oBridgeDialog );
-
-				oBridgeFigure.loadFigureBoneData();
-				oBridgePose.loadPoseData( oFigure, true );
-				
-				if( oBridgeDialog.bRemoveIncompatible ){
-					oBridgeFigure.removeIncompatibleNodes( oFigure );
-				}
-				if( oBridgeDialog.bIncludeSubdiv && oBridgeSubdiv.isSubdivPrereq() ){
-					oBridgeSubdiv.lockSubdivisionProperties( true );
-					oBridgeFigure.setEyelashVisibility( oFigure, false );
-					oBridgeExporter.exportOBJ( oFigure, oBridgeScene.sFig, i, false );
-					oBridgeFigure.setEyelashVisibility( oFigure, true );
-					oBridgeExporter.exportFBX( oFigure, oBridgeScene.sFig, i , "_HD" , bDebugFBX );
-					oBridgeSubdiv.lockSubdivisionProperties( false );
-					oBridgeExporter.exportFBX( oFigure, oBridgeScene.sFig, i , "_base" , bDebugFBX );
-				}
-				else if( oBridgeSubdiv.bIncludeSubdiv ){
-					oBridgeSubdiv.lockSubdivisionProperties( true );
-					oBridgeFigure.setEyelashVisibility( oFigure, false );
-					oBridgeExporter.exportOBJ( oFigure, oBridgeScene.sFig, i, false );
-					oBridgeFigure.setEyelashVisibility( oFigure, true );
-					oBridgeExporter.exportFBX( oFigure, oBridgeScene.sFig, i , "" ,bDebugFBX );
-				}
-				else{
-					oBridgeSubdiv.lockSubdivisionProperties( false );
-					oBridgeFigure.setEyelashVisibility( oFigure, false );
-					oBridgeExporter.exportOBJ( oFigure, oBridgeScene.sFig, i, false );
-					oBridgeFigure.setEyelashVisibility( oFigure, true );
-					oBridgeExporter.exportFBX( oFigure, oBridgeScene.sFig, i , "" ,bDebugFBX );
-				}
-
-				oBridgeExporter.setLock( oFigure, false, true );
-				oBridgePose.restorePose( oFigure );
-				oBridgeScene.reparentFigure( oFigure );
-				if ( oBridgeDialog.bIncludeMorphs ){
-					oBridgeExporter.reconnectMorphs( oBridgeDialog.aExportableProperties );
-					// oBridgeExporter.reconnectSkeleton( oFigure );
-				}
-
-				// Write data
-				sFileBasename = String( "%1%2/%2%3/%2" ).arg( oBridgeExporter.sRootPath ).arg( oBridgeScene.sFig ).arg( i );
-				sBaseDirectory = String( "%1%2/%2%3" ).arg( oBridgeExporter.sRootPath ).arg( oBridgeScene.sFig ).arg( i );
-				
-				oBridgeWriter = new DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
-				oBridgeWriter.bCollectTextures = oBridgeDialog.bCollectTextures
-				oBridgeWriter.writeParentingData( oFigure, sFileBasename + ".dat" );
-				sDtufilename = oBridgeWriter.writeConfiguration( oFigure, sFileBasename, sBaseDirectory );
-				if( oBridgeDialog.bIncludeSubdiv && oBridgeDialog.bNewSubdiv ){
-					oBridgeSubdiv.processFBX( sDtufilename )
-				}
-				
-
+			if( !bEnable ){
+				continue
 			}
-		}
-
-		if( nExportType != oBridgeScene.oExportTypes.Figure ){
-			oBridgeScene.setHideRoot( true, false );
-			
-			var oNode;
-			var bIsBone;
-			var sEnvPath;
-			var sFileBasename;
-			
-			for( var i = 0; i < oBridgeScene.aEnvProp.length; i += 1 ){
-				oNode = oBridgeScene.aEnvProp[i];
-
-				for( var j = 0; j < oBridgeScene.aEnvProp.length; j += 1 ){
-					oBridgeScene.setVisible( oBridgeScene.aEnvProp[j], i == j );
+			oBridgeScene.setOnlyVisible( oNode );
+			oBridgeExporter.bIncludeAnim = bIncludeAnim;
+			if( bAutoWeights ){ 
+				if( MessageBox.warning(
+					qsTr( "Transfering the Weights will destroy the current state of your scene save your scene before exporting." ),
+					g_sDazBridgeName, qsTr( "&Continue" ), qsTr( "&Cancel" ) ) == 1 ){
+					return;
 				}
-				
-				bIsBone = oNode.getSkeleton() != null;
+				oBridgeAutoWeights.weightObjects( oNode )
+			}
+			oBridgeExporter.setLock( oNode, true, true );
+			oBridgeExporter.makeEndDir( sCleanedName );
+
+			// Morph Export
+			if( bIncludeMorphs ){
+				oBridgeExporter.getMorphString( oExportInfo.aExportableProperties );
+				oBridgeExporter.loadMorphLinks( oExportInfo.aExportableProperties, oNode );
+				oBridgeExporter.disconnectMorphs( oExportInfo.aExportableProperties );
+				// oBridgeExporter.disconnectSkeleton( oFigure );
+			};	
+
+			// Export Figure
+			var oBridgeFigure = new DzBridgeFigure( oNode );
+			var oBridgeSubdiv = new DzBridgeSubdivision( g_sScriptPath, oExportInfo );
+
+			oBridgeFigure.loadFigureBoneData();
+			oBridgePose.loadPoseData( oNode, true );
+			
+			if( oBridgeExporter.oExportTypes.EnvProp == nExportType ){
+				oBridgeEnvironment.updateName( oNode, true )
 				if( bIsBone ){
 					oBridgeEnvironment.flattenObjectHierarchy( oNode );
 				}
 				else{
 					oBridgeExporter.setLock( oNode, true, false );
 				}
-				
-				oBridgeSubdiv = new DzBridgeSubdivision( g_sScriptPath, {} )
-				oBridgeSubdiv.setSubDivLevelAll( oNode, 0 );
-				
-				sEnvPath = String( "%1%2/%2%3/" ).arg( oBridgeExporter.sRootPath ).arg( oBridgeScene.sEnv ).arg( i );
-				oBridgeExporter.makeEndDir( i, oBridgeScene.sEnv );
-				
-				oBridgeEnvironment.updateName( oNode );
-				
-				oBridgeExporter.exportFBX( oNode, oBridgeScene.sEnv, i, "", bDebugFBX );
-				
-				sFileBasename = sEnvPath + oBridgeScene.sEnv;
-				
-				if( bIsBone ){
-					oBridgeFigure = new DzBridgeFigure( oNode );
-					oBridgeFigure.loadFigureBoneData();
-					oBridgePose.loadPoseData( oNode, true );
-					oBridgeWriter = new DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
-				} else {
-					oBridgePose.loadPoseData( oNode, false );
-					oBridgeWriter = new DzBridgeWriter( oBridgeExporter, {}, oBridgePose, oBridgeDialog )
-					oBridgeWriter.writeMemo( sEnvPath + "nobone.txt", "not skeleton" );
-					oBridgeExporter.setLock( oNode, false, false );
-				}
-				oBridgeEnvironment.updateName( oNode );
-				
-				oBridgeWriter.writeConfiguration( oNode, sFileBasename );
+			}
 
+			if( bRemoveIncompatible ){
+				oBridgeFigure.removeIncompatibleNodes( oNode );
+			}
+			if( bIncludeSubdiv && oBridgeSubdiv.isSubdivPrereq() ){
+				oBridgeSubdiv.lockSubdivisionProperties( true );
+				oBridgeFigure.setEyelashVisibility( oNode, false );
+				oBridgeExporter.exportOBJ( oNode, sCleanedName, false );
+				oBridgeFigure.setEyelashVisibility( oNode, true );
+				oBridgeExporter.exportFBX( oNode, sCleanedName, "_HD" , bDebugFBX );
+				oBridgeSubdiv.lockSubdivisionProperties( false );
+				oBridgeExporter.exportFBX( oNode, sCleanedName, "_base" , bDebugFBX );
+			}
+			else if( bIncludeSubdiv ){
+				oBridgeSubdiv.lockSubdivisionProperties( true );
+				oBridgeFigure.setEyelashVisibility( oNode, false );
+				oBridgeExporter.exportOBJ( oNode, sCleanedName, false );
+				oBridgeFigure.setEyelashVisibility( oNode, true );
+				oBridgeExporter.exportFBX( oNode, sCleanedName, "" ,bDebugFBX );
+			}
+			else{
+				oBridgeSubdiv.lockSubdivisionProperties( false );
+				oBridgeFigure.setEyelashVisibility( oNode, false );
+				oBridgeExporter.exportOBJ( oNode, sCleanedName, false );
+				oBridgeFigure.setEyelashVisibility( oNode, true );
+				oBridgeExporter.exportFBX( oNode, sCleanedName, "" ,bDebugFBX );
+			}
+
+			oBridgeExporter.setLock( oNode, false, true );
+			oBridgePose.restorePose( oNode );
+			oBridgeScene.reparentFigure( oExportInfo );
+			if ( bIncludeMorphs ){
+				oBridgeExporter.reconnectMorphs( oExportInfo.aExportableProperties );
+				// oBridgeExporter.reconnectSkeleton( oNode );
+			}
+
+			// Write data
+			sFileBasename = String( "%1/%2/%2" ).arg( oBridgeExporter.sRootPath ).arg( sCleanedName );
+			sBaseDirectory = String( "%1/%2" ).arg( oBridgeExporter.sRootPath ).arg( sCleanedName );
+			
+			var oBridgeWriter = new DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oExportInfo )
+
+			if( oBridgeExporter.oExportTypes.EnvProp == nExportType ){
+				oBridgeEnvironment.updateName( oNode );
+				if( !bIsBone ){
+					oBridgeWriter.writeMemo( sBaseDirectory + "/nobone.txt", "not skeleton" );
+					oBridgeExporter.setLock( oNode, false, false );
+				}	
+			}
+
+			oBridgeWriter.writeParentingData( oNode, sFileBasename + ".dat" );
+			sDtufilename = oBridgeWriter.writeConfiguration( oNode , sFileBasename, sBaseDirectory );
+			if( bIncludeSubdiv && bNewSubdiv ){
+				oBridgeSubdiv.processFBX( sDtufilename )
 			}
 		}
-		
+
 		oBridgeScene.setHideRoot( true, true );
 		oBridgeScene.setHideRoot( false, true );
 	};

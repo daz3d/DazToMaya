@@ -7,9 +7,9 @@
 * @param {DzBridgePose} oBridgePose
 * @param {DzBridgeDialog} oBridgeDialog
 */
-function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
+function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oExportInfo )
 {
-    this.init( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
+    this.init( oBridgeExporter, oBridgeFigure, oBridgePose, oExportInfo )
 };
 	/**********************************************************************/
 	DzBridgeWriter.prototype = Object.create( DzBridgeHelpers.prototype )
@@ -17,13 +17,14 @@ function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDia
 	DzBridgeWriter.superclass = DzBridgeHelpers.prototype
 
     /**********************************************************************/
-    DzBridgeWriter.prototype.init = function( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDialog )
+    DzBridgeWriter.prototype.init = function( oBridgeExporter, oBridgeFigure, oBridgePose, oExportInfo )
     {   
-        this.bCollectTextures = true;
+        this.bCollectTextures = oExportInfo.bCollectTextures;
 		this.oBridgeExporter = oBridgeExporter;
 		this.oBridgeFigure = oBridgeFigure;
-		this.aSubdivisionCombos = oBridgeDialog.aSubdivisionCombos;
-		this.bCollectTextures = oBridgeDialog.bCollectTextures;
+		this.aSubdivisionCombos = oExportInfo.aSubdivisionCombos;
+		this.bCollectTextures = oExportInfo.bCollectTextures;
+		this.oExportInfo = oExportInfo;
 		this.oBridgePose = oBridgePose;
 		DzBridgeWriter.superclass.init.call( this );
     };
@@ -37,11 +38,9 @@ function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oBridgeDia
 		var oDtuJson = {};
 		var aChildren = oNode.getNodeChildren( true );
 		var nChildren = aChildren.length;
-		var oAssetMgr = App.getAssetMgr();
-		var sContentType = oAssetMgr.getTypeForNode( oNode );
 		oDtuJson["Asset Name"] = oNode.getLabel();
 		oDtuJson["Import Name"] = oNode.getName();
-		oDtuJson["Asset Type"] = sContentType;
+		oDtuJson["Asset Type"] = this.getExportName( this.oExportInfo.nExportType );
 		oDtuJson["FBX File"] = this.oBridgeExporter.sFbxPath;
 		oDtuJson["Materials"] = [];
 		oDtuJson["Subdivisions"] = []

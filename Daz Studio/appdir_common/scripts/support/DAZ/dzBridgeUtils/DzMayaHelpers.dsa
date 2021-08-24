@@ -54,12 +54,12 @@ function DzBridgeHelpers( sDazBridgeName,
 		* Keyword for Figure Exports
 		* @type {String}
 		*/
-		this.sFig = "FIG";
+		this.sFig = "Figure";
 		/** 
 		* Keyword for Env/Prop Exports
 		* @type {String}
 		*/
-		this.sEnv = "ENV";
+		this.sEnv = "Env/Prop";
 		/** 
 		* Used for the FBX Exporter to export user's Morphs
 		* @type {String}
@@ -307,7 +307,7 @@ function DzBridgeHelpers( sDazBridgeName,
 	* @param {Boolean} bAscii
 	* @memberof DzBridgeHelpers
 	*/
-	DzBridgeHelpers.prototype.exportFBX = function( oNode, sName, nIdx, sSuffix, bAscii )
+	DzBridgeHelpers.prototype.exportFBX = function( oNode, sName, sSuffix, bAscii )
 	{
 		// Get the export manager
 		var oExportMgr = App.getExportMgr();
@@ -340,13 +340,12 @@ function DzBridgeHelpers( sDazBridgeName,
 			// Figures
 			oSettings.setBoolValue( "doFigures", true );
 			
-			var bIsEnv = sName.startsWith( this.sEnv );
 			// Props
-			oSettings.setBoolValue( "doProps", bIsEnv );
+			oSettings.setBoolValue( "doProps", true );
 			// Lights
-			oSettings.setBoolValue( "doLights", bIsEnv );
+			oSettings.setBoolValue( "doLights", true );
 			// Cameras
-			oSettings.setBoolValue( "doCameras", bIsEnv );
+			oSettings.setBoolValue( "doCameras", true );
 			
 			// Animations
 			oSettings.setBoolValue( "doAnims", this.bIncludeAnim );
@@ -418,8 +417,8 @@ function DzBridgeHelpers( sDazBridgeName,
 					.arg( oExporter.getExtension() ) :
 				oExportMgr.getExportPath() );
 			
-			var sPath = this.sRootPath + sName + "/" + sName + nIdx + "/"
-			this.sFbxPath = this.sRootPath + sName + "/" + sName + nIdx + "/";
+			var sPath = this.sRootPath + sName + "/";
+			this.sFbxPath = this.sRootPath + sName + "/";
 			if( bAscii ){
 				sPath += "A_" + sName + ".fbx"
 				this.sFbxPath += "A_" + sName + ".fbx"
@@ -472,7 +471,7 @@ function DzBridgeHelpers( sDazBridgeName,
 	* @param {Boolean} bSelected
 	* @memberof DzBridgeHelpers
 	*/
-	DzBridgeHelpers.prototype.exportOBJ = function( oNode, sName, nIdx, bSelected )
+	DzBridgeHelpers.prototype.exportOBJ = function( oNode, sName, bSelected, bTemp )
 	{
 		// Get the export manager
 		var oExportMgr = App.getExportMgr();
@@ -591,17 +590,16 @@ function DzBridgeHelpers( sDazBridgeName,
 					.arg( oNode.name )
 					.arg( oExporter.getExtension() ) :
 				oExportMgr.getExportPath() );
-			var sRootDir = this.sRootPath + sName + "/" 
-			var sDir = sRootDir + sName + nIdx + "/"
-			var sPath = sDir + sName+ ".obj";
+			var sRootDir = this.sRootPath + "/" + sName + "/" 
+			if( bTemp ){
+				sRootDir = this.sRootPath + "/temp/" 
+			}
+			var sPath = sRootDir + sName+ ".obj";
+
 			var oTempDir = new DzDir( "" );
 			oTempDir.setPath( sRootDir )
 			if( !oTempDir.exists() ){
 				oTempDir.mkdir( sRootDir );
-			};
-			oTempDir.setPath( sDir )
-			if( !oTempDir.exists() ){
-				oTempDir.mkdir( sDir );
 			};
 			// If the user didn't cancel and the file doesn't already
 			// exist, or the user wants to overwrite it
@@ -643,7 +641,7 @@ function DzBridgeHelpers( sDazBridgeName,
 	* @param {Number} nIdx
 	* @memberof DzBridgeHelpers
 	*/
-	DzBridgeHelpers.prototype.importOBJ = function( sName, nIdx )
+	DzBridgeHelpers.prototype.importOBJ = function( sName )
 	{
 		// Get the import manager
 	var oImportMgr = App.getImportMgr();
@@ -724,7 +722,7 @@ function DzBridgeHelpers( sDazBridgeName,
 			aExtensions[ i ] = String("*.%1").arg( oImporter.getExtension( i ) );
 		}
 		
-		var sPath = this.sRootPath + sName + "/" + sName + nIdx + "/" + sName+ ".obj";
+		var sPath = this.sRootPath + "temp" + "/" + sName+ ".obj";
 
 		// If the user didn't cancel
 		if( sPath ){
@@ -767,7 +765,7 @@ function DzBridgeHelpers( sDazBridgeName,
 	*/
 	DzBridgeHelpers.prototype.addTempDirectory = function()
 	{
-		sTempPath = this.sRootPath + "/" + "temp"
+		sTempPath = this.sRootPath + "/" + "temp" 
 		var oDir = new DzDir( "" );
 		oDir.setPath( sTempPath );
 		if( !oDir.exists() ){
@@ -1002,4 +1000,13 @@ function DzBridgeHelpers( sDazBridgeName,
 		return this.oMeshTypes.Mesh; //1
 	};
 
-	
+	/*********************************************************************/
+	DzBridgeHelpers.prototype.getExportName = function( nExportType )
+	{
+		if( nExportType == this.oExportTypes.Figure ){
+			return this.sFig
+		}
+		else if( nExportType == this.oExportTypes.EnvProp ){
+			return this.sEnv
+		}
+	};

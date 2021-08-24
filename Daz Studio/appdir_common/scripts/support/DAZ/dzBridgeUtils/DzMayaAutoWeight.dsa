@@ -157,9 +157,9 @@ DzBridgeAutoWeight.superclass = DzBridgeHelpers.prototype
 				oChild.select( true )
 				sName = oChild.name
 				sLabel = oChild.getLabel()
-
-				var sPath = this.sRootPath +  "temp" + "/"  +  "temp" + sName + "/";
-				this.exportOBJ( oChild, "temp", sName, true )
+				
+				var sPath = this.sRootPath + "temp/";
+				this.exportOBJ( oChild, sName + "temp", true, true )
 				var oAbvChild = oChild.getNodeParent()
 				if( oAbvChild.inherits("DzRigidFollowNode")){
 					Scene.removeNode( oChild );
@@ -168,8 +168,8 @@ DzBridgeAutoWeight.superclass = DzBridgeHelpers.prototype
 				else{
 					Scene.removeNode( oChild );
 				}
-				this.importOBJ( "temp", sName )
-				oImport = Scene.findNodeByLabel( "temp" );
+				this.importOBJ( sName + "temp" )
+				oImport = Scene.findNodeByLabel( sName + "temp" );
 				oImport.setName( sName )
 				oImport.setLabel( sLabel )
 				var bSuccess = this.transferWeights( oSource, oImport );
@@ -198,7 +198,7 @@ DzBridgeAutoWeight.superclass = DzBridgeHelpers.prototype
 			}
 			else{
 				this.findingPropsToWeight( oNode, oNode )
-			}
+			} 
 		}
 		this.returnMorphValues( oActiveMorphs )
 	};

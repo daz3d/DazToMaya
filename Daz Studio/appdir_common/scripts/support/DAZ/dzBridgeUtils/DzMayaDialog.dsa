@@ -42,15 +42,171 @@ function DzBridgeDialog( oBridgeExporter )
                                              oBridgeExporter.sScriptPath,
                                              oBridgeExporter.sRootPath,
                                              oBridgeExporter.sFbxPath )
-    }
+    };
+
+	/*********************************************************************/
+	DzBridgeDialog.prototype.exportDialog = function( wBridgeDialog )
+	{
+		// Get the current style
+        var oStyle = App.getStyle();
+        // Get the general margin
+        var nMargin = oStyle.pixelMetric( "DZ_GeneralMargin" );
+		
+		// Set the dialog title 
+        wBridgeDialog.caption = "Choose Your Exports";
+
+		var wMainWgt = new DzWidget( wBridgeDialog );
+
+		var lytMain = new DzVBoxLayout( wMainWgt );
+        lytMain.margin = nMargin;
+        lytMain.spacing = nMargin;
+		
+		var wExportLabel = new DzLabel( wMainWgt )
+        wExportLabel.text = "Your Exports have been automatically assigned change with caution..."
+        lytMain.addWidget( wExportLabel )
+
+		var wOverride = DzWidget( wMainWgt );
+		var lytOverrideGrid = new DzGridLayout( wOverride );
+		lytOverrideGrid.margin = nMargin;
+		lytOverrideGrid.spacing = nMargin;
+        lytMain.addWidget( wOverride );
+
+        this.wExportGrid = DzWidget( wMainWgt );
+		this.lytExportGrid = new DzGridLayout( this.wExportGrid );
+		this.lytExportGrid.margin = nMargin;
+		this.lytExportGrid.spacing = nMargin;
+        lytMain.addWidget(  this.wExportGrid );
+
+		var wGlobalLabel = new DzLabel( wOverride );
+        lytOverrideGrid.addWidget( wGlobalLabel, 0, 0 );
+
+		var wEnableAll = new DzPushButton( wOverride );
+        wEnableAll.text = "Enable All";
+        lytOverrideGrid.addWidget( wEnableAll, 1, 0 );
+
+		var wDisableAll = new DzPushButton( wOverride );
+        wDisableAll.text = "Disable All";
+        lytOverrideGrid.addWidget( wDisableAll, 1, 1 );
+
+        var wObjectLabel = new DzLabel( this.wExportGrid );
+        wObjectLabel.text = "Object Name";
+        this.lytExportGrid.addWidget( wObjectLabel, 2, 0 );
+
+        var wExportTypeLbl = new DzLabel( this.wExportGrid );
+        wExportTypeLbl.text = "Choose Export Type";
+        this.lytExportGrid.addWidget( wExportTypeLbl, 2, 1 );
+
+        wBridgeDialog.addWidget( wMainWgt );
+        wBridgeDialog.setFixedWidth( 500 );
+		wBridgeDialog.addStretch()
+
+		wEnableAll.released.scriptConnect( this, this.handleEnableAll );
+		wDisableAll.released.scriptConnect( this, this.handleDisableAll );
+	};
+
+	/*********************************************************************/
+	DzBridgeDialog.prototype.handleEnableAll = function()
+	{
+		wChildren = this.wExportGrid.getChildrenOfWidget()
+		for( var i = 0; i < wChildren.length; i++ ){
+			wChild = wChildren[i]
+			if( wChild.className() == "QCheckBox" ){
+				wChild.checked = true;
+			}
+		}
+	};
+
+	/*********************************************************************/
+	DzBridgeDialog.prototype.handleDisableAll = function()
+	{
+		wChildren = this.wExportGrid.getChildrenOfWidget()
+		for( var i = 0; i < wChildren.length; i++ ){
+			wChild = wChildren[i]
+			if( wChild.className() == "QCheckBox" ){
+				wChild.checked = false;
+			}
+		}
+	};
+
+	/*********************************************************************/
+	DzBridgeDialog.prototype.prepareExportDialog = function( oBridgeScene )
+	{
+		wBridgeDialog = new DzBasicDialog();
+		this.exportDialog( wBridgeDialog )
+		this.createExportList( oBridgeScene );
+		if( !wBridgeDialog.exec() ){
+            return null;
+		} 
+		return true
+	};
+
+	/*********************************************************************/
+	DzBridgeDialog.prototype.createExportList = function( oBridgeScene )
+	{
+		oToExport = oBridgeScene.oToExport
+		
+		for( nElementId in oToExport ){
+			var nRow = this.lytExportGrid.rowCount();
+			var oNode = oToExport[nElementId].oNode;
+			var nExportType = oToExport[nElementId].nExportType;
+			
+			var wNodeLabel = new DzLabel( this.wExportGrid );
+			wNodeLabel.text = oNode.getLabel();
+			wNodeLabel.setFixedWidth( 160 );
+        	this.lytExportGrid.addWidget( wNodeLabel, nRow, 0 );
+
+			var wExportTypeComboBox = new DzComboBox( this.wExportGrid );
+            wExportTypeComboBox.addItem( "Env/Prop" );
+            wExportTypeComboBox.addItem( "Figure" );
+			wExportTypeComboBox.currentItem = nExportType;
+			this.lytExportGrid.addWidget( wExportTypeComboBox, nRow, 1 );
+			oToExport[nElementId].wExportOption = wExportTypeComboBox
+
+			var wPromptSettings = new DzPushButton( this.wExportGrid );
+			wPromptSettings.text = "Choose Export Settings";
+			wPromptSettings.setFixedWidth( 200 );
+			this.lytExportGrid.addWidget( wPromptSettings, nRow, 2 );
+			oToExport[nElementId].wSettings = wPromptSettings
+
+			var wEnableCbx  = new DzCheckBox( this.wExportGrid );
+			wEnableCbx.checked = true;
+			wEnableCbx.alignment = DzWidget.AlignCenter
+			this.lytExportGrid.addWidget( wEnableCbx, nRow, 3 );
+			oToExport[nElementId].wEnable = wEnableCbx
+
+			oSignal = {"DzBridgeDialog" : this, "oExportInfo" : oToExport[nElementId]}
+			oToExport[nElementId].wSettings.released.scriptConnect( oSignal, this.handleShowExportSettings );
+			oToExport[nElementId].wExportOption['currentIndexChanged(int)'].scriptConnect( oSignal, this.handleExportType )
+			oToExport[nElementId].wEnable.toggled.scriptConnect( oSignal, this.handleEnable );
+		}
+
+	};
+
+	/*********************************************************************/
+	DzBridgeDialog.prototype.handleShowExportSettings = function()
+	{
+		this.DzBridgeDialog.promptSettings( this.oExportInfo );
+	};
+
+	/*********************************************************************/
+	DzBridgeDialog.prototype.handleExportType = function()
+	{
+		this.oExportInfo.nExportType = this.oExportInfo.wExportOption.currentItem;
+	};
+
+	/*********************************************************************/
+	DzBridgeDialog.prototype.handleEnable = function()
+	{
+		this.oExportInfo.bEnable = this.oExportInfo.wEnable.checked;
+	};
 
     /*********************************************************************/
 	// Bool : ...
 	// Export Settings Dialog
-	DzBridgeDialog.prototype.promptSettings = function( oNode )
+	DzBridgeDialog.prototype.promptSettings = function( oExportInfo )
 	{
         // Assign Variable
-        this.oNode = oNode;
+        this.oNode = oExportInfo.oNode;
 
 		// Get the current style
         var oStyle = App.getStyle();
@@ -82,7 +238,7 @@ function DzBridgeDialog( oBridgeExporter )
 		// Checkbox to include morph data
 		var wIncludeMorphsCbx = new DzCheckBox( wMainWgt );
 		wIncludeMorphsCbx.text = "Enable Morphs";
-		wIncludeMorphsCbx.checked = false;
+		wIncludeMorphsCbx.checked = oExportInfo.bIncludeMorphs;
 		lytMorphs.addWidget( wIncludeMorphsCbx );
 
 		// Button to choose morph data
@@ -94,7 +250,7 @@ function DzBridgeDialog( oBridgeExporter )
 		// Checkbox to export subdivisions
 		var wEnableSubdivCbx = new DzCheckBox( wMainWgt );
 		wEnableSubdivCbx.text = "Enable Subdivisions";
-		wEnableSubdivCbx.checked = false;
+		wEnableSubdivCbx.checked = oExportInfo.bIncludeSubdiv;
 		lytSubdiv.addWidget( wEnableSubdivCbx );
 
 		// Button to choose subdivisions
@@ -106,7 +262,7 @@ function DzBridgeDialog( oBridgeExporter )
 		// Checkbox to include animation data
 		var wIncludeAnimationsCbx = new DzCheckBox( wMainWgt );
 		wIncludeAnimationsCbx.text = "Include animation data";
-		wIncludeAnimationsCbx.checked = false;
+		wIncludeAnimationsCbx.checked = oExportInfo.bIncludeAnim;
 		lytSettings.addWidget( wIncludeAnimationsCbx );
 
 		// Advanced Settings
@@ -127,31 +283,32 @@ function DzBridgeDialog( oBridgeExporter )
 		// Checkbox to collect textures at export
 		var wCollectTexturesCbx = new DzCheckBox( this.wAdvWgt );
 		wCollectTexturesCbx.text = "Collect Textures";
-		wCollectTexturesCbx.checked = false;
+		wCollectTexturesCbx.checked = oExportInfo.bCollectTextures;
 		lytAdvance.addWidget( wCollectTexturesCbx );
 
 		// Checkbox to Remove incompatible nodes
 		var wRemoveIncompatible = new DzCheckBox( this.wAdvWgt );
 		wRemoveIncompatible.text = "Remove any incompatible nodes";
-		wRemoveIncompatible.checked = false;
+		wRemoveIncompatible.checked = oExportInfo.bRemoveIncompatible;
 		lytAdvance.addWidget( wRemoveIncompatible )
 
 		// Checkbox to Use New Subdiv Export
 		var wNewSubdiv = new DzCheckBox( this.wAdvWgt );
 		wNewSubdiv.text = "Better Subdivision Export";
-		wNewSubdiv.checked = false;
+		wNewSubdiv.checked = oExportInfo.bNewSubdiv;
 		lytAdvance.addWidget( wNewSubdiv )
 
 		// Checkbox to use Transfer Utility
 		var wTransferUtil = new DzCheckBox( this.wAdvWgt );
 		wTransferUtil.text = "Auto-Weight";
-		wTransferUtil.checked = false;
+		wTransferUtil.checked = oExportInfo.bAutoWeights;
 		lytAdvance.addWidget( wTransferUtil )
 
 		// Create Connections
-		wChooseMorphsBut.released.connect(this, this.handleShowMorphDialog );
-		wChooseSubdivBut.released.connect(this, this.handleShowSubdivDialog );
-		this.wAdvanceSettings.toggled.connect( this, this.handleShowAdvancedSetting)
+		oSignal = {"DzBridgeDialog" : this, "oExportInfo" : oExportInfo}
+		wChooseMorphsBut.released.scriptConnect(oSignal, this.handleShowMorphDialog );
+		wChooseSubdivBut.released.scriptConnect(oSignal, this.handleShowSubdivDialog );
+		this.wAdvanceSettings.toggled.scriptConnect( this, this.handleShowAdvancedSetting)
 
 		//Help 
 		wTransferUtil.whatsThis = "When a mesh like a button is not weighted it will not keep its location. \
@@ -166,13 +323,13 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 		}
 		
 		// Set settings variables from the Dialog
-		this.bIncludeSubdiv = wEnableSubdivCbx.checked
-		this.bIncludeAnim = wIncludeAnimationsCbx.checked;
-		this.bIncludeMorphs = wIncludeMorphsCbx.checked;
-		this.bCollectTextures = wCollectTexturesCbx.checked;
-		this.bRemoveIncompatible = wRemoveIncompatible.checked;
-		this.bAutoWeights = wTransferUtil.checked;
-		this.bNewSubdiv = wNewSubdiv.checked;
+		oExportInfo.bIncludeSubdiv = wEnableSubdivCbx.checked
+		oExportInfo.bIncludeAnim = wIncludeAnimationsCbx.checked;
+		oExportInfo.bIncludeMorphs = wIncludeMorphsCbx.checked;
+		oExportInfo.bCollectTextures = wCollectTexturesCbx.checked;
+		oExportInfo.bRemoveIncompatible = wRemoveIncompatible.checked;
+		oExportInfo.bAutoWeights = wTransferUtil.checked;
+		oExportInfo.bNewSubdiv = wNewSubdiv.checked;
 		// When user Accepts the dialog
 		return true;
 	};
@@ -196,18 +353,18 @@ When leaving daz to deal with it we will be automatically transfer the weights f
 	/*********************************************************************/
 	DzBridgeDialog.prototype.handleShowMorphDialog = function()
 	{
-		this.aExportableProperties = this.executeSubScript(
-			this.sMorphDialog, 
-			[this.oNode, this.sPresetPath] 
+		this.oExportInfo.aExportableProperties = this.DzBridgeDialog.executeSubScript(
+			this.DzBridgeDialog.sMorphDialog, 
+			[this.oExportInfo.oNode, this.DzBridgeDialog.sPresetPath] 
 		);
 	};
 
 	/*********************************************************************/
 	DzBridgeDialog.prototype.handleShowSubdivDialog = function()
 	{
-	    this.aSubdivisionCombos = this.executeSubScript(
-			this.sSubdivDialog, 
-			[this.oNode] 
+	    this.oExportInfo.aSubdivisionCombos = this.DzBridgeDialog.executeSubScript(
+			this.DzBridgeDialog.sSubdivDialog, 
+			[this.oExportInfo.oNode] 
 		)
 	};
 

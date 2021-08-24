@@ -70,6 +70,7 @@ figure = ""
 
 check_box_save = 0
 check_box_merge = 0
+check_box_auto_ik = 0
 cfg_settings = ""
 window_daz_main = ""
 window_name = "DazToMayaMain12225"
@@ -2414,7 +2415,8 @@ def auto_import_daz():
     # Auto IK if figure in the scene, else it is a Prop
     all_joints = mel.eval('ls -type joint')
     group_props()
-    if all_joints != None and "head" in all_joints:
+    run_auto_ik = cmds.checkBox(check_box_auto_ik, query=True, value=True)
+    if all_joints != None and "head" in all_joints and run_auto_ik:
         auto_ik()
     else:
         mel.eval('viewFit -all')  # View Fit All
@@ -2504,6 +2506,7 @@ def open_main_window():
     global window_daz_main
     global check_box_save
     global check_box_merge
+    global check_box_auto_ik
 
     if cmds.window(window_name, exists=True):
         cmds.deleteUI(window_name)
@@ -2530,8 +2533,13 @@ def open_main_window():
                             columnWidth=[(1, 200), (2, 120)],
                             columnSpacing=[(1, 6), (2, 0)]
                         )
+
+    auto_ik_text = "Run Auto-IK at Import"
+    check_box_auto_ik = cmds.checkBox(label=auto_ik_text, value=0)
+    
     label_text = "Merge Import to current scene"
     check_box_merge = cmds.checkBox(label=label_text, value=0)
+    
     cmds.optionMenu("scaleMenu", w=130, label="  Scale:")
     cmds.menuItem(label="Automatic")
     cmds.menuItem(label="x10 (biger)")
