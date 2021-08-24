@@ -1,6 +1,6 @@
 
 /** 
-* Used to weight non-skinned geometry on Nodes with a skeleton
+* Used to Export out Daz 
 * @class
 * @constructor
 * @param {String} sDazBridgeName
@@ -15,9 +15,10 @@ function DzBridgeExporter( sDazBridgeName,
                sScriptPath,
                oBridgeScene );
 };
-DzBridgeExporter.prototype = Object.create( DzBridgeMorphs.prototype )
-DzBridgeExporter.constructor = DzBridgeExporter
-DzBridgeExporter.superclass = DzBridgeMorphs.prototype
+	/*********************************************************************/
+	DzBridgeExporter.prototype = Object.create( DzBridgeMorphs.prototype )
+	DzBridgeExporter.constructor = DzBridgeExporter
+	DzBridgeExporter.superclass = DzBridgeMorphs.prototype
 
     /*********************************************************************/
 	/** 
@@ -66,13 +67,24 @@ DzBridgeExporter.superclass = DzBridgeMorphs.prototype
 		*/
 	    this.sFbxPath = "";
 
-        this.prepareForExport( oBridgeScene )
+		this.sType = "";
 
-        DzBridgeExporter.superclass.init.call( this,
-                                            sDazBridgeName, 
-                                            sScriptPath,
-                                            this.sRootPath,
-                                            this.sFbxPath );
+		this.nExportType = 0;
+
+		DzBridgeExporter.superclass.init.call( this,
+			sDazBridgeName, 
+			sScriptPath,
+			this.sRootPath,
+			this.sFbxPath );
+
+        this.prepareForExport( oBridgeScene )
+		
+		DzBridgeExporter.superclass.init.call( this,
+			sDazBridgeName, 
+			sScriptPath,
+			this.sRootPath,
+			this.sFbxPath );
+        
     };
 
     /*********************************************************************/
@@ -90,19 +102,14 @@ DzBridgeExporter.superclass = DzBridgeMorphs.prototype
 		
 		this.sRootPath = sPath;
 		
-		var aFiles;
-		var sDelPath;
-		var oDelDir = new DzDir( "" );
-		
 		var aRoot = ["Documents","DAZ 3D", "Bridges", this.sDazBridgeName] 
 		var aFolders = ["Exports", "Config", "Presets"];
-		var aSubs = [oBridgeScene.sEnv, oBridgeScene.sFig]
 
-        var nExportType = oBridgeScene.getExportType();
+		this.sType = oBridgeScene.getExportName();
+        this.nExportType = oBridgeScene.getExportType();
 
 		for( var i = 0; i < aRoot.length; i += 1 ){
 			// Create Base Directory
-			
 			sPath = this.sRootPath + aRoot[i] + "/";
 			this.sRootPath = sPath;
 
@@ -130,7 +137,6 @@ DzBridgeExporter.superclass = DzBridgeMorphs.prototype
 			// Create Directories
 			oDir.setPath( sTempPath );
 			if( !oDir.exists() ){
-				
 				if( i == 0 ){
 					MessageBox.information( qsTr( "You can manually locate your export files here:\n%1" ).arg( sTempPath ), 
 											qsTr( "Your Export Path" ), 
@@ -139,66 +145,9 @@ DzBridgeExporter.superclass = DzBridgeMorphs.prototype
 				oDir.mkdir( sTempPath );
 			}
 		}
-
-		// Create Type Directories
-		if( nExportType == oBridgeScene.oExportTypes.EnvProp ){
-			sPath = this.sRootPath + aSubs[0] + "/"
-			sType = aSubs[0]	
-			};
-		if( nExportType == oBridgeScene.oExportTypes.Figure ){
-			sPath = this.sRootPath + aSubs[1] + "/"
-			sType = aSubs[1]	
-			};	
-		
-		if( this.nExportType == oBridgeScene.oExportTypes.Both ){
-			sPath = this.sRootPath 
-			sType = aSubs[0]	
-		}
-		
-		// Create Directories
-		oDir.setPath( sPath );
-		if( !oDir.exists() ){
-			oDir.mkdir( sPath );
-		};
-		
-		// Find Users Daz Content Paths
-		var aContentDir = this.findUsersContent( this.sConfigPath );
-		this.writeConfigPath( aContentDir );
-
-		// Replace RootPath if Custom Path is Enabled
-		if( this.useCustomPath() ){
-			sPath = sPath.replace( this.sRootPath, this.sCustomPath );
-			oDir.setPath( sPath );
-			this.sRootPath = this.sCustomPath;
-		};
-
-		var aDirs = []
-		// Delete Files
-		aFiles = oDir.getFilesFromDir( [], true );
-		for( var j = 0; j < aFiles.length; j += 1 ){
-			var oFile = new DzFile( aFiles[j] );
-			var sFileName = oFile.fileName()
-			dir = oDir.relativeFilePath( aFiles[j] ).replace(  sFileName, "" )
-			aDirs.pushIfNotExists( dir );
-			oDir.remove( aFiles[j] );
-
-		};
-	
-		// Delete Dirs
-		for ( var j = 0; j < aDirs.length; j += 1 ){
-			sDelPath = sPath + aDirs[j]
-			oDelDir.setPath( sDelPath );
-			if( oDelDir.exists() ){
-				sDirName = oDelDir.dirName()
-				oDelDir.rmdir( sDelPath );
-				if( oDelDir.cdUp() && sDirName != oBridgeScene.getExportType() ){
-					oDelDir.rmdir()
-				}
-			}	
-		};
-
 		
 	};
+	
 	/*********************************************************************/
 	// Array : Find the Daz Paths where content is installed
 	DzBridgeExporter.prototype.findUsersContent = function()
@@ -215,9 +164,11 @@ DzBridgeExporter.superclass = DzBridgeMorphs.prototype
 	}
 	/*********************************************************************/
 	// void : ...
-	DzBridgeExporter.prototype.writeConfigPath = function( aContentDir )
+	DzBridgeExporter.prototype.writeConfigPath = function()
 	{
+		var aContentDir = this.findUsersContent( this.sConfigPath );
 		var sDazPath = this.sConfigPath + "daz_paths.json";
+		print(sDazPath)
 		var oCurFile = new DzFile( sDazPath );
 		var oDazFile = new DzFile( sDazPath );
 		var oDazJson = {};
@@ -276,3 +227,79 @@ DzBridgeExporter.superclass = DzBridgeMorphs.prototype
 			}
 		}
 	};
+
+	/*********************************************************************/
+	// void : ...
+	DzBridgeExporter.prototype.createTypeDir = function( nExportType ) 
+	{
+		var oDir = new DzDir( "" );
+
+		var aSubs = [this.sEnv, this.sFig]
+
+		// Create Type Directories
+		if( nExportType == this.oExportTypes.EnvProp ){
+			this.sExportPath = this.sRootPath + aSubs[0] + "/"	
+			};
+		if( nExportType == this.oExportTypes.Figure ){
+			this.sExportPath = this.sRootPath + aSubs[1] + "/"	
+			};	
+		
+		if( nExportType == this.oExportTypes.Both ){
+			this.sExportPath = this.sRootPath + aSubs[0] + "/"
+		}
+	
+		// Create Directories
+		oDir.setPath( this.sExportPath );
+		if( !oDir.exists() ){
+			oDir.mkdir( this.sExportPath );
+		};
+		
+	};
+
+	/*********************************************************************/
+	// void : ...
+	DzBridgeExporter.prototype.clearExportDir = function()
+	{
+		var oDir = new DzDir( "" );
+		var sPath = ""
+		var aFiles;
+		var sDelPath;
+		var oDelDir = new DzDir( "" );
+
+		// Replace RootPath if Custom Path is Enabled
+		if( this.useCustomPath() ){
+			sPath = this.sExportPath.replace( this.sRootPath, this.sCustomPath );
+			oDir.setPath( sPath );
+			this.sRootPath = this.sCustomPath;
+		}
+
+		var aDirs = []
+		// Delete Files
+		aFiles = oDir.getFilesFromDir( [], true );
+		for( var j = 0; j < aFiles.length; j += 1 ){
+			var oFile = new DzFile( aFiles[j] );
+			var sFileName = oFile.fileName()
+			dir = oDir.relativeFilePath( aFiles[j] ).replace(  sFileName, "" )
+			aDirs.pushIfNotExists( dir );
+			oDir.remove( aFiles[j] );
+
+		}
+		
+		// Delete Dirs
+		for ( var j = 0; j < aDirs.length; j += 1 ){
+			sDelPath = sPath + aDirs[j]
+			oDelDir.setPath( sDelPath );
+			if( oDelDir.exists() ){
+				sDirName = oDelDir.dirName()
+				oDelDir.rmdir( sDelPath );
+				if( oDelDir.cdUp() && sDirName != sType ){
+					oDelDir.rmdir()
+				}
+			}	
+		}
+
+	};
+
+
+	
+

@@ -99,6 +99,7 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 			switch( oBridgeScene.getExportType() ){
 				case 2:
 					nExportType = oBridgeDialog.promptExportType();
+					print(nExportType)
 					if( nExportType == oBridgeDialog.oExportTypes.None ){
 						return
 					}
@@ -112,12 +113,17 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 					break
 			}
 		}
+		var nExportType = oBridgeScene.getExportType();
+		oBridgeExporter.createTypeDir( nExportType );
+		oBridgeExporter.writeConfigPath();
+		oBridgeExporter.clearExportDir();
+
 		var oBridgeAutoWeights = new DzBridgeAutoWeight( oBridgeExporter.sRootPath );
 		var oBridgePose = new DzBridgePose();
-		var oBridgeEnvironment = new DzBridgeEnvironment()
+		var oBridgeEnvironment = new DzBridgeEnvironment();
 		var sFileBasename;
 		var sBaseDirectory; 
-		var nExportType = oBridgeScene.getExportType()
+		
 		if( nExportType == oBridgeScene.oExportTypes.Both
 		|| nExportType == oBridgeScene.oExportTypes.Figure ){
 			oBridgeScene.setHideRoot( false, false );
@@ -135,6 +141,7 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 					}
 					oBridgeExporter.bIncludeAnim = oBridgeDialog.bIncludeAnim;
 				};
+
 				if( oBridgeDialog.bAutoWeights ){ 
 					if( !oBridgeDialog.bSilent ){
 						if( MessageBox.warning(

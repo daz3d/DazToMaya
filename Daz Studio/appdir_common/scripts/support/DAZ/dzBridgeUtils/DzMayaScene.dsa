@@ -17,6 +17,7 @@ DzBridgeScene.superclass = DzBridgeHelpers.prototype;
         this.aFigures = [];
         this.aEnvProp = [];
 		this.aToReparent = [];
+		this.aRemoved = [];
 		DzBridgeScene.superclass.init.call( this )
     };
 
@@ -159,6 +160,20 @@ DzBridgeScene.superclass = DzBridgeHelpers.prototype;
 		}
 	};
 
+	/*********************************************************************/
+	DzBridgeScene.prototype.getExportName = function()
+	{
+		nExportType = this.getExportType();
+		if( nExportType == this.oExportTypes.Figure){
+			return this.sFig
+		}
+		else if( nExportType == this.oExportTypes.EnvProp ){
+			return this.sEnv
+		}
+		else{
+			return this.sFig
+		}
+	};
 
 	/*********************************************************************/
 	/** 
@@ -168,14 +183,16 @@ DzBridgeScene.superclass = DzBridgeHelpers.prototype;
 	DzBridgeScene.prototype.overrideExportType = function( nExportType )
 	{	
 		if( nExportType == this.oExportTypes.Figure){
-			this.EnvProp = [];
+			this.aRemoved = this.aEnvProp;
+			this.aEnvProp = [];
 			return
 		}
 		else if( nExportType == this.oExportTypes.Both ){
 			return
 		}
 		else{
-			this.Figure = [];
+			this.aRemoved = this.aFigures;
+			this.aFigures = [];
 			return
 		}
 	};
@@ -188,9 +205,15 @@ DzBridgeScene.superclass = DzBridgeHelpers.prototype;
 			for( var i = 0; i < this.aFigures.length; i += 1 ){
 				this.setVisible( this.aFigures[i], bYesNo );
 			}
+			for( var i = 0; i < this.aRemoved.length; i += 1 ){
+				this.setVisible( this.aRemoved[i], bYesNo );
+			}
 		} else {
 			for( var i = 0; i < this.aEnvProp.length; i += 1 ){
 				this.setVisible( this.aEnvProp[i], bYesNo );
+			}
+			for( var i = 0; i < this.aRemoved.length; i += 1 ){
+				this.setVisible( this.aRemoved[i], bYesNo );
 			}
 		}
 	};
