@@ -2375,24 +2375,37 @@ def import_fbx(daz_file_path):
     mel.eval(import_cmd)
 
 
-def auto_import_daz():
+def auto_import_all( ):
+    fbx_exports = []
+    for path, dirname, filenames in os.walk(Definitions.EXPORT_DIR):
+        for file in filenames:
+            if file.endswith(".fbx"):
+                if "_HD" not in file and "_base" not in file:
+                    fbx_exports.append(os.path.join(path, file))
+    
+    if len(fbx_exports) != 1:
+        merge_scene = True
+    else:
+        merge_scene = False
+    for fbx in fbx_exports:
+        auto_import_daz(fbx, merge_scene)
 
-    # Importing only first figure for now
-    daz_file_path = os.path.abspath(Definitions.EXPORT_DIR + "\FIG\FIG0\B_FIG.fbx")
 
+def auto_import_daz( daz_file_path, merge_scene ):
     # exit if file not found
     if os.path.exists(daz_file_path) == False:
         open_import_not_found_window()
         return
 
-    # Create a new scene or merge to existing one based on the check box
-    merge_scene = cmds.checkBox(check_box_merge, query=True, value=True)
-    if merge_scene == False:
-        result = mel.eval("saveChanges(\"file -f -new\")")
-        if result == 0:
-            return
-        else:
-            cmds.NewScene()
+    if not merge_scene:
+        # Create a new scene or merge to existing one based on the check box
+        merge_scene = cmds.checkBox(check_box_merge, query=True, value=True)
+        if merge_scene == False:
+            result = mel.eval("saveChanges(\"file -f -new\")")
+            if result == 0:
+                return
+            else:
+                cmds.NewScene()
 
     # Load and show wait dialog
     wait_dialog = WaitDialog()
@@ -2553,7 +2566,7 @@ def open_main_window():
                     label='Auto-Import',
                     width=343,
                     height=50,
-                    c=lambda *args: auto_import_daz()
+                    c=lambda *args: auto_import_all()
                 )
     cmds.separator(height=20, style='in')
 
