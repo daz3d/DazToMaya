@@ -6,6 +6,7 @@ import maya.cmds  as cmds
 from Definitions import EXPORT_DIR
 from DtuLoader import DtuLoader
 from TextureLib import texture_library, texture_maps
+from DtuStorage import DtuStorage
 
 
 
@@ -20,16 +21,21 @@ class DazMaterials:
         """
         Load materials from Dtu file
         """
-        dtu_path = os.path.abspath(EXPORT_DIR + "\FIG\FIG0")
-        dtu_loader = DtuLoader(dtu_path)
-        mats = dtu_loader.get_materials_list()
-        for mat in mats:
-            asset_name = mat["Asset Name"]
-            asset_name = asset_name.replace(" ", "_")
-            mat_name = mat["Material Name"].replace(" ", "_")
-            if asset_name not in self.material_dict.keys():
-                self.material_dict[asset_name] = {}
-            self.material_dict[asset_name][mat_name] = mat
+        sel = cmds.ls(assemblies=True)
+        dtu_storage = DtuStorage()
+        for top_node in sel:
+            uid = cmds.ls(top_node, uid=True)[0]
+            if dtu_storage.exists(uid):
+                dtu_dict = dtu_storage.load(uid)
+                dtu_loader = DtuLoader(dtu_dict)
+                mats = dtu_loader.get_materials_list()
+                for mat in mats:
+                    asset_name = mat["Asset Name"]
+                    asset_name = asset_name.replace(" ", "_")
+                    mat_name = mat["Material Name"].replace(" ", "_")
+                    if asset_name not in self.material_dict.keys():
+                        self.material_dict[asset_name] = {}
+                    self.material_dict[asset_name][mat_name] = mat
 
     def get_materials_in_scene(self):
         # No need to pass in a string to `type`, if you don't want to.

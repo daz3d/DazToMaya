@@ -1010,3 +1010,15 @@ function DzBridgeHelpers( sDazBridgeName,
 			return this.sEnv
 		}
 	};
+
+	/*********************************************************************/
+	DzBridgeHelpers.prototype.exportMeshSmoothing = function( oNode )
+	{
+		if( nExportType == this.oExportTypes.Figure ){
+			return this.sFig
+		}
+		else if( nExportType == this.oExportTypes.EnvProp ){
+			return this.sEnv
+		}
+	};
+

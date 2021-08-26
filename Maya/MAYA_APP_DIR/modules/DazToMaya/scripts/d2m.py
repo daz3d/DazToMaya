@@ -16,9 +16,11 @@ from shutil import copyfile
 
 import Definitions
 import DtuLoader
+import DtuStorage
 import morphs
 import dazmaterials as dzm
 import TextureLib
+import DtuStorage
 
 if int(cmds.about(v=True)) > 2020:
     import importlib
@@ -2369,34 +2371,35 @@ def import_fbx(daz_file_path):
     if scale_menu_value == "x0.01 (smaller)":
         # FORCE cm Correct Unit....... CHELO
         mel.eval('FBXImportConvertUnitString m')
-    
-    daz_file_path = daz_file_path.replace('\\', '/')
+    daz_file_path = daz_file_path.replace(os.sep, "/")
     import_cmd = "FBXImport -f \"" + daz_file_path + "\""
+   
     mel.eval(import_cmd)
 
 
-def auto_import_all( ):
-    fbx_exports = []
+def auto_import_all():
+    dtu_exports = []
     for path, dirname, filenames in os.walk(Definitions.EXPORT_DIR):
         for file in filenames:
-            if file.endswith(".fbx"):
-                if "_HD" not in file and "_base" not in file:
-                    fbx_exports.append(os.path.join(path, file))
+            if file.endswith(".dtu"):
+                dtu_exports.append(os.path.join(path, file))
     
-    if len(fbx_exports) != 1:
+    if len(dtu_exports) != 1:
         merge_scene = True
     else:
         merge_scene = False
-    for fbx in fbx_exports:
-        auto_import_daz(fbx, merge_scene)
+    for dtu in dtu_exports:
+        dtu_loader = DtuLoader.DtuLoader(dtu)
+        auto_import_daz(dtu_loader, merge_scene)
 
-
-def auto_import_daz( daz_file_path, merge_scene ):
+def auto_import_daz( dtu_loader, merge_scene ):
     # exit if file not found
+    daz_file_path = dtu_loader.get_fbx_path()
+    dtu_storage = DtuStorage.DtuStorage()
     if os.path.exists(daz_file_path) == False:
         open_import_not_found_window()
         return
-
+    print(daz_file_path)
     if not merge_scene:
         # Create a new scene or merge to existing one based on the check box
         merge_scene = cmds.checkBox(check_box_merge, query=True, value=True)
@@ -2414,7 +2417,12 @@ def auto_import_daz( daz_file_path, merge_scene ):
     # Refresh and import Fbx
     print("Importing Daz...")
     cmds.refresh()
+    before = set(cmds.ls(assemblies=True, uuid=True))
     import_fbx(daz_file_path)
+    after = set(cmds.ls(assemblies=True, uuid=True))
+    imported = list(after.difference(before))[0]
+    uid = cmds.ls(imported, uid=True)[0]
+    dtu_storage.save(uid, dtu_loader.get_dtu_dict())
     print("AutoIK...")
 
     try:
@@ -2427,7 +2435,7 @@ def auto_import_daz( daz_file_path, merge_scene ):
 
     # Auto IK if figure in the scene, else it is a Prop
     all_joints = mel.eval('ls -type joint')
-    group_props()
+    # group_props() #Destructive breaks scenes
     run_auto_ik = cmds.checkBox(check_box_auto_ik, query=True, value=True)
     if all_joints != None and "head" in all_joints and run_auto_ik:
         auto_ik()

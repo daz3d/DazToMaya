@@ -19,15 +19,14 @@ class DtuLoader:
     subdivsion_level = ""
     materials_list = []
 
-    def __init__(self, imported_dir):
-        self.import_dir = imported_dir
+    def __init__(self, dtu_path):
+        if isinstance(dtu_path, str):
+            self.dtu_path = dtu_path
+        else:
+            self.dtu_dict = dtu_path
 
     def load_dtu(self):
-        for file in os.listdir(self.import_dir):
-            if file.endswith(".dtu"):
-                dtu = os.path.join(self.import_dir, file)
-                break
-        with open(dtu, "r") as data:
+        with open(self.dtu_path, "r") as data:
             self.dtu_dict = json.load(data)
 
     def get_dtu_dict(self):
