@@ -51,6 +51,7 @@ function DzBridgeWriter( oBridgeExporter, oBridgeFigure, oBridgePose, oExportInf
 		oDtuJson["JointOrientation"] = this.oBridgeFigure.oJointOrientation;
 		oDtuJson["LimitData"] = this.oBridgeFigure.oLimitsData;
 		oDtuJson["PoseData"] = this.oBridgePose.oPoseData;
+		oDtuJson["Dforce"] = this.oExportInfo.aInfluenceWeights;
 		
 		aFigureMats = this.writeMaterials( oNode, sDir );
 		oDtuJson["Materials"].push( aFigureMats );

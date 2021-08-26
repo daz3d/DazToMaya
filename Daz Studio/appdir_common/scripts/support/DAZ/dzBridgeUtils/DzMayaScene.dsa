@@ -35,7 +35,8 @@ DzBridgeScene.superclass = DzBridgeHelpers.prototype;
 			"bAutoWeights" : false,
 			"bNewSubdiv" : false,
 			"aExportableProperties" : [],
-			"aSubdivisionCombos" : []
+			"aSubdivisionCombos" : [],
+			"aInfluenceWeights" : []
 		}
 		DzBridgeScene.superclass.init.call( this )
     };

@@ -23,8 +23,10 @@ var g_sBridgeDialog = String( "%2/dzBridgeUtils/Dz%1Dialog.dsa" ).arg( g_sBridge
 var g_sBridgeWriter = String( "%2/dzBridgeUtils/Dz%1Writer.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
 var g_sBridgeFigure = String( "%2/dzBridgeUtils/Dz%1Figure.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
 var g_sBridgeSubdiv = String( "%2/dzBridgeUtils/Dz%1Subdivision.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
+var g_sBridgeDforce = String( "%2/dzBridgeUtils/Dz%1Dforce.dsa" ).arg( g_sBridge ).arg( g_sScriptPath );
 
 include( g_sBridgeHelpers ); // Dependencies : ...
+include( g_sBridgeDforce ); // Dependencies : ...
 include( g_sBridgeEnv );  // Dependencies : DzBridgeHelper
 include( g_sBridgeWriter ); // Dependencies : DzBridgeHelper
 include( g_sBridgeFigure ); // Dependencies : DzBridgeHelper
@@ -138,7 +140,7 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 				}
 				oBridgeAutoWeights.weightObjects( oNode )
 			}
-			oBridgeExporter.setLock( oNode, true, true );
+			oBridgeExporter.setLock( oNode, true, false );
 			oBridgeExporter.makeEndDir( sCleanedName );
 
 			// Morph Export
@@ -152,17 +154,17 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 			// Export Figure
 			var oBridgeFigure = new DzBridgeFigure( oNode );
 			var oBridgeSubdiv = new DzBridgeSubdivision( g_sScriptPath, oExportInfo );
+			var oBridgeDforce = new DzBridgeDforce( oNode );
+
 
 			oBridgeFigure.loadFigureBoneData();
 			oBridgePose.loadPoseData( oNode, true );
-			
+			oBridgeDforce.findWeights( oExportInfo )
+
 			if( oBridgeExporter.oExportTypes.EnvProp == nExportType ){
 				oBridgeEnvironment.updateName( oNode, true )
 				if( bIsBone ){
 					oBridgeEnvironment.flattenObjectHierarchy( oNode );
-				}
-				else{
-					oBridgeExporter.setLock( oNode, true, false );
 				}
 			}
 
@@ -211,7 +213,6 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 				oBridgeEnvironment.updateName( oNode );
 				if( !bIsBone ){
 					oBridgeWriter.writeMemo( sBaseDirectory + "/nobone.txt", "not skeleton" );
-					oBridgeExporter.setLock( oNode, false, false );
 				}	
 			}
 
@@ -220,6 +221,7 @@ include( g_sBridgeDialog ); // Dependencies : DzBridgeHelper
 			if( bIncludeSubdiv && bNewSubdiv ){
 				oBridgeSubdiv.processFBX( sDtufilename )
 			}
+			oBridgeExporter.setLock( oNode, false, false );
 		}
 
 		oBridgeScene.setHideRoot( true, true );

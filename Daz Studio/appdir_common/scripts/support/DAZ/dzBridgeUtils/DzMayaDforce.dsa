@@ -1,0 +1,57 @@
+/** 
+* Used to get dForce Information from Daz
+* TODO: This current state is broken needs to recursivly check the children 
+* as this only checks top node right now.
+* @class
+* @constructor
+*/
+function DzBridgeDforce( oNode )
+{
+    this.init( oNode )
+};
+
+    /*********************************************************************/
+    DzBridgeDforce.prototype.init = function( oNode )
+    {
+        this.oNode = oNode;
+        this.aInfluenceWeights = []
+    };
+
+    /*********************************************************************/
+    DzBridgeDforce.prototype.findDforceModifier = function( oObject )
+    {
+        nModifers = oObject.getNumModifiers();
+        for( var i = 0; i < nModifers; i++ ){
+            oMod= oObject.getModifier(i);
+            if( oMod.getName().find("dForce Simulation") > -1 ){
+               return oMod
+            }	
+        }
+    };
+
+    /*********************************************************************/
+    DzBridgeDforce.prototype.getInfluenceWeights = function( oModifer )
+    {
+        oInfluenceWeights = oModifer.getInfluenceWeights();
+        if( oInfluenceWeights ){
+            for( var i = 0; i < oInfluenceWeights.getNumWeights(); i++ ){
+                nWeight = oInfluenceWeights.getFloatWeight( i );
+                this.aInfluenceWeights.push( nWeight );
+            }
+        }
+    };
+
+    /*********************************************************************/
+    DzBridgeDforce.prototype.findWeights = function( oExportInfo )
+    {
+        oObject = this.oNode.getObject();
+        if( oObject ){
+            oModifer = this.findDforceModifier( oObject );
+            if( oModifer ){
+                this.getInfluenceWeights( oModifer );
+            }
+        }
+        oExportInfo.aInfluenceWeights = this.aInfluenceWeights;
+    };
+
+    
