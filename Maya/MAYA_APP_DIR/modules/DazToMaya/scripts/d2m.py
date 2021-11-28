@@ -36,11 +36,11 @@ else:
 
 
 # no delete morph, editer for user...
-
-d2m_logo = os.path.abspath("../icons/d2m_import_logo.png")
-d2m_banner = os.path.abspath("../icons/d2m_banner.png")
-d2m_help_icon = os.path.abspath("../icons/d2m_help_icon.png")
-txtConf = os.path.abspath("../scripts/d2m.cfg")
+DIRNAME = os.path.dirname(os.path.abspath(__file__))
+d2m_logo = os.path.join(DIRNAME, "../icons/d2m_import_logo.png")
+d2m_banner = os.path.join(DIRNAME, "../icons/d2m_banner.png")
+d2m_help_icon = os.path.join(DIRNAME, "../icons/d2m_help_icon.png")
+txtConf = os.path.join(DIRNAME, "../scripts/d2m.cfg")
 
 scale_menu_value = "Automatic"
 
