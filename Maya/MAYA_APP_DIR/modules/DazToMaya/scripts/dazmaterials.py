@@ -3,7 +3,7 @@ import os, sys
 import pymel.core as pm
 import maya.cmds  as cmds
 
-from Definitions import EXPORT_DIR
+from Definitions import EXPORT_DIRS, try_paths
 from DtuLoader import DtuLoader
 from TextureLib import texture_library, texture_maps
 
@@ -20,7 +20,7 @@ class DazMaterials:
         """
         Load materials from Dtu file
         """
-        dtu_path = os.path.abspath(EXPORT_DIR + "\FIG\FIG0")
+        dtu_path = try_paths(EXPORT_DIRS, os.path.join("FIG", "FIG0"))
         dtu_loader = DtuLoader(dtu_path)
         mats = dtu_loader.get_materials_list()
         for mat in mats:
