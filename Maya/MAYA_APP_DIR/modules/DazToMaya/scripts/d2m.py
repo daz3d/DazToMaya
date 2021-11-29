@@ -2375,26 +2375,9 @@ def import_fbx(daz_file_path):
     mel.eval(import_cmd)
 
 
-from typing import List
-def try_paths(paths: List[str], file: str):
-  if os.path.isabs(file):
-    return file if os.path.exists(file) else False
-
-  tried = []
-  for path in paths:
-    newPath = os.path.join(path, file)
-    if os.path.exists(newPath):
-      return newPath
-    else:
-      tried.append(newPath)
-
-  raise FileNotFoundError("Tried paths: \n" + "\n".join(tried))
-  # return False
-
 def auto_import_daz():
-
     # Importing only first figure for now
-    daz_file_path = try_paths(Definitions.EXPORT_DIRS, os.path.join("FIG", "FIG0", "B_FIG.fbx"))
+    daz_file_path = Definitions.try_paths(Definitions.EXPORT_DIRS, os.path.join("FIG", "FIG0", "B_FIG.fbx"))
 
     # exit if file not found
     if not daz_file_path:
