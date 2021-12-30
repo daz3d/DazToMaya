@@ -36,11 +36,11 @@ else:
 
 
 # no delete morph, editer for user...
-
-d2m_logo = os.path.abspath("../icons/d2m_import_logo.png")
-d2m_banner = os.path.abspath("../icons/d2m_banner.png")
-d2m_help_icon = os.path.abspath("../icons/d2m_help_icon.png")
-txtConf = os.path.abspath("../scripts/d2m.cfg")
+DIRNAME = os.path.dirname(os.path.abspath(__file__))
+d2m_logo = os.path.join(DIRNAME, "../icons/d2m_import_logo.png")
+d2m_banner = os.path.join(DIRNAME, "../icons/d2m_banner.png")
+d2m_help_icon = os.path.join(DIRNAME, "../icons/d2m_help_icon.png")
+txtConf = os.path.join(DIRNAME, "../scripts/d2m.cfg")
 
 scale_menu_value = "Automatic"
 
@@ -2368,19 +2368,19 @@ def import_fbx(daz_file_path):
     if scale_menu_value == "x0.01 (smaller)":
         # FORCE cm Correct Unit....... CHELO
         mel.eval('FBXImportConvertUnitString m')
-    
+
     daz_file_path = daz_file_path.replace('\\', '/')
+
     import_cmd = "FBXImport -f \"" + daz_file_path + "\""
     mel.eval(import_cmd)
 
 
 def auto_import_daz():
-
     # Importing only first figure for now
-    daz_file_path = os.path.abspath(Definitions.EXPORT_DIR + "\FIG\FIG0\B_FIG.fbx")
+    daz_file_path = Definitions.try_paths(Definitions.EXPORT_DIRS, os.path.join("FIG", "FIG0", "B_FIG.fbx"))
 
     # exit if file not found
-    if os.path.exists(daz_file_path) == False:
+    if not daz_file_path:
         open_import_not_found_window()
         return
 
