@@ -2377,7 +2377,7 @@ def import_fbx(daz_file_path):
 def auto_import_daz():
 
     # Importing only first figure for now
-    daz_file_path = os.path.abspath(Definitions.EXPORT_DIR + "\FIG\FIG0\B_FIG.fbx")
+    daz_file_path = os.path.abspath(Definitions.EXPORT_DIR + "/FIG/FIG0/B_FIG.fbx")
 
     # exit if file not found
     if os.path.exists(daz_file_path) == False:
@@ -2515,7 +2515,7 @@ def open_main_window():
                                     maximizeButton=False,
                                     minimizeButton=True,
                                     sizeable=False,
-                                    title="DazToMaya v1.8.0"
+                                    title="DazToMaya 2022.1"
                                 )
 
     cmds.columnLayout("columnName01", adjustableColumn=True)

@@ -201,22 +201,11 @@ void DzMayaAction::executeAction()
 //		DzMayaDialog* mayaDialog = qobject_cast<DzMayaDialog*>(m_bridgeDialog);
 
 #if __LEGACY_PATHS__
-		if (m_sAssetType == "SkeletalMesh")
-		{
-			m_sRootFolder = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + "/DAZ 3D/Bridges/Daz To Maya/Exports/FIG";
-			m_sRootFolder = m_sRootFolder.replace("\\", "/");
-			m_sExportSubfolder = "FIG0";
-			m_sExportFbx = "B_FIG";
-			m_sAssetName = "FIG";
-		}
-		else
-		{
-			m_sRootFolder = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + "/DAZ 3D/Bridges/Daz To Maya/Exports/ENV";
-			m_sRootFolder = m_sRootFolder.replace("\\", "/");
-			m_sExportSubfolder = "ENV0";
-			m_sExportFbx = "B_ENV";
-			m_sAssetName = "ENV";
-		}
+		m_sRootFolder = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + "/DAZ 3D/Bridges/Daz To Maya/Exports/FIG";
+		m_sRootFolder = m_sRootFolder.replace("\\", "/");
+		m_sExportSubfolder = "FIG0";
+		m_sExportFbx = "B_FIG";
+		m_sAssetName = "FIG";
 		m_sDestinationPath = m_sRootFolder + "/" + m_sExportSubfolder + "/";
 		m_sDestinationFBX = m_sDestinationPath + m_sExportFbx + ".fbx";
 #endif
