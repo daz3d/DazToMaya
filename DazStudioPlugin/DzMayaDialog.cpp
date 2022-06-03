@@ -54,9 +54,9 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 // Set the dialog title
 	 int revision = PLUGIN_REV % 1000;
 #ifdef _DEBUG
-	 setWindowTitle(tr("Daz To Maya Bridge v%1.%2 Build %3.%4").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(revision).arg(PLUGIN_BUILD));
+	 setWindowTitle(tr("Daz To Maya Bridge %1.%2 Build %3.%4").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(revision).arg(PLUGIN_BUILD));
 #else
-	 setWindowTitle(tr("Daz To Maya Bridge v%1.%2").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR));
+	 setWindowTitle(tr("Daz To Maya Bridge %1.%2").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR));
 #endif
 
 	 // Disable Unsupported AssetType ComboBox Options

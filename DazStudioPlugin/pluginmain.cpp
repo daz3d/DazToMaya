@@ -15,7 +15,7 @@ DZ_PLUGIN_VERSION(PLUGIN_MAJOR, PLUGIN_MINOR, PLUGIN_REV, PLUGIN_BUILD);
 
 #ifdef _DEBUG
 DZ_PLUGIN_DESCRIPTION(QString(
-	"<b>Pre-Release Maya Bridge v%1.%2.%3.%4 </b><br>\
+	"<b>Pre-Release Maya Bridge %1.%2.%3.%4 </b><br>\
 <a href = \"https://github.com/daz3d/DazToMaya\">Github</a><br><br>"
 ).arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(PLUGIN_REV).arg(PLUGIN_BUILD));
 #else
