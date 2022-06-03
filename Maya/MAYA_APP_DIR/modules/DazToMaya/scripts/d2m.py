@@ -322,7 +322,7 @@ def assign_to_new_shader(old_shd, new_shd):
             cmds.connectAttr(new_shd + '.outColor',
                              shd_group[0] + '.surfaceShader', force=True)
             cmds.delete(old_shd)
-        
+
         ret_val = True
 
     return ret_val
@@ -2173,10 +2173,10 @@ def auto_ik():
                     mel.eval('setAttr "Genesis8Male.drawStyle" 2')
                 except:
                     pass
-                
+
                 daz_figure = "Genesis8"
                 break
-            
+
             if "Genesis8" in joint and "Genesis8_1" in joint:
 
                 try:
@@ -2196,7 +2196,7 @@ def auto_ik():
                     mel.eval('setAttr "Genesis8_1Male.drawStyle" 2')
                 except:
                     pass
-                
+
                 daz_figure = "Genesis8_1"
                 break
 
@@ -2311,7 +2311,7 @@ def group_props():
                 if len(group_childs) > 1:
                     remove_joints_if_prop(x)
                     group_stuff(x)
-                    try:                                                            
+                    try:
                         cmds.delete(x)
                     except:
                         pass
@@ -2368,7 +2368,7 @@ def import_fbx(daz_file_path):
     if scale_menu_value == "x0.01 (smaller)":
         # FORCE cm Correct Unit....... CHELO
         mel.eval('FBXImportConvertUnitString m')
-    
+
     daz_file_path = daz_file_path.replace('\\', '/')
     import_cmd = "FBXImport -f \"" + daz_file_path + "\""
     mel.eval(import_cmd)
@@ -2377,7 +2377,7 @@ def import_fbx(daz_file_path):
 def auto_import_daz():
 
     # Importing only first figure for now
-    daz_file_path = os.path.abspath(Definitions.EXPORT_DIR + "\FIG\FIG0\B_FIG.fbx")
+    daz_file_path = os.path.abspath(Definitions.EXPORT_DIR + "/FIG/FIG0/B_FIG.fbx")
 
     # exit if file not found
     if os.path.exists(daz_file_path) == False:
@@ -2450,7 +2450,8 @@ def d2mstart():
     print("d2m start")
 
     maya_version = cmds.about(v=True)
-    if "2014" in maya_version or "2015" in maya_version or "2016" in maya_version or "2017" in maya_version or "2018" in maya_version or "2019" in maya_version or "2020" in maya_version or "2022" in maya_version:
+#    if "2014" in maya_version or "2015" in maya_version or "2016" in maya_version or "2017" in maya_version or "2018" in maya_version or "2019" in maya_version or "2020" in maya_version or "2022" in maya_version:
+    if int(maya_version) >= 2014:
         cmds.showWindow(window_daz_main)
         cmds.window(window_name, edit=True, widthHeight=(343, 470))
     else:
@@ -2465,7 +2466,7 @@ def initialize():
     global figure
 
     print(sys.platform)
-    
+
     # Get settings configuration
     with open(txtConf, 'r') as output:
         cfg_settings = output.read()
@@ -2500,7 +2501,7 @@ def open_main_window():
     """
     Open main dialogue window for Daz to Maya
     """
-    
+
     global window_daz_main
     global check_box_save
     global check_box_merge
@@ -2514,7 +2515,7 @@ def open_main_window():
                                     maximizeButton=False,
                                     minimizeButton=True,
                                     sizeable=False,
-                                    title="DazToMaya v1.8.0"
+                                    title="DazToMaya 2022.1"
                                 )
 
     cmds.columnLayout("columnName01", adjustableColumn=True)
@@ -2525,7 +2526,7 @@ def open_main_window():
     cmds.separator(height=10, style='in')
 
     # Import settings
-    cmds.rowColumnLayout(   
+    cmds.rowColumnLayout(
                             numberOfColumns=2,
                             columnWidth=[(1, 200), (2, 120)],
                             columnSpacing=[(1, 6), (2, 0)]
@@ -2540,7 +2541,7 @@ def open_main_window():
     cmds.menuItem(label="x0.01 (smaller)")
     cmds.setParent('..')
     cmds.separator(height=5, style='none')
-    
+
     cmds.button(
                     label='Auto-Import',
                     width=343,
@@ -2562,24 +2563,24 @@ def open_main_window():
                 )
     cmds.separator(height=5, style='none')
 
-    # Check box to show popup for saving textures    
+    # Check box to show popup for saving textures
     cmds.columnLayout("CheckBoxColumn", columnOffset=("left", 10))
     check_box_status = 0
     if "askToSaveSceneWithTextures=0" in cfg_settings:
         check_box_status = 0
-    elif "askToSaveSceneWithTextures=1" in cfg_settings: 
+    elif "askToSaveSceneWithTextures=1" in cfg_settings:
         check_box_status = 1
     check_box_label = "Show me a reminder after importing from Temp folder."
     check_box_save = cmds.checkBox(
                                 label=check_box_label,
-                                changeCommand=lambda *args: config_save_callback(), 
+                                changeCommand=lambda *args: config_save_callback(),
                                 value=check_box_status
                             )
     cmds.setParent('..')
     cmds.separator(height=15, style='in')
 
     # Convert materials button section
-    cmds.rowColumnLayout(   
+    cmds.rowColumnLayout(
                             numberOfColumns=3,
                             columnWidth=[(1, 225), (2, 8), (3, 95)],
                             columnSpacing=[(1, 6), (2, 0)]
@@ -2587,7 +2588,7 @@ def open_main_window():
     cmds.button(
                     label='Convert Materials',
                     width=43,
-                    height=25, 
+                    height=25,
                     c=lambda *args: btn_convert_callback()
                 )
     cmds.separator(height=8, style='none')
@@ -2624,7 +2625,7 @@ def open_main_window():
 
     # Copyright section
     cmds.separator(height=5, style='none')
-    cmds.rowColumnLayout(   
+    cmds.rowColumnLayout(
                             numberOfColumns=4,
                             columnWidth=[(1, 43), (2, 200), (3, 50), (4, 50)]
                         )
@@ -2699,7 +2700,7 @@ def btn_convert_callback():
             pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
             # convert_all_to_arnold_daz_fixes()
             dzm.DazMaterials().convert_to_arnold()
-            
+
 
         if mat_conv == "Vray":
             ConvertToVray().start_convert()
@@ -2722,7 +2723,7 @@ def config_save_callback():
 
 def slider_drag_callback(*args):
     valor_spec_weight = cmds.floatSliderGrp(
-                                                'SpecWeight', query=True, 
+                                                'SpecWeight', query=True,
                                                 value=True
                                             )
     valor_spec_rough = cmds.floatSliderGrp('SpecRough', query=True, value=True)
@@ -2736,13 +2737,13 @@ def slider_drag_callback(*args):
                     "Neck",
                     "Ears",
                     "Torso",
-                    "Hips", 
-                    "Shoulders", 
-                    "Arms", 
-                    "Forearms", 
-                    "Nipples", 
-                    "Hands", 
-                    "Legs", 
+                    "Hips",
+                    "Shoulders",
+                    "Arms",
+                    "Forearms",
+                    "Nipples",
+                    "Hands",
+                    "Legs",
                     "Feet"
                 )
     scene_mats = mel.eval('ls -mat')
@@ -2829,7 +2830,7 @@ def open_import_not_found_window():
     cmds.text(label=error_text, align='center')
     cmds.separator(height=5, style='none')
     cmds.image(image=not_found_logo, width=672)
-    
+
     cmds.rowColumnLayout(
                             numberOfColumns=4,
                             columnWidth=[(1, 160), (2, 150), (3, 50)],
@@ -3028,7 +3029,7 @@ class ConvertToVray:
                     cmds.delete(old_shd)
                 except:
                     pass
-            
+
             ret_val = True
 
         return ret_val

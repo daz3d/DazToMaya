@@ -3,6 +3,7 @@ import sys
 
 import maya.cmds as cmds
 import maya.api.OpenMaya as om2
+import maya.mel as mel
 
 import Definitions
 import DtuLoader
@@ -107,7 +108,8 @@ def create_custom_template(morph_links):
     template_file.write(template_text)
     template_file.close()
 
-    cmds.refreshEditorTemplates()
+    #cmds.refreshEditorTemplates()
+    mel.eval("refreshCustomTemplate")
 
 
 def clean_morphs():

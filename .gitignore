@@ -3,3 +3,7 @@ venv
 __pycache__
 .vscode
 *.pyc
+.vs
+out
+CMakeSettings.json
+.DS_Store
