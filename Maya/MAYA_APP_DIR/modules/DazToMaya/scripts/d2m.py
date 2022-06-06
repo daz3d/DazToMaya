@@ -37,6 +37,12 @@ else:
 
 # no delete morph, editer for user...
 
+# DB, 2022-June-05: Hotfix for Mac Maya
+import platform
+if (platform.system() == "Darwin"):
+    module_script_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(module_script_dir)
+
 d2m_logo = os.path.abspath("../icons/d2m_import_logo.png")
 d2m_banner = os.path.abspath("../icons/d2m_banner.png")
 d2m_help_icon = os.path.abspath("../icons/d2m_help_icon.png")

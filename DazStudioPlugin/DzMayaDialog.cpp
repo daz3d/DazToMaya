@@ -252,7 +252,11 @@ void DzMayaDialog::HandleTargetPluginInstallerButton()
 	// Get Software Versio
 	DzBridgeDialog::m_sEmbeddedFilesPath = ":/DazBridgeMaya";
 	QString sBinariesFile = "/mayaplugin.zip";
+#ifdef __APPLE__
+    QString sDestinationPath = QDir().homePath() + "/Library/Preferences/Autodesk/maya";
+#else
 	QString sDestinationPath = QDir().homePath() + "/Documents/maya";
+#endif
 	if (QDir(sDestinationPath).exists() == false)
 	{
 		sDestinationPath = QDir().homePath() + "/Documents";
