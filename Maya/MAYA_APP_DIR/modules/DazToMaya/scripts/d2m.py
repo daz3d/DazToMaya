@@ -20,7 +20,7 @@ import morphs
 import dazmaterials as dzm
 import TextureLib
 
-if int(cmds.about(v=True)) > 2020:
+if Definitions.MAYA_VERSION > 2020:
     import importlib
     importlib.reload(Definitions)
     importlib.reload(DtuLoader)
@@ -81,6 +81,7 @@ window_daz_main = ""
 window_name = "DazToMayaMain12225"
 ask_to_save_window_name = "AskToSaveWindow5"
 
+global_current_dtu = None
 
 def config_ask_to_save(value):
     with open(txtConf, 'wt') as output:
@@ -1733,6 +1734,9 @@ def gen3_rotations_fix():
 
 # TODO: Remove hardocing
 def gen8_rotations_fix():
+    global global_current_dtu
+    if global_current_dtu is None or global_current_dtu.hasAnimation():
+        return
     # ---------------------------------------------------------
     try:
         mel.eval('setAttr "lShldrBend.rotateX" 0.0')
@@ -2095,6 +2099,9 @@ def scene_renamer():
 
 
 def auto_ik():
+    global global_current_dtu
+    if global_current_dtu is None:
+        return
 
     # cmds.scriptEditorInfo(suppressWarnings=True)
     # cmds.scriptEditorInfo(suppressErrors=True)
@@ -2162,10 +2169,10 @@ def auto_ik():
                 break
             if "Genesis8" in joint and not "Genesis8_1" in joint:
 
-                try:
-                    gen8_mat_fix()
-                except:
-                    pass
+                # try:
+                #     gen8_mat_fix()
+                # except:
+                #     pass
                 try:
                     gen8_rotations_fix()
                 except:
@@ -2185,10 +2192,10 @@ def auto_ik():
 
             if "Genesis8" in joint and "Genesis8_1" in joint:
 
-                try:
-                    gen8_mat_fix()
-                except:
-                    pass
+                # try:
+                #     gen8_mat_fix()
+                # except:
+                #     pass
                 try:
                     gen8_rotations_fix()
                 except:
@@ -2208,7 +2215,8 @@ def auto_ik():
 
 
         # -----Probar forzar ojos correctos...... agregado para male3 lion-o...
-        gen8_mat_fix()
+        if "Genesis8" in daz_figure:
+            gen8_mat_fix()
 
         # ROTATIONS FIX-----------------------------------
         print("------------------------------------")
@@ -2253,12 +2261,13 @@ def auto_ik():
             compensate_hip()
         except:
             pass
-        try:
-            daz_to_ik()
-        except:
-            pass
+        if global_current_dtu.hasAnimation() == False:
+            try:
+                daz_to_ik()
+            except:
+                pass
 
-        mel.eval('hikCreateControlRig')
+            mel.eval('hikCreateControlRig')
 
         scalp_fix()
         lash_fix_2()
@@ -2381,9 +2390,12 @@ def import_fbx(daz_file_path):
 
 
 def auto_import_daz():
+    global global_current_dtu
 
     # Importing only first figure for now
     daz_file_path = os.path.abspath(Definitions.EXPORT_DIR + "/FIG/FIG0/B_FIG.fbx")
+    dtu_path = os.path.abspath(Definitions.EXPORT_DIR + "/FIG/FIG0/")
+    global_current_dtu = DtuLoader.DtuLoader(dtu_path)
 
     # exit if file not found
     if os.path.exists(daz_file_path) == False:
@@ -2455,9 +2467,7 @@ def auto_import_daz():
 def d2mstart():
     print("d2m start")
 
-    maya_version = cmds.about(v=True)
-#    if "2014" in maya_version or "2015" in maya_version or "2016" in maya_version or "2017" in maya_version or "2018" in maya_version or "2019" in maya_version or "2020" in maya_version or "2022" in maya_version:
-    if int(maya_version) >= 2014:
+    if Definitions.MAYA_VERSION >= 2014:
         cmds.showWindow(window_daz_main)
         cmds.window(window_name, edit=True, widthHeight=(343, 470))
     else:

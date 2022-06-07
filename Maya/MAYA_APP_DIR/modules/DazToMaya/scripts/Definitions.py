@@ -2,6 +2,8 @@ import os
 import platform
 import maya.cmds as cmds
 
+MAYA_VERSION = int(cmds.about(v=True))
+
 if (platform.system() == "Windows"):
     import ctypes.wintypes
     CSIDL_PERSONAL=5

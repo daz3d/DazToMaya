@@ -147,3 +147,28 @@ class DtuLoader:
         if len(self.morph_links_dict.keys()) == 0:
             self.load_morph_links_dict()
         return self.morph_links_dict
+
+    def getDtuVersion(self):
+        dtu_dict = self.get_dtu_dict()
+        fDtuVersion = 1.0
+        if "DTU Version" in dtu_dict:
+            dtu_version = dtu_dict["DTU Version"]
+        else:
+            print("WARNING: DtuLoader.py, getDtuVersion(): the loaded dtu file does not have a version number. [" + self.dtu_path + "]")
+        return float(dtu_version)
+
+    def getAssetType(self):
+        dtu_dict = self.get_dtu_dict()
+        sAssetType = ""
+        if "Asset Type" in dtu_dict:
+            sAssetType = dtu_dict["Asset Type"]
+        else:
+            print("ERROR: DtuLoader.py, getAssetType(): unable to find \"Asset Type\" in dtu header.  [" + self.dtu_path + "]")
+        return str(sAssetType)
+
+    def hasAnimation(self):
+        dtu_dict = self.get_dtu_dict()
+        bHasAnimation = False
+        if self.getAssetType() == "Animation":
+            bHasAnimation = True
+        return bool(bHasAnimation)

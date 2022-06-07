@@ -241,7 +241,7 @@ void DzMayaAction::writeConfiguration()
 
 	writeDTUHeader(writer);
 
-	if (m_sAssetType.toLower().contains("mesh"))
+	if (m_sAssetType.toLower().contains("mesh") || m_sAssetType == "Animation")
 	{
 		QTextStream *pCVSStream = nullptr;
 		if (m_bExportMaterialPropertiesCSV)
@@ -292,10 +292,15 @@ void DzMayaAction::writeConfiguration()
 // Setup custom FBX export options
 void DzMayaAction::setExportOptions(DzFileIOSettings& ExportOptions)
 {
-	ExportOptions.setBoolValue("doEmbed", false);
-	ExportOptions.setBoolValue("doDiffuseOpacity", false);
-	ExportOptions.setBoolValue("doCopyTextures", false);
-
+	//ExportOptions.setBoolValue("doEmbed", false);
+	//ExportOptions.setBoolValue("doDiffuseOpacity", false);
+	//ExportOptions.setBoolValue("doCopyTextures", false);
+	ExportOptions.setBoolValue("doFps", true);
+	ExportOptions.setBoolValue("doLocks", false);
+	ExportOptions.setBoolValue("doLimits", false);
+	ExportOptions.setBoolValue("doBaseFigurePoseOnly", false);
+	ExportOptions.setBoolValue("doHelperScriptScripts", false);
+	ExportOptions.setBoolValue("doMentalRayMaterials", false);
 }
 
 QString DzMayaAction::readGuiRootFolder()
