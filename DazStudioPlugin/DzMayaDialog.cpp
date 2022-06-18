@@ -252,14 +252,35 @@ void DzMayaDialog::HandleTargetPluginInstallerButton()
 	// Get Software Versio
 	DzBridgeDialog::m_sEmbeddedFilesPath = ":/DazBridgeMaya";
 	QString sBinariesFile = "/mayaplugin.zip";
+	QProcessEnvironment env(QProcessEnvironment::systemEnvironment());
+	QString sMayaAppDir = env.value("MAYA_APP_DIR");
 #ifdef __APPLE__
-    QString sDestinationPath = QDir().homePath() + "/Library/Preferences/Autodesk/maya";
+	if (sMayaAppDir == "") {
+		sMayaAppDir = QDir().homePath() + "/Library/Preferences/Autodesk/maya";
+	}
 #else
-	QString sDestinationPath = QDir().homePath() + "/Documents/maya";
+	if (sMayaAppDir == "") {
+		sMayaAppDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + QDir::separator() + "maya";
+	}
 #endif
+	QString sDestinationPath = sMayaAppDir;
 	if (QDir(sDestinationPath).exists() == false)
 	{
-		sDestinationPath = QDir().homePath() + "/Documents";
+		// Warning, not a valid MayaAppDir
+		QMessageBox msgBox;
+		msgBox.setTextFormat(Qt::RichText);
+		msgBox.setWindowTitle("MAYA_APP_DIR not found");
+		msgBox.setText(
+		tr("The bridge could not find the path to your personal Maya application directory (MAYA_APP_DIR).<br><br> \
+On Windows, this is usually at <b>\"/Users/&lt;username&gt;/Documents/maya/\"</b> and on Mac, it is at \
+<b>\"~&lt;username&gt;/Library/Preferences/Autodesk/maya/\"</b>.  Please navigate to where \
+this folder is located for your installation.<br><br> \
+For more information on the MAYA_APP_DIR setting, please refer to:<br> \
+<a href=\"https://knowledge.autodesk.com/support/maya/learn-explore/caas/CloudHelp/cloudhelp/2015/ENU/Maya/files/Environment-Variables-File-path-variables-htm.html\">\
+File path variables (Maya Support and learning)</a>"));
+		msgBox.setStandardButtons(QMessageBox::Ok);
+		msgBox.exec();
+		sDestinationPath = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
 	}
 	QString softwareVersion = m_TargetSoftwareVersionCombo->currentText();
 

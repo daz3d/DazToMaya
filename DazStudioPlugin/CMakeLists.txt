@@ -2,7 +2,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(DZ_PLUGIN_TGT_NAME dzbridge_maya)
+set(DZ_PLUGIN_TGT_NAME dzmayabridge)
 set(DZ_PLUGIN_PROJECT_NAME "DzBridge-Maya")
 
 include_directories(${COMMON_LIB_INCLUDE_DIR})
