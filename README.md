@@ -25,7 +25,7 @@ The Daz To maya Bridge consists of two parts: a Daz Studio Plugin which exports 
 * A compatible version of the [Daz Studio][DazStudioURL] application
   * Minimum: 4.10
 * A compatible version of the [Maya][MayaURL] application
-  * Minimum: 2016
+  * Minimum: 2019
 * Operating System:
   * Windows 7 or newer
   * macOS 10.13 (High Sierra) or newer
