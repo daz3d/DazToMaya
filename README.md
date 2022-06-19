@@ -33,7 +33,7 @@ The Daz To maya Bridge consists of two parts: a Daz Studio Plugin which exports 
 
 ## 3. How do I install the Daz To Maya Bridge?
 ### Daz Studio:
--	You can install the Daz To Cinema 4D Bridge automatically through the Daz Install Manager or Daz Central.  This will automatically add a new menu option under File -> Send To -> Daz To Cinema 4D.
+-	You can install the Daz To Maya Bridge automatically through the Daz Install Manager or Daz Central.  This will automatically add a new menu option under File -> Send To -> Daz To Maya.
 -	Alternatively, you can manually install by downloading the latest build from Github Release Page and following the instructions there to install into Daz Studio.
 
 ### Maya:
