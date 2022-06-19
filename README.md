@@ -50,7 +50,7 @@ The Daz To maya Bridge consists of two parts: a Daz Studio Plugin which exports 
 ## 4. How do I use the Maya Bridge?
 1.	Open your character in Daz Studio.
 2.	Make sure any clothing or hair is parented to the main body.
-3.	From the main menu, select File -> Send To -> Daz To Cinema 4D.
+3.	From the main menu, select File -> Send To -> Daz To Maya.
 4.	A dialog will pop up: choose what type of conversion you wish to do, “Static Mesh” (no skeleton), “Skeletal Mesh” (Character or with joints), or “Animation”.
 5.	To enable Morphs or Subdivision levels, click the CheckBox to Enable that option, then click the "Choose Morphs" or "Bake  Subdivisions" button to configure your selections.
 6.	Click Accept, then wait for a dialog popup to notify you when to switch to Maya.
