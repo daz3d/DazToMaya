@@ -59,7 +59,8 @@ The Daz To maya Bridge consists of two parts: a Daz Studio Plugin which exports 
 
 ### Morphs:
 -	If you enabled the Export Morphs option, there will be a “Morphs” node in the Outliner panel.  Select this node and you will see morph sliders appear in the “Attribute Editor” panel, under the “Extra Attributes” heading.
-Animation:
+
+### Animation:
 -	To use the “Animation” asset type option, your Figure must use animations on the Daz Studio “Timeline” system.  
 -	If you are using “aniMate” or “aniBlocks” based animations, you need to right-click in the "aniMate” panel and select “Bake To Studio Keyframes”.  
 -	Once your animation is on the “Timeline” system, you can start the transfer using File -> Send To -> Daz To Maya.  
