@@ -88,7 +88,7 @@ The directory structure is as follows:
 - `Maya`:                  Files that pertain to the _Maya_ side of the bridge
   - `MAYA_APP_DIR`:  See table above
     - `...`:            Remaining sub-hierarchy
-- `DazStudioPlugin`:          Files that pertain to the _Daz Studio_ side of the DazToBlender bridge
+- `DazStudioPlugin`:          Files that pertain to the _Daz Studio_ side of the DazToMaya bridge
 - `dzbridge-common`:          Files from the Daz Bridge Library used by DazStudioPlugin
 - `Test`:                     Scripts and generated output (reports) used for Quality Assurance Testing.
 
