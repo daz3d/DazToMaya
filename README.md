@@ -69,7 +69,7 @@ The Daz To maya Bridge consists of two parts: a Daz Studio Plugin which exports 
 ### Subdivision Support:
 -	Daz Studio uses Catmull-Clark Subdivision Surface technology which is a mathematical way to describe an infinitely smooth surface in a very efficient manner. Similar to how an infinitely smooth circle can be described with just the radius, the base resolution mesh of a Daz Figure is actually the mathematical data in an equation to describe an infinitely smooth surface. For Software which supports Catmull-Clark Subdivision and subdivision surface-based morphs (also known as HD Morphs), there is no loss in quality or detail by exporting the base resolution mesh (subdivision level 0), and then using the native Catmull-Clark subdivision functions.
 -	For Software which does not fully support Catmull-Clark Subdivision or HD Morphs, we can "Bake" additional subdivision detail levels into the mesh to more closely approximate the detail of the original surface. However, baking each additional subdivision level requires exponentially more CPU time, memory, and storage space.
--	When you enable Bake Subdivision options in the Daz To Cinema4D bridge, the asset is transferred to Cinema4D as a standard mesh with higher resolution vertex counts.
+-	When you enable Bake Subdivision options in the Daz To Maya bridge, the asset is transferred to Maya as a standard mesh with higher resolution vertex counts.
 
 
 ## 5. Directory Structure
