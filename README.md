@@ -26,6 +26,7 @@ The Daz To maya Bridge consists of two parts: a Daz Studio Plugin which exports 
   * Minimum: 4.10
 * A compatible version of the [Maya][MayaURL] application
   * Minimum: 2019
+  * [PyMEL](https://knowledge.autodesk.com/support/maya/learn-explore/caas/CloudHelp/cloudhelp/2022/ENU/Maya-Scripting/files/GUID-2AA5EFCE-53B1-46A0-8E43-4CD0B2C72FB4-htm.html)
 * Operating System:
   * Windows 7 or newer
   * macOS 10.13 (High Sierra) or newer
@@ -45,6 +46,7 @@ The Daz To maya Bridge consists of two parts: a Daz Studio Plugin which exports 
 6.	In Maya, you should now see a “DazToMaya” tab in the Maya Shelf toolbar.  Click this tab to find the DazToMaya options.
 7.	If you have tabs disabled in the Maya Shelf, you may need to click the “cog” icon and select “Shelf Tabs” to find and select the “DazToMaya” tab.
 8.	From the DazToMaya tab of the Shelf, you should now see an icon for “DAZ IMPORT”.  You are done installing Daz To Maya Bridge!
+9. If you recieve an error when trying to click the "DAZ IMPORT" icon, make sure you have [PyMEL installed](https://knowledge.autodesk.com/support/maya/learn-explore/caas/CloudHelp/cloudhelp/2022/ENU/Maya-Scripting/files/GUID-2AA5EFCE-53B1-46A0-8E43-4CD0B2C72FB4-htm.html).
 
  
 ## 4. How do I use the Maya Bridge?
