@@ -128,7 +128,7 @@ void DzMayaAction::executeAction()
 		{
 			dzScene->setPrimarySelection(rootNodes[0]);
 		}
-		else
+		else if (rootNodes.length() > 1)
 		{
 			if (m_nNonInteractiveMode == 0)
 			{
