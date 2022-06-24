@@ -1,3 +1,24 @@
+DZBRIDGE_VERSION_MAJOR = 2022
+DZBRIDGE_VERSION_MINOR = 1
+DZBRIDGE_VERSION_REVISION = 10
+DZBRIDGE_VERSION_BUILD = 32
+DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
+##
+## DazToMaya
+##
+## Copyright 2020 Daz Productions, Inc.
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this project except in compliance with the License.
+## You may obtain a copy of the License at
+##
+##     http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+##
 import sys
 import os
 import math
@@ -2465,13 +2486,8 @@ def auto_import_daz():
 
 
 def d2mstart():
-    print("d2m start")
-
-    if Definitions.MAYA_VERSION >= 2014:
-        cmds.showWindow(window_daz_main)
-        cmds.window(window_name, edit=True, widthHeight=(343, 470))
-    else:
-        print("Maya Version not Supported. Please visit www.daz3d.com")
+    cmds.showWindow(window_daz_main)
+    cmds.window(window_name, edit=True, widthHeight=(343, 470))
 
 
 def initialize():
@@ -2481,7 +2497,10 @@ def initialize():
     global cfg_settings
     global figure
 
-    print(sys.platform)
+    print("DazToMaya: Python Version is {}.{}.{} {}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro, sys.version_info.releaselevel))
+    if Definitions.MAYA_VERSION < 2014:
+        print("DazToMaya: ERROR: Maya Version below 2014 not Supported.  Please visit www.daz3d.com")
+        return false
 
     # Get settings configuration
     with open(txtConf, 'r') as output:
@@ -2508,6 +2527,8 @@ def initialize():
     open_main_window()
     d2mstart()
     # d2m58-mac
+    print("DazToMaya: has successfully loaded, version {}.".format(DZBRIDGE_VERSION_STRING))
+    print("DaztoC4D: Intermediate folder location is \"{0}\".".format(Definitions.EXPORT_DIR))
 
 
 # ----------- UI --------------
