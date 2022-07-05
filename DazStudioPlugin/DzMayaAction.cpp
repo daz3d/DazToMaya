@@ -135,7 +135,6 @@ void DzMayaAction::executeAction()
 				QMessageBox::warning(0, tr("Error"),
 					tr("Please select one Character or Prop to send."), QMessageBox::Ok);
 			}
-			return;
 		}
 	}
 
