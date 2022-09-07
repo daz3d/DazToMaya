@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2022
-DZBRIDGE_VERSION_MINOR = 1
-DZBRIDGE_VERSION_REVISION = 11
-DZBRIDGE_VERSION_BUILD = 34
+DZBRIDGE_VERSION_MINOR = 2
+DZBRIDGE_VERSION_REVISION = 12
+DZBRIDGE_VERSION_BUILD = 35
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -2234,6 +2234,23 @@ def auto_ik():
                 daz_figure = "Genesis8_1"
                 break
 
+            if "Genesis9" in joint:
+                try:
+                    gen9_apply_t_pose()
+                except:
+                    pass
+
+                # set DrawStyle for Genesis9 Skeleton to "None"
+                # 2 == None
+                # 0 == Bone
+                try:
+                    mel.eval('setAttr "Genesis9.drawStyle" 0')
+                except:
+                    pass
+
+                daz_figure = "Genesis9"
+                break
+
 
         # -----Probar forzar ojos correctos...... agregado para male3 lion-o...
         if "Genesis8" in daz_figure:
@@ -2284,7 +2301,11 @@ def auto_ik():
             pass
         if global_current_dtu.hasAnimation() == False:
             try:
-                daz_to_ik()
+                if "Genesis9" in daz_figure:
+                    map_gen9_to_hik()
+                else:
+                    daz_to_ik()
+                pass
             except:
                 pass
 
@@ -3290,3 +3311,310 @@ class ConvertToVray:
             pass
         print("Done.")
         self.convert_ui()
+
+def map_gen9_to_hik():
+
+    # unirBones(DazBone,HumanIkBone) -------------------------------------
+    joints_list = mel.eval('ls -type joint')
+
+    mel.eval('setCharacterObject("hip","Character1",1,0)')
+    mel.eval('setCharacterObject("spine1","Character1",8,0)')
+    mel.eval('setCharacterObject("spine2","Character1",23,0)')
+    mel.eval('setCharacterObject("spine3","Character1",24,0)')
+    mel.eval('setCharacterObject("spine4","Character1",25,0)')
+    mel.eval('setCharacterObject("neck1","Character1",20,0)')
+    mel.eval('setCharacterObject("neck2","Character1",32,0)')
+    mel.eval('setCharacterObject("head","Character1",15,0)')
+
+    # Left
+    mel.eval('setCharacterObject("l_thigh","Character1",2,0)')
+    mel.eval('setCharacterObject("l_shin","Character1",3,0)')
+    mel.eval('setCharacterObject("l_foot","Character1",4,0)')
+    mel.eval('setCharacterObject("l_toes","Character1",16,0)')
+
+    mel.eval('setCharacterObject("l_shoulder","Character1",18,0)')
+    mel.eval('setCharacterObject("l_upperarm","Character1",9,0)')
+    mel.eval('setCharacterObject("l_forearm","Character1",10,0)')
+
+    mel.eval('setCharacterObject("l_hand","Character1",11,0)')
+    mel.eval('setCharacterObject("l_thumb1","Character1",50,0)')
+    mel.eval('setCharacterObject("l_thumb2","Character1",51,0)')
+    mel.eval('setCharacterObject("l_thumb3","Character1",52,0)')
+    mel.eval('setCharacterObject("l_index1","Character1",54,0)')
+    mel.eval('setCharacterObject("l_index2","Character1",55,0)')
+    mel.eval('setCharacterObject("l_index3","Character1",56,0)')
+    mel.eval('setCharacterObject("l_mid1","Character1",58,0)')
+    mel.eval('setCharacterObject("l_mid2","Character1",59,0)')
+    mel.eval('setCharacterObject("l_mid3","Character1",60,0)')
+    mel.eval('setCharacterObject("l_ring1","Character1",62,0)')
+    mel.eval('setCharacterObject("l_ring2","Character1",63,0)')
+    mel.eval('setCharacterObject("l_ring3","Character1",64,0)')
+    mel.eval('setCharacterObject("l_pinky1","Character1",66,0)')
+    mel.eval('setCharacterObject("l_pinky2","Character1",67,0)')
+    mel.eval('setCharacterObject("l_pinky3","Character1",68,0)')
+
+    # Right
+    mel.eval('setCharacterObject("r_thigh","Character1",5,0)')
+    mel.eval('setCharacterObject("r_shin","Character1",6,0)')
+    mel.eval('setCharacterObject("r_foot","Character1",7,0)')
+    mel.eval('setCharacterObject("r_toes","Character1",17,0)')
+
+    mel.eval('setCharacterObject("r_shoulder","Character1",19,0)')
+    mel.eval('setCharacterObject("r_upperarm","Character1",12,0)')
+    mel.eval('setCharacterObject("r_forearm","Character1",13,0)')
+
+    mel.eval('setCharacterObject("r_hand","Character1",14,0)')
+
+    mel.eval('setCharacterObject("r_thumb1","Character1",74,0)')
+    mel.eval('setCharacterObject("r_thumb2","Character1",75,0)')
+    mel.eval('setCharacterObject("r_thumb3","Character1",76,0)')
+    mel.eval('setCharacterObject("r_index1","Character1",78,0)')
+    mel.eval('setCharacterObject("r_index2","Character1",79,0)')
+    mel.eval('setCharacterObject("r_index3","Character1",80,0)')
+    mel.eval('setCharacterObject("r_mid1","Character1",82,0)')
+    mel.eval('setCharacterObject("r_mid2","Character1",83,0)')
+    mel.eval('setCharacterObject("r_mid3","Character1",84,0)')
+    mel.eval('setCharacterObject("r_ring1","Character1",86,0)')
+    mel.eval('setCharacterObject("r_ring2","Character1",87,0)')
+    mel.eval('setCharacterObject("r_ring3","Character1",88,0)')
+    mel.eval('setCharacterObject("r_pinky1","Character1",90,0)')
+    mel.eval('setCharacterObject("r_pinky2","Character1",91,0)')
+    mel.eval('setCharacterObject("r_pinky3","Character1",92,0)')
+
+    mel.eval('setCharacterObject("l_forearmtwist1","Character1",177,0)')
+    mel.eval('setCharacterObject("l_forearmtwist2","Character1",185,0)')
+    mel.eval('setCharacterObject("l_upperarmtwist1","Character1",176,0)')
+    mel.eval('setCharacterObject("l_upperarmtwist2","Character1",184,0)')
+    mel.eval('setCharacterObject("l_thightwist1","Character1",172,0)')
+    mel.eval('setCharacterObject("l_thightwist2","Character1",180,0)')
+    # parentar("lMetatarsals","Character1_LeftFoot")
+
+    mel.eval('setCharacterObject("r_forearmtwist1","Character1",179,0)')
+    mel.eval('setCharacterObject("r_forearmtwist2","Character1",187,0)')
+    mel.eval('setCharacterObject("r_upperarmtwist1","Character1",178,0)')
+    mel.eval('setCharacterObject("r_upperarmtwist2","Character1",186,0)')
+    mel.eval('setCharacterObject("r_thightwist1","Character1",174,0)')
+    mel.eval('setCharacterObject("r_thightwist2","Character1",182,0)')
+    # parentar("rMetatarsals","Character1_RightFoot")
+
+    toe_bones_left = ("l_bigtoe1", "l_indextoe1", "l_midtoe1",
+                    "l_ringtoe1", "l_pinkytoe1")
+    for toe_bone_left in toe_bones_left:
+        if toe_bone_left in joints_list:
+            parent_ar(toe_bone_left, "l_toes")
+
+    toe_bones_left = ("r_bigtoe1", "r_indextoe1", "r_midtoe1",
+                    "r_ringtoe1", "r_pinkytoe1")
+    for toe_bone_left in toe_bones_left:
+        if toe_bone_left in joints_list:
+            parent_ar(toe_bone_left, "r_toes")
+
+def gen9_apply_t_pose():
+    global global_current_dtu
+    if global_current_dtu is None or global_current_dtu.hasAnimation():
+        return
+    # ---------------------------------------------------------
+    try:
+        mel.eval('setAttr "l_upperarm.rotateX" 0.0')
+        mel.eval('setAttr "l_upperarm.rotateY" 0.0')
+        mel.eval('setAttr "l_upperarm.rotateZ" 48.24')
+        # 45.75
+
+        mel.eval('setAttr "r_upperarm.rotateX" 0.0')
+        mel.eval('setAttr "r_upperarm.rotateY" -0.0')
+        mel.eval('setAttr "r_upperarm.rotateZ" -48.24')
+
+        mel.eval('setAttr "l_forearm.rotateX" 1.16')
+        mel.eval('setAttr "l_forearm.rotateY" 15.49')
+        mel.eval('setAttr "l_forearm.rotateZ" -4.2')
+
+        mel.eval('setAttr "r_forearm.rotateX" 1.16')
+        mel.eval('setAttr "r_forearm.rotateY" -15.49')
+        mel.eval('setAttr "r_forearm.rotateZ" 4.2')
+
+        mel.eval('setAttr "l_hand.rotateX" 0.0')
+        mel.eval('setAttr "l_hand.rotateY" -13.76')
+        mel.eval('setAttr "l_hand.rotateZ" 0.0')
+
+        mel.eval('setAttr "r_hand.rotateX" 0.0')
+        mel.eval('setAttr "r_hand.rotateY" 13.76')
+        mel.eval('setAttr "r_hand.rotateZ" -0.0')
+
+        mel.eval('setAttr "l_thumb1.rotateX" -0.0')
+        mel.eval('setAttr "l_thumb1.rotateY" -0.0')
+        mel.eval('setAttr "l_thumb1.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_thumb1.rotateX" -0.0')
+        mel.eval('setAttr "r_thumb1.rotateY" 0.0')
+        mel.eval('setAttr "r_thumb1.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_thumb2.rotateX" -0.0')
+        mel.eval('setAttr "l_thumb2.rotateY" -0.0')
+        mel.eval('setAttr "l_thumb2.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_thumb2.rotateX" -0.0')
+        mel.eval('setAttr "r_thumb2.rotateY" 0.0')
+        mel.eval('setAttr "r_thumb2.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_thumb3.rotateX" -0.0')
+        mel.eval('setAttr "l_thumb3.rotateY" -0.0')
+        mel.eval('setAttr "l_thumb3.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_thumb3.rotateX" -0.0')
+        mel.eval('setAttr "r_thumb3.rotateY" 0.0')
+        mel.eval('setAttr "r_thumb3.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_indexmetacarpal.rotateX" -0.0')
+        mel.eval('setAttr "l_indexmetacarpal.rotateY" -0.0')
+        mel.eval('setAttr "l_indexmetacarpal.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_indexmetacarpal.rotateX" -0.0')
+        mel.eval('setAttr "r_indexmetacarpal.rotateY" 0.0')
+        mel.eval('setAttr "r_indexmetacarpal.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_index.rotateX" -0.0')
+        mel.eval('setAttr "l_index.rotateY" 0.0')
+        mel.eval('setAttr "l_index.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_index1.rotateX" -0.0')
+        mel.eval('setAttr "r_index1.rotateY" -0.0')
+        mel.eval('setAttr "r_index1.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_index2.rotateX" -0.0')
+        mel.eval('setAttr "l_index2.rotateY" -0.0')
+        mel.eval('setAttr "l_index2.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_index2.rotateX" -0.0')
+        mel.eval('setAttr "r_index2.rotateY" 0.0')
+        mel.eval('setAttr "r_index2.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_index3.rotateX" -0.0')
+        mel.eval('setAttr "l_index3.rotateY" -0.0')
+        mel.eval('setAttr "l_index3.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_index3.rotateX" -0.0')
+        mel.eval('setAttr "r_index3.rotateY" 0.0')
+        mel.eval('setAttr "r_index3.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_midmetacarpal.rotateX" -0.0')
+        mel.eval('setAttr "l_midmetacarpal.rotateY" 0.0')
+        mel.eval('setAttr "l_midmetacarpal.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_midmetacarpal.rotateX" -0.0')
+        mel.eval('setAttr "r_midmetacarpal.rotateY" -0.0')
+        mel.eval('setAttr "r_midmetacarpal.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_mid1.rotateX" -0.0')
+        mel.eval('setAttr "l_mid1.rotateY" -0.0')
+        mel.eval('setAttr "l_mid1.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_mid1.rotateX" -0.0')
+        mel.eval('setAttr "r_mid1.rotateY" 0.0')
+        mel.eval('setAttr "r_mid1.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_mid2.rotateX" -0.0')
+        mel.eval('setAttr "l_mid2.rotateY" -0.0')
+        mel.eval('setAttr "l_mid2.rotateZ" 0.0')
+
+        mel.eval('setAttr "r_mid2.rotateX" -0.0')
+        mel.eval('setAttr "r_mid2.rotateY" 0.0')
+        mel.eval('setAttr "r_mid2.rotateZ" -0.0')
+
+        mel.eval('setAttr "l_mid3.rotateX" -0.0')
+        mel.eval('setAttr "l_mid3.rotateY" -0.0')
+        mel.eval('setAttr "l_mid3.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_mid3.rotateX" -0.0')
+        mel.eval('setAttr "r_mid3.rotateY" 0.0')
+        mel.eval('setAttr "r_mid3.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_ringmetacarpal.rotateX" -0.0')
+        mel.eval('setAttr "l_ringmetacarpal.rotateY" 0.0')
+        mel.eval('setAttr "l_ringmetacarpal.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_ringmetacarpal.rotateX" -0.0')
+        mel.eval('setAttr "r_ringmetacarpal.rotateY" -0.0')
+        mel.eval('setAttr "r_ringmetacarpal.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_ring1.rotateX" -0.0')
+        mel.eval('setAttr "l_ring1.rotateY" 0.0')
+        mel.eval('setAttr "l_ring1.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_ring1.rotateX" -0.0')
+        mel.eval('setAttr "r_ring1.rotateY" -0.0')
+        mel.eval('setAttr "r_ring1.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_ring2.rotateX" -0.0')
+        mel.eval('setAttr "l_ring2.rotateY" 0.0')
+        mel.eval('setAttr "l_ring2.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_ring2.rotateX" -0.0')
+        mel.eval('setAttr "r_ring2.rotateY" -0.0')
+        mel.eval('setAttr "r_ring2.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_ring3.rotateX" -0.0')
+        mel.eval('setAttr "l_ring3.rotateY" 0.0')
+        mel.eval('setAttr "l_ring3.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_ring3.rotateX" -0.0')
+        mel.eval('setAttr "r_ring3.rotateY" -0.0')
+        mel.eval('setAttr "r_ring3.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_pinkymetacarpal.rotateX" -0.0')
+        mel.eval('setAttr "l_pinkymetacarpal.rotateY" 0.0')
+        mel.eval('setAttr "l_pinkymetacarpal.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_pinkymetacarpal.rotateX" -0.0')
+        mel.eval('setAttr "r_pinkymetacarpal.rotateY" -0.0')
+        mel.eval('setAttr "r_pinkymetacarpal.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_pinky1.rotateX" -0.0')
+        mel.eval('setAttr "l_pinky1.rotateY" -0.0')
+        mel.eval('setAttr "l_pinky1.rotateZ" -0.0')
+
+        mel.eval('setAttr "r_pinky1.rotateX" -0.0')
+        mel.eval('setAttr "r_pinky1.rotateY" 0.0')
+        mel.eval('setAttr "r_pinky1.rotateZ" 0.0')
+
+        mel.eval('setAttr "l_pinky2.rotateX" -0.0')
+        mel.eval('setAttr "l_pinky2.rotateY" -0.0')
+        mel.eval('setAttr "l_pinky2.rotateZ" 0.0')
+
+        mel.eval('setAttr "r_pinky2.rotateX" -0.0')
+        mel.eval('setAttr "r_pinky2.rotateY" 0.0')
+        mel.eval('setAttr "r_pinky2.rotateZ" -0.0')
+
+        mel.eval('setAttr "l_pinky3.rotateX" -0.0')
+        mel.eval('setAttr "l_pinky3.rotateY" -0.0')
+        mel.eval('setAttr "l_pinky3.rotateZ" 0.0')
+
+        mel.eval('setAttr "r_pinky3.rotateX" -0.0')
+        mel.eval('setAttr "r_pinky3.rotateY" 0.0')
+        mel.eval('setAttr "r_pinky3.rotateZ" -0.0')
+
+        mel.eval('setAttr "l_shin.rotateX" 0.0')
+        mel.eval('setAttr "l_shin.rotateY" -9.66')
+        mel.eval('setAttr "l_shin.rotateZ" 0.0')
+
+        mel.eval('setAttr "r_shin.rotateX" 0.0')
+        mel.eval('setAttr "r_shin.rotateY" 9.66')
+        mel.eval('setAttr "r_shin.rotateZ" -0.0')
+
+        mel.eval('setAttr "l_thigh.rotateX" 0.54')
+        mel.eval('setAttr "l_thigh.rotateY" -0.16')
+        mel.eval('setAttr "l_thigh.rotateZ" -6.23')
+
+        mel.eval('setAttr "r_thigh.rotateX" 0.54')
+        mel.eval('setAttr "r_thigh.rotateY" 0.16')
+        mel.eval('setAttr "r_thigh.rotateZ" 6.23')
+        '''
+        mel.eval('setAttr "l_foot.rotateX" -1.96')
+        mel.eval('setAttr "l_foot.rotateY" -4.88')
+        mel.eval('setAttr "l_foot.rotateZ" 3.53')
+
+        mel.eval('setAttr "r_foot.rotateX" -1.96')
+        mel.eval('setAttr "r_foot.rotateY" 4.88')
+        mel.eval('setAttr "r_foot.rotateZ" -3.53')
+        '''
+    except:
+        print("Error trying to apply Genesis 9 t-Pose, skipping...")
