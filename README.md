@@ -40,7 +40,7 @@ The Daz To maya Bridge consists of two parts: a Daz Studio Plugin which exports 
 ### Maya:
 1.	The Daz Studio Plugin comes embedded with an installer for the Maya Bridge module.  From the Daz To Maya Bridge dialog, there is now section in the Advanced Settings section for Installing the Maya module.
 2.	Click the “Install Plugin” button.  You will see a window popup to choose a folder to install the Maya module.  The starting folder should be the default location for maya plugins and modules.
-3.	On Windows, the path to install modules should be “\Users\<username>\Documents\maya\modules”.  On Mac, the path should be “/Users/<username>/Library/Preferences/Autodesk/maya/modules”.
+3.	On Windows, the path to install modules should be “Documents\maya\modules”.  On Mac, the path should be “/Users/<username>/Library/Preferences/Autodesk/maya/modules”.
 4.	For most Maya setups, you should be able to just click “Select Folder”.  You will then see a confirmation dialog stating if the plugin installation was successful.
 5.	If Maya is running, you will need to restart for the Daz To Maya Bridge module to load.
 6.	In Maya, you should now see a “DazToMaya” tab in the Maya Shelf toolbar.  Click this tab to find the DazToMaya options.

@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2022
 DZBRIDGE_VERSION_MINOR = 1
-DZBRIDGE_VERSION_REVISION = 10
-DZBRIDGE_VERSION_BUILD = 32
+DZBRIDGE_VERSION_REVISION = 11
+DZBRIDGE_VERSION_BUILD = 34
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -2528,7 +2528,7 @@ def initialize():
     d2mstart()
     # d2m58-mac
     print("DazToMaya: has successfully loaded, version {}.".format(DZBRIDGE_VERSION_STRING))
-    print("DaztoC4D: Intermediate folder location is \"{0}\".".format(Definitions.EXPORT_DIR))
+    print("DazToMaya: Intermediate folder location is \"{0}\".".format(Definitions.EXPORT_DIR))
 
 
 # ----------- UI --------------

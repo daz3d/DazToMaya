@@ -396,7 +396,11 @@ void DzMayaDialog::HandleOpenIntermediateFolderButton(QString sFolderPath)
 {
 	QString sIntermediateFolder = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + QDir::separator() + "DazToMaya";
 #if __LEGACY_PATHS__
-	sIntermediateFolder = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + "/DAZ 3D/Bridges/Daz To Maya/Exports/FIG/FIG0";
+	sIntermediateFolder = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + "/DAZ 3D/Bridges/Daz To Maya/Exports";
+	if (QFile(sIntermediateFolder).exists() == false)
+	{
+		QDir().mkpath(sIntermediateFolder);
+	}
 #else
 	if (intermediateFolderEdit != nullptr)
 	{
