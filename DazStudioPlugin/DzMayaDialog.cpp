@@ -66,9 +66,9 @@ the tutorials or videos below to install and enable the Maya Plugin for the brid
 <ul>\
 <li><a href=\"https://github.com/daz3d/DazToMaya#3-how-do-i-install-the-daz-to-maya-bridge\">How To Install and Configure the Bridge (Github)</a></li>\
 <li><a href=\"https://www.daz3d.com/maya-bridge#faq\">Daz To Maya FAQ (Daz 3D)</a></li>\
-<li><a href=\"https://youtu.be/y1yizEPQvh0\">How To Install DazToMaya Bridge (Youtube)</a></li>\
+<li><a href=\"https://youtu.be/H3ukRuEyLCM\">How To Install DazToMaya Bridge (Youtube)</a></li>\
 <li><a href=\"https://knowledge.autodesk.com/support/maya/learn-explore/caas/CloudHelp/cloudhelp/2023/ENU/Maya-EnvVar/files/GUID-228CCA33-4AFE-4380-8C3D-18D23F7EAC72-htm.html\">Maya File Paths (Autodesk Knowledge Base)</a></li>\
-<li><a href=\"https://www.daz3d.com/forums/discussion/574846/official-daztomaya-bridge-2022-what-s-new-and-how-to-use-it\">What's New and How To Use It (Daz 3D Forums)</a></li>\
+<li><a href=\"https://www.daz3d.com/forums/discussion/574846/official-daztomaya-bridge-2022-what-s-new-and-how-to-use-it/p1\">What's New and How To Use It (Daz 3D Forums)</a></li>\
 </ul>\
 Once the maya plugin is enabled, please add a Character or Prop to the Scene to transfer assets using the Daz To Maya Bridge.<br><br>\
 To find out more about Daz Bridges, go to <a href=\"https://www.daz3d.com/daz-bridges\">https://www.daz3d.com/daz-bridges</a><br>\
