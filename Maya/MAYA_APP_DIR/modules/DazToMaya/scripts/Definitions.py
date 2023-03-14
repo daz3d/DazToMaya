@@ -2,6 +2,16 @@ import os
 import platform
 import maya.cmds as cmds
 
+# DB, 2023-Mar-14: fix current working directory conflicts with other modules + plugins
+testFile = os.path.abspath("../scripts/d2m.py")
+if os.path.exists(testFile) == False:
+    module_script_dir = os.path.dirname(os.path.abspath(__file__))
+    print("DazToMaya: INFO: current directory is not [" + module_script_dir + "], changing working directory...")
+    os.chdir(module_script_dir)
+else:
+    module_script_dir = os.path.dirname(testFile)
+DAZTOMAYA_MODULE_DIR = os.path.dirname(module_script_dir).replace("\\", "/")
+
 MAYA_VERSION = int(cmds.about(v=True))
 
 if (platform.system() == "Windows"):

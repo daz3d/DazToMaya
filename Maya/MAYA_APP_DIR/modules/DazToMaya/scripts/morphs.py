@@ -73,7 +73,7 @@ def create_morphs_node(morph_links):
 
 def create_custom_template(morph_links):
     """
-    Create custom template to be used for morphList node 
+    Create custom template to be used for morphList node
     """
     template_text = "<?xml version='1.0' encoding='UTF-8'?>\n"
     template_text += "<templates>\n"
@@ -103,7 +103,7 @@ def create_custom_template(morph_links):
 
     template_text += "</templates>\n"
 
-    template_path = os.path.abspath("..\scripts\\AETemplates\AEtransform.MorphsTemplate.xml")
+    template_path = Definitions.DAZTOMAYA_MODULE_DIR + "\scripts\\AETemplates\AEtransform.MorphsTemplate.xml"
     template_file = open(template_path, "w")
     template_file.write(template_text)
     template_file.close()

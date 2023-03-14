@@ -1,6 +1,7 @@
-import os 
+import os
+import Definitions
 
-texture_maps = os.path.abspath("../scripts/textures/")
+texture_maps = Definitions.DAZTOMAYA_MODULE_DIR + "/scripts/textures/"
 
 texture_library = {
     "normal": {
@@ -106,5 +107,3 @@ texture_library = {
         ]
     }
 }
-
-

@@ -58,16 +58,10 @@ else:
 
 # no delete morph, editer for user...
 
-# DB, 2022-June-05: Hotfix for Mac Maya
-import platform
-if (platform.system() == "Darwin"):
-    module_script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(module_script_dir)
-
-d2m_logo = os.path.abspath("../icons/d2m_import_logo.png")
-d2m_banner = os.path.abspath("../icons/d2m_banner.png")
-d2m_help_icon = os.path.abspath("../icons/d2m_help_icon.png")
-txtConf = os.path.abspath("../scripts/d2m.cfg")
+d2m_logo = Definitions.DAZTOMAYA_MODULE_DIR + "/icons/d2m_import_logo.png"
+d2m_banner = Definitions.DAZTOMAYA_MODULE_DIR + "/icons/d2m_banner.png"
+d2m_help_icon = Definitions.DAZTOMAYA_MODULE_DIR + "/icons/d2m_help_icon.png"
+txtConf = Definitions.DAZTOMAYA_MODULE_DIR + "/scripts/d2m.cfg"
 
 scale_menu_value = "Automatic"
 
