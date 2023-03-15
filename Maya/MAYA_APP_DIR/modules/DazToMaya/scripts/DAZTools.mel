@@ -2,18 +2,18 @@
 global proc DAZTools()
 {
     if (`window -exists DAZWin`)deleteUI -window DAZWin;
-    window -title "DAZ Studio Tools for Maya" -widthHeight 300 80 DAZWin;   
+    window -title "DAZ Studio Tools for Maya" -widthHeight 300 80 DAZWin;
         columnLayout;
             rowColumnLayout -nc 1;
             text "Please choose one of the following options:";
-            setParent ..; 
+            setParent ..;
             rowColumnLayout -nc 1;
                 button -w 300 -label "Rig or Re-target Skeleton" -command "DAZRigger";
-            setParent ..; 
+            setParent ..;
             rowColumnLayout -nc 1;
                 button -w 300 -label "Export Animations to DAZ" -command "DufferWin";
-            setParent ..; 
-        setParent ..; 
+            setParent ..;
+        setParent ..;
     setParent ..;
     showWindow DAZWin;
 }
@@ -36,35 +36,35 @@ global proc DufferWin(){
     string $rigs[];
     for ($obj in $rigA)
         if (`attributeExists "version" $obj`)
-            if(`getAttr ($obj+".version")`=="1.02") appendStringArray($rigs, {$obj}, 1); 
+            if(`getAttr ($obj+".version")`=="1.02") appendStringArray($rigs, {$obj}, 1);
     if ($ns == "") $ns = $rigs[0];
     if ($folder==""){
 	    if (`filetest -d "C:/Daz/Applications/Data/DAZ 3D/My DAZ 3D Library/People/Genesis 8 Male/Animation/"`) $folder = "C:/Daz/Applications/Data/DAZ 3D/My DAZ 3D Library/People/Genesis 8 Male/Animation/";
 	    if (`filetest -d "D:/Daz/Applications/Data/DAZ 3D/My DAZ 3D Library/People/Genesis 8 Male/Animation/"`) $folder = "D:/Daz/Applications/Data/DAZ 3D/My DAZ 3D Library/People/Genesis 8 Male/Animation/";
 	}
-    window -title "Export DUF to DAZ Studio" -widthHeight 502 100 DufferWin;   
+    window -title "Export DUF to DAZ Studio" -widthHeight 502 100 DufferWin;
         columnLayout;
             rowColumnLayout -nc 3;
             text -al "right" -w 100 "Animation Name:";
             textField -w 300 -tx $name DufferNameField;
             button -label "From Scene" -w 100 -command "string $fn = `file -q -sn`; textField -e -tx `basenameEx $fn` DufferNameField";
-            setParent ..; 
+            setParent ..;
             rowColumnLayout -nc 3;
             text -al "right" -w 100 "Export Folder:";
             textField -w 300 -tx $folder DufferFolderField;
             string $command = "string $fd = `textField -q -tx DufferFolderField`; string $sf[] = `fileDialog2 -fm 3 -cap \"Choose folder\" -dir $fd -ds 2`; if (`size($sf)`>0) textField -e -tx ($sf[0]+\"/\") DufferFolderField";
             button -label "Browse" -w 100 -command $command;
-            setParent ..; 
-            rowColumnLayout -nc 3; 
+            setParent ..;
+            rowColumnLayout -nc 3;
             text -al "right" -w 100 "Rig:";
             optionMenu -w 300 DufferNSMenu;
         		for ($rig in $rigs) menuItem -label $rig;
             button -w 100 -label "Refresh" -command "DufferWin";
-            setParent ..; 
+            setParent ..;
             rowColumnLayout -nc 1;
 			//checkBox -w 50 -v $bak -label "Bake" DufferBake;
             button -w 500 -label "Export DUF" -command "Duffer2 `textField -q -tx DufferFolderField` `textField -q -tx DufferNameField` `optionMenu -q -v DufferNSMenu`";
-        setParent ..; 
+        setParent ..;
     setParent ..;
     showWindow DufferWin;
 }
@@ -74,22 +74,22 @@ global proc string Duffer2(string $folder, string $name, string $rig)
     string $shapes[];
     string $joints[];
     int $bak = 1;
-    
+
     scriptJob -runOnce true -e "idle" "Undo";
-    
+
     //Check for missing information
     if ($folder=="") error "Folder not provided.";
     if ($name=="") error "Animation name not provided.";
     if ($rig=="") error "Rig not provided.";
     if (`objExists $rig`==0) error "Chosen rig doesn't exist.";
-    
+
 	string $NSA[] = `FindNS $rig`;
     string $NS = $NSA[0];
 	print $NS;
     string $rigName = $NSA[1];
 	string $rigT[] = `listRelatives -c -type joint ($NS+":ExportSetup")`;
 	$rig = $rigT[0];
-	
+
     if (`file -q -modified`)
     {
         $confirm = `confirmDialog -title "Please save before exporting" -message ("File has been modified since last save.\n Please save your work before continuing.")
@@ -106,36 +106,36 @@ global proc string Duffer2(string $folder, string $name, string $rig)
         if ($confirm == "No") error "Process cancelled by the user.";
         else print "\nReplacing file";
     }
-    
+
     string $start = `playbackOptions -q -ast`;
     string $end = `playbackOptions -q -aet`;
-    
+
     string $filename = ($folder + $name + ".duf");
     $joints = `listRelatives -ad -type joint $rig`;
-    
+
     string $rate = `currentUnit -q -time`;
     float $frameRate = 30;
     switch ($rate)
     {
-        case "game": 
+        case "game":
             $frameRate = 15;
             break;
-        case "film": 
+        case "film":
             $frameRate = 24;
             break;
-        case "pal": 
+        case "pal":
             $frameRate = 25;
             break;
-        case "ntsc": 
+        case "ntsc":
             $frameRate = 30;
             break;
-        case "show": 
+        case "show":
             $frameRate = 48;
             break;
-        case "palf": 
+        case "palf":
             $frameRate = 50;
             break;
-        case "ntscf": 
+        case "ntscf":
             $frameRate = 60;
             break;
     }
@@ -158,14 +158,14 @@ global proc string Duffer2(string $folder, string $name, string $rig)
     int $steps = `size($joints)`*9;
     if ($hasShapes) $steps += `size($shapes)`;
     progressBar -edit -beginProgress -status "Exporting Animation..." -maxValue $steps $gMainProgressBar;
-    
-    
+
+
 	//start writing DUF file
 	$file = `fopen $filename "w"`;
 	fprint $file "{\n";
 	fprint $file "	\"file_version\" : \"0.6.0.0\",\n";
 	fprint $file "	\"asset_info\" : {\n";
-	
+
 	fprint $file ("		\"id\" : \""+$filename+"\",\n");
     fprint $file "		\"type\" : \"preset_pose\",\n";
     fprint $file "		\"contributor\" : {\n";
@@ -174,25 +174,25 @@ global proc string Duffer2(string $folder, string $name, string $rig)
     fprint $file "			\"website\" : \"\"\n";
     fprint $file "		},\n";
     fprint $file "		\"revision\" : \"1.0\",\n";
-    
+
     string $dateTXT = `date -format "YYYY-MM-DD"`+ "T" +`date -format "hh:mm:ss"`;
-    
+
     fprint $file ("		\"modified\" : \""+$dateTXT+"Z\"\n");
     fprint $file "	},\n";
-    
+
     fprint $file "    \"scene\" : {\n";
     fprint $file "		\"animations\" : [\n";
     float $values[];
     int $k=0;
     string $attributes[] = {"translation", "rotation", "scale"};
     string $axis[] = {"X", "Y", "Z"};
-    
-    
+
+
     //compensate for Bind Pose offsets
     float $bindX[];
     float $bindY[];
     float $bindZ[];
-    
+
     int $state = `autoKeyframe -q -state`;
     autoKeyframe -state false;
     move -ls 0 0 0 ($NS+":*_ctrl");
@@ -207,47 +207,47 @@ global proc string Duffer2(string $folder, string $name, string $rig)
         $bindZ[$t] = `getAttr ($jnt+".translateZ")`;
     }
     autoKeyframe -state $state;
-    
+
     int $b=0;
-    
+
     if ($bak == 1)
     {
 		global string $gMainPane;
 		paneLayout -e -manage false $gMainPane;
         bakeResults -simulation true -t ($start+":"+$end) -sampleBy 1 -disableImplicitControl false -preserveOutsideKeys false -sparseAnimCurveBake false -removeBakedAttributeFromLayer true -removeBakedAnimFromLayer true -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape false {($NS+":lShldrBend_EXP"), ($NS+":rShldrBend_EXP")};
-        
+
         //Fix Shoulder Animations
         select -r ($NS+":lShldrBend_EXP") ($NS+":rShldrBend_EXP");
         filterCurve;
-        
+
         copyKey  -attribute "rotateX" ($NS+":lShldrBend_EXP");
         pasteKey  -attribute "rotateX" -o "replaceCompletely" ($NS+":lShldrTwist_EXP");
         keyframe -valueChange 0  ($NS+":lShldrBend_EXP.rotateX");
-        
+
         copyKey  -attribute "rotateX" ($NS+":rShldrBend_EXP");
         pasteKey  -attribute "rotateX" -o "replaceCompletely" ($NS+":rShldrTwist_EXP");
         keyframe -valueChange 0  ($NS+":rShldrBend_EXP.rotateX");
-        
+
         bakeResults -simulation true -t ($start+":"+$end) -sampleBy 1 -disableImplicitControl false -preserveOutsideKeys false -sparseAnimCurveBake false -removeBakedAttributeFromLayer true -removeBakedAnimFromLayer true -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape false {($NS+":lForearmBend_EXP"), ($NS+":rForearmBend_EXP")};
-        
+
         select -r ($NS+":lForearmBend_EXP") ($NS+":rForearmBend_EXP");
         filterCurve;
-        
+
         keyframe -valueChange 0  ($NS+":lForearmBend_EXP.rotateX");
         keyframe -valueChange 0  ($NS+":lForearmBend_EXP.rotateZ");
         keyframe -valueChange 0  ($NS+":rForearmBend_EXP.rotateX");
         keyframe -valueChange 0  ($NS+":rForearmBend_EXP.rotateZ");
-            
+
         select -cl;
-        
+
         bakeResults -simulation true -t ($start+":"+$end) -sampleBy 1 -disableImplicitControl false -preserveOutsideKeys false -sparseAnimCurveBake false -removeBakedAttributeFromLayer true -removeBakedAnimFromLayer true -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape false $joints;
         select -r $joints;
         filterCurve;
         select -cl;
 		paneLayout -e -manage true $gMainPane;
     }
-    
-    
+
+
     //parse values
     for ($joint in $joints)
     {
@@ -281,7 +281,7 @@ global proc string Duffer2(string $folder, string $name, string $rig)
                     }
                     fprint $file "			{\n";
                     fprint $file ("				\"url\" : \"name://@selection/"+$jnt+":?"+$at+"/"+`tolower $ax`+"/value\",\n");
-                    
+
                     $keys = "				\"keys\" : [";
                     $frames = `keyframe -q $curve[0]`;
                     $values = `keyframe -q -vc $curve[0]`;
@@ -372,8 +372,9 @@ global proc DAZRigger()
 {
     print "---- Running DAZ Rigger v1.02 ----\n";
     global string $DAZVersion;
-    $DAZVersion = "1.02";
+    $DAZVersion = "1.02.1";
 	global string $SourceFolder;
+    $SourceFolder = "";
 	string $source[];
 	int $prompt = 1;
 	string $message = "Apply Auto-rigger to which file?";
@@ -387,13 +388,13 @@ global proc DAZRigger()
     if ($result == "Run on open file"){
         string $scene = `file -q -sn`;
         $SourceFolder = `dirname $scene`;
-	if ($SourceFolder=="")
-	{
-		string $newFolder[] = `fileDialog2 -cap "Select the folder where your rig will be saved." -fm 2 -dialogStyle 2`;
-		if (`size($newFolder)` == 0) error "Process aborted by user";
-		$SourceFolder = $newFolder[0];
-	}
-        $prompt = 0;
+    	if ($SourceFolder=="")
+    	{
+    		string $newFolder[] = `fileDialog2 -cap "Select the folder where your rig will be saved." -fm 2 -dialogStyle 2`;
+    		if (`size($newFolder)` == 0) error "Process aborted by user";
+    		$SourceFolder = $newFolder[0];
+    	}
+            $prompt = 0;
     }
     if ($result == "Cancel") error "Script interrupted by user.";
 	if ($prompt){
@@ -406,6 +407,8 @@ global proc DAZRigger()
         }
         else file -open -f $source[0];
     }
+    string $character = hikGetCurrentCharacter();
+    hikEnableCharacter($character, 0);
     string $top = `UnifySkeletons`;
 	MakeRig $top;
 }
@@ -413,7 +416,7 @@ global proc DAZRigger()
 global proc string UnifySkeletons()
 {
 	string $temp = `getenv TEMP`;
-	
+
 	// Find Top Joint
 	string $topJoint;
 	string $jnts[] = `ls -type joint`;
@@ -423,9 +426,9 @@ global proc string UnifySkeletons()
 		if ($par[0]=="") $topJoint = $jnt;
 		if (`endsWith $par[0] "_Group"`) $topJoint = `FixD2M $par[0]`;
 	}
-	
+
 	ApplyBindPose $topJoint;
-	
+
 	//If there are more chilren than the hip joint, unify the skeletons
 	int $chSize = size(`listRelatives -c -type joint $topJoint`);
 	if ($chSize > 1)
@@ -444,7 +447,7 @@ global proc string UnifySkeletons()
 			}
 		}
 		string $topInfs[] = `skinCluster -q -wi $topCluster`;
-		
+
 		// Simplify influence list to short names
 		string $infNames[];
 		for ($inf in $topInfs)
@@ -453,7 +456,7 @@ global proc string UnifySkeletons()
 			string $new[] = {$path[(`size $path`-1)]};
 			appendStringArray($infNames, $new, 1);
 		}
-		
+
 		// Transfer weights from smaller clusters to big cluster
 		$clusters = `stringArrayRemove {$topCluster} $clusters`;
 		for ($skin in $clusters)
@@ -477,22 +480,22 @@ global proc string UnifySkeletons()
 		// Delete Obsolete hierarchy
 		string $children[] =  `listRelatives -c -type joint $topJoint`;
 		for ($ch in $children) if ($ch != "hip") delete $ch;
-		
+
 		print "---- Joint hierarchies unified ----\n";
 	}
-	
+
 	//Move Geometry to the proper group
 	group -empty -n "Geometry";
 	$meshNodes = `ls -type "mesh"`;
 	$meshT = `filterExpand -sm 12 $meshNodes`;
 	$MTR = `stringArrayRemoveDuplicates($meshT)`;
-	for ($tr in $MTR) 
+	for ($tr in $MTR)
 	{
 		string $new = `rename $tr ($tr+"Geo")`;
 		parent $new "Geometry";
 	}
 	print "---- Geometries grouped ----\n";
-	
+
 	string $tj[] = `stringToStringArray $topJoint "|"`;
 	$topJoint = $tj[0];
 	return $topJoint;
@@ -529,9 +532,9 @@ global proc int MakeRig(string $export)
 	int $remap = 0;
 	if ($hasAnim) $animS = `confirmDialog -title "Retarget" -message "The chosen FBX file has animation.\nWould you like to retarget it to the new rig?" -button "Just Make Rig" -button "Make Rig and Retarget Animation" -button "Just Retarget Animation" -button "Cancel" -defaultButton "Make Rig and Retarget Animation" -cancelButton "Cancel" -dismissString "Cancel"`;
 	if ($animS== "Just Make Rig") { $remap = 0; $makeRig = 1;}
-	if ($animS== "Make Rig and Retarget Animation"){ $remap = 1; $makeRig = 1;} 
-	if ($animS== "Just Retarget Animation"){ $remap = 1; $makeRig = 0;} 
-	if ($animS== "Cancel") return 0; 
+	if ($animS== "Make Rig and Retarget Animation"){ $remap = 1; $makeRig = 1;}
+	if ($animS== "Just Retarget Animation"){ $remap = 1; $makeRig = 0;}
+	if ($animS== "Cancel") return 0;
 	if($remap)
 	{
 		currentUnit -time ntsc;
@@ -579,7 +582,7 @@ global proc int MakeRig(string $export)
 			catch (`parent ($name+"_zero") ($jointParent[0]+"_ctrl")`);
 		}
 		print "---- FK Rig set up ----\n";
-		
+
 		FixTwistJoints;
 		SetupStructure $export;
 		MakeIKHand;
@@ -670,7 +673,7 @@ global proc int RemapAnimation(string $top, string $file, int $start, int $end)
 	playbackOptions -e -min $start -ast $start -max $end -aet $end;
 	file -r -type "mayaAscii" -ignoreVersion -gl -mergeNamespacesOnClash false -namespace $top -options "v=0;" $file;
 	string $dup[] = `duplicate -n ($top+"_dup") ($top+":"+$top)`;
-	parent -w $dup[0]; 
+	parent -w $dup[0];
 	string $joints[] = `listRelatives -ad -type joint $dup[0]`;
 	for ($jnt in $joints)
 	{
@@ -701,7 +704,7 @@ global proc int RemapAnimation(string $top, string $file, int $start, int $end)
 	pointConstraint "rFoot" ($top+":rFootIK_ctrl");
 	orientConstraint -mo "lMetatarsals" ($top+":lFootIK_ctrl");
 	orientConstraint -mo "rMetatarsals" ($top+":rFootIK_ctrl");
-	
+
 	select -r `listRelatives -c -type joint $dup[0]`;
 	file -import -type "atomImport" -ra true -namespace "data" -options ";;targetTime=3;option=replace;match=hierarchy;;selected=childrenToo;search=;replace=;prefix=;suffix=;mapFile=;" ($temp+"/DazAnim.atom");
 	string $ctrls[] = `ls ($top+":*_ctrl")`;
@@ -715,7 +718,7 @@ global proc int RemapAnimation(string $top, string $file, int $start, int $end)
 }
 
 global proc string SaveRig(string $export)
-{	
+{
 	global string $SourceFolder;
 	$name = ($SourceFolder+"/"+$export+"_rig.ma");
 	file -rn $name ;
@@ -745,14 +748,14 @@ global proc int FixTwistJoints()
 		}
 		moveJointsMode 0;
 	}
-	
+
 	print "---- Twist joints fixed ----\n";
 	return 1;
 }
 
 global proc int LockAttributes()
 {
-	
+
 	for ($ctrl in `ls "*_ctrl"`)
 	{
 		if ($ctrl != "rHandFKIK_ctrl" && $ctrl != "lHandFKIK_ctrl" && $ctrl != "rFootFKIK_ctrl" && $ctrl != "lFootFKIK_ctrl" && $ctrl != "rElbowIK_ctrl" && $ctrl != "lElbowIK_ctrl" && $ctrl != "rKneeIK_ctrl" && $ctrl != "lKneeIK_ctrl"){
@@ -795,7 +798,7 @@ global proc int LockAttributes()
 	}
 	setAttr -lock true -keyable false -channelBox false "lHandIK_ctrl.ikBlend";
 	setAttr -lock true -keyable false -channelBox false "rHandIK_ctrl.ikBlend";
-	
+
 	print "---- Attributes locked ----\n";
 	return 1;
 }
@@ -829,28 +832,28 @@ global proc int SetupStructure (string $export)
 	group -empty -n "Skeleton";
 	parent $export "Skeleton";
 	group -empty -n "Controls";
-	
+
 	parent "Controls" ($export+"Rig");
 	parent "Skeleton" ($export+"Rig");
 	parent "Geometry" ($export+"Rig");
 	parent "IKSetup" ($export+"Rig");
 	parent "ExportSetup" ($export+"Rig");
-	
+
 	MakeController "crossThick" "Root_ctrl";
 	ColorCtrl "darkPink" "Root_ctrl";
 	TRSCtrl 2 "5 5 5" "Root_ctrl";
 	AttachToJoint 1 "Root_ctrl" $export;
-	
+
 	MakeController "circle" "Top_ctrl";
 	ColorCtrl "yellow" "Top_ctrl";
 	TRSCtrl 2 "35 35 35" "Top_ctrl";
 	AttachToJoint 0 "Top_ctrl" $export;
-	
+
 	MakeController "circle" "Offset_ctrl";
 	ColorCtrl "lightBrown" "Offset_ctrl";
 	TRSCtrl 2 "25 25 25" "Offset_ctrl";
 	AttachToJoint 0 "Offset_ctrl" $export;
-	
+
 	parent "hip_ctrl_zero" "Offset_ctrl";
 	parent "Offset_ctrl_zero" "Top_ctrl";
 	parent "Root_ctrl_zero" "Top_ctrl";
@@ -859,7 +862,7 @@ global proc int SetupStructure (string $export)
 	parent "rFingers_loc" "Controls";
 	parent "lToe_ctrl_zero" "Controls";
 	parent "rToe_ctrl_zero" "Controls";
-	
+
 	addAttr -ln "ShowControls" -at bool "Top_ctrl";
 	setAttr -e -keyable false -channelBox true "Top_ctrl.ShowControls" true;
 	addAttr -ln "ReferenceControls" -at bool "Top_ctrl";
@@ -873,7 +876,7 @@ global proc int SetupStructure (string $export)
 	addAttr -ln "ReferenceGeometry" -at bool "Top_ctrl";
 	setAttr -e -keyable false -channelBox true "Top_ctrl.ReferenceGeometry" true;
 	setAttr "IKSetup.visibility" false;
-	
+
 	string $cond = `createNode -n "GeometryRefCondition" condition`;
 	setAttr ($cond+".operation") 2;
 	setAttr ($cond+".secondTerm") 0;
@@ -882,7 +885,7 @@ global proc int SetupStructure (string $export)
 	setAttr "Geometry.overrideEnabled" 1;
 	connectAttr  ($cond+".outColor.outColorR") "Geometry.overrideDisplayType";
 	connectAttr "Top_ctrl.ReferenceGeometry" ($cond+".firstTerm");
-	
+
 	string $cond1 = `createNode -n "ControlsRefCondition" condition`;
 	setAttr ($cond1+".operation") 2;
 	setAttr ($cond1+".secondTerm") 0;
@@ -891,7 +894,7 @@ global proc int SetupStructure (string $export)
 	setAttr "Controls.overrideEnabled" 1;
 	connectAttr  ($cond1+".outColor.outColorR") "Controls.overrideDisplayType";
 	connectAttr "Top_ctrl.ReferenceControls" ($cond1+".firstTerm");
-	
+
 	string $cond2 = `createNode -n "SkeletonRefCondition" condition`;
 	setAttr ($cond2+".operation") 2;
 	setAttr ($cond2+".secondTerm") 0;
@@ -904,12 +907,12 @@ global proc int SetupStructure (string $export)
 	connectAttr -f "Top_ctrl.ShowGeometry" "Geometry.visibility";
 	connectAttr -f "Top_ctrl.ShowControls" "Controls.visibility";
 	connectAttr -f "Top_ctrl.ShowSkeleton" "Skeleton.visibility";
-	
+
 	addAttr -ln "FaceRigVisibility"  -at bool "head_ctrl";
 	setAttr -e -keyable false -channelBox true "head_ctrl.FaceRigVisibility" true;
 	connectAttr -f "head_ctrl.FaceRigVisibility" "lowerFaceRig_ctrl_zero.visibility";
 	connectAttr -f "head_ctrl.FaceRigVisibility" "upperFaceRig_ctrl_zero.visibility";
-	
+
 	for ($cns in `ls -type orientConstraint -type parentConstraint`) setAttr ($cns+".interpType") 2;
 
 	print "---- Rig Structure set up ----\n";
@@ -923,7 +926,7 @@ global proc int MakeIKFoot()
 	string $colorA[2]={"red","blue"};
 	string $colorB[2]={"darkRed","darkBlue"};
 	string $colorC[2]={"lightPink","babyBlue"};
-	
+
 	for($i=0;$i<2;$i++)
 	{
 		MakeController "cube" ($side[$i]+"FootIK_ctrl");
@@ -944,22 +947,22 @@ global proc int MakeIKFoot()
 		setAttr ($side[$i]+"FootIK_ctrl_zero.rotateZ") 0;
 		setAttr ($side[$i]+"FootIK_ctrl.rotateY") `getAttr ($side[$i]+"FootIK_ctrl_zero.rotateY")`;
 		setAttr ($side[$i]+"FootIK_ctrl_zero.rotateY") 0;
-		
+
 		MakeController "sphere" ($side[$i]+"KneeIK_ctrl");
 		ColorCtrl $colorB[$i] ($side[$i]+"KneeIK_ctrl");
 		TRSCtrl 2 "3 3 3" ($side[$i]+"KneeIK_ctrl");
 		AttachToJoint 0 ($side[$i]+"KneeIK_ctrl") ($side[$i]+"Shin");
 		move -os -r 0 0 30 ($side[$i]+"KneeIK_ctrl_zero");
 		rotate 0 0 0 ($side[$i]+"KneeIK_ctrl_zero");
-		
+
 		MakeController "directionThin" ($side[$i]+"ThighIK_ctrl");
 		ColorCtrl $colorB[$i] ($side[$i]+"ThighIK_ctrl");
 		TRSCtrl 2 "2 2 12" ($side[$i]+"ThighIK_ctrl");
 		AttachToJoint 0 ($side[$i]+"ThighIK_ctrl") ($side[$i]+"ThighBend");
 		parent ($side[$i]+"ThighIK_ctrl_zero") "pelvis_ctrl";
-		
+
 		setAttr ($side[$i]+"Shin.preferredAngleX") 10;
-		
+
 		duplicate -rr -po -n ($side[$i]+"ThighBendIK") ($side[$i]+"ThighBend");
 		parent ($side[$i]+"ThighBendIK") "IKSetup";
 		duplicate -rr -po -n ($side[$i]+"ThighTwistIK") ($side[$i]+"ThighTwist");
@@ -969,19 +972,19 @@ global proc int MakeIKFoot()
 		duplicate -rr -po -n ($side[$i]+"FootIK") ($side[$i]+"Foot");
 		parent ($side[$i]+"FootIK") ($side[$i]+"ShinIK");
 		transformLimits -ry 0 0 -ery 0 0 ($side[$i]+"ThighBendIK");
-		
+
 		IKSetup ($side[$i]+"FootIK_loc") ($side[$i]+"KneeIK_ctrl") ($side[$i]+"ThighBendIK") ($side[$i]+"FootIK");
 
 		$node = `createNode reverse`;
 		connectAttr -f ($side[$i]+"FootIK_loc.ikBlend") ($node+".inputX");
-		
+
 		parentConstraint -sr "y" ($side[$i]+"ThighBendIK") ($side[$i]+"ThighBend");
 		scaleConstraint ($side[$i]+"ThighBendIK") ($side[$i]+"ThighBend");
 		connectAttr -f ($side[$i]+"FootIK_loc.ikBlend") ($side[$i]+"ThighBend_parentConstraint1."+$side[$i]+"ThighBendIKW1");
 		connectAttr -f ($side[$i]+"FootIK_loc.ikBlend") ($side[$i]+"ThighBend_scaleConstraint1."+$side[$i]+"ThighBendIKW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ThighBend_parentConstraint1."+$side[$i]+"ThighBend_ctrlW0");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ThighBend_scaleConstraint1."+$side[$i]+"ThighBend_ctrlW0");
-		
+
 		parentConstraint ($side[$i]+"ShinIK") ($side[$i]+"Shin");
 		scaleConstraint ($side[$i]+"ShinIK") ($side[$i]+"Shin");
 		connectAttr -f ($side[$i]+"FootIK_loc.ikBlend") ($side[$i]+"Shin_parentConstraint1."+$side[$i]+"ShinIKW1");
@@ -989,10 +992,10 @@ global proc int MakeIKFoot()
 		connectAttr -f ($node+".outputX") ($side[$i]+"Shin_parentConstraint1."+$side[$i]+"Shin_ctrlW0");
 		connectAttr -f ($node+".outputX") ($side[$i]+"Shin_scaleConstraint1."+$side[$i]+"Shin_ctrlW0");
 		setAttr ($side[$i]+"FootIK_loc.ikBlend") 1;
-		
+
 		parent ($side[$i]+"KneeIK_ctrl_zero") "pelvis_ctrl";
 		parent ($side[$i]+"FootIK_ctrl_zero") "Offset_ctrl";
-		
+
 		MakeController "quarterCircleThick" ($side[$i]+"LiftIK_ctrl");
 		ColorCtrl $colorA[$i] ($side[$i]+"LiftIK_ctrl");
 		TRSCtrl 2 "10 10 -10" ($side[$i]+"LiftIK_ctrl");
@@ -1008,7 +1011,7 @@ global proc int MakeIKFoot()
 		setAttr -lock true ($side[$i]+"FootIK_loc.rx");
 		setAttr -lock true ($side[$i]+"FootIK_loc.ry");
 		setAttr -lock true ($side[$i]+"FootIK_loc.rz");
-		
+
 		transformLimits -ry 0 0 -ery 0 0 ($side[$i]+"Toe");
 
 		duplicate -rr -po -n ($side[$i]+"FootIKT_loc") ($side[$i]+"Foot_ctrl_zero");
@@ -1019,7 +1022,7 @@ global proc int MakeIKFoot()
 		connectAttr -f ($side[$i]+"FootIK_loc.ikBlend") ($side[$i]+"Foot_scaleConstraint1."+$side[$i]+"FootIKT_locW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"Foot_parentConstraint1."+$side[$i]+"Foot_ctrlW0");
 		connectAttr -f ($node+".outputX") ($side[$i]+"Foot_scaleConstraint1."+$side[$i]+"Foot_ctrlW0");
-		
+
 		duplicate -rr -po -n ($side[$i]+"MetatarsalsIK_loc") ($side[$i]+"Metatarsals_ctrl_zero");
 		parent ($side[$i]+"MetatarsalsIK_loc") ($side[$i]+"LiftIK_ctrl");
 		parentConstraint ($side[$i]+"MetatarsalsIK_loc") ($side[$i]+"Metatarsals") ;
@@ -1028,7 +1031,7 @@ global proc int MakeIKFoot()
 		connectAttr -f ($side[$i]+"FootIK_loc.ikBlend") ($side[$i]+"Metatarsals_scaleConstraint1."+$side[$i]+"MetatarsalsIK_locW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"Metatarsals_parentConstraint1."+$side[$i]+"Metatarsals_ctrlW0");
 		connectAttr -f ($node+".outputX") ($side[$i]+"Metatarsals_scaleConstraint1."+$side[$i]+"Metatarsals_ctrlW0");
-		
+
 		MakeController "rombus" ($side[$i]+"FootFKIK_ctrl");
 		ColorCtrl $colorA[$i] ($side[$i]+"FootFKIK_ctrl");
 		TRSCtrl 2 "3 3 3" ($side[$i]+"FootFKIK_ctrl");
@@ -1039,7 +1042,7 @@ global proc int MakeIKFoot()
 		addAttr -ln "FKIK"  -at double  -min 0 -max 1 -dv 1 ($side[$i]+"FootFKIK_ctrl");
 		setAttr -e-keyable true ($side[$i]+"FootFKIK_ctrl.FKIK");
 		connectAttr -f ($side[$i]+"FootFKIK_ctrl.FKIK") ($side[$i]+"FootIK_loc.ikBlend");
-		
+
 		$node3 = `createNode condition`;
 		connectAttr -f ($side[$i]+"FootFKIK_ctrl.FKIK") ($node3+".firstTerm");
 		setAttr ($node3+".secondTerm") .1;
@@ -1049,7 +1052,7 @@ global proc int MakeIKFoot()
 		connectAttr -f ($node3+".outColorR") ($side[$i]+"FootIK_ctrl_zero.visibility");
 		connectAttr -f ($node3+".outColorR") ($side[$i]+"KneeIK_ctrl_zero.visibility");
 		connectAttr -f ($node3+".outColorR") ($side[$i]+"ThighIK_ctrl_zero.visibility");
-		
+
 		$node4 = `createNode condition`;
 		connectAttr -f ($side[$i]+"FootFKIK_ctrl.FKIK") ($node4+".firstTerm");
 		setAttr ($node4+".secondTerm") .9;
@@ -1058,9 +1061,9 @@ global proc int MakeIKFoot()
 		setAttr ($node4+".colorIfFalseR") 0;
 		connectAttr -f ($node4+".outColorR") ($side[$i]+"ThighBend_ctrl_zero.visibility");
 		parent ($side[$i]+"FootFKIK_ctrl_zero") "hip_ctrl";
-		
+
 		MakeStretchy ($side[$i]+"Foot");
-		
+
 		BreakConnection ($side[$i]+"Foot.tx");
 		BreakConnection ($side[$i]+"Foot.ty");
 		BreakConnection ($side[$i]+"Foot.tz");
@@ -1070,47 +1073,47 @@ global proc int MakeIKFoot()
 		BreakConnection ($side[$i]+"Shin.tx");
 		BreakConnection ($side[$i]+"Shin.ty");
 		BreakConnection ($side[$i]+"Shin.tz");
-		
+
 		if($i==0)
 		{
 			spaceLocator -n "hipIK_hlp";
 			parentConstraint "hip" "hipIK_hlp";
 			parent "hipIK_hlp" "IKSetup";
 		}
-		
+
 		parent ($side[$i]+"ThighBendIK") "hipIK_hlp";
-			
+
 		duplicate -po -n ($side[$i]+"ThighBendIK_hlp") ($side[$i]+"ThighBend");
 		parent ($side[$i]+"ThighBendIK_hlp") "hipIK_hlp";
 		parentConstraint ($side[$i]+"ThighBendIK") ($side[$i]+"ThighBendIK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ThighTwistIK_hlp") ($side[$i]+"ThighTwist");
 		parent ($side[$i]+"ThighTwistIK_hlp") ($side[$i]+"ThighBendIK_hlp");
 		orientConstraint ($side[$i]+"ThighBendIK") ($side[$i]+"ThighTwistIK_hlp");
 		pointConstraint {($side[$i]+"ThighBendIK"),($side[$i]+"ShinIK")} ($side[$i]+"ThighTwistIK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ShinIK_hlp") ($side[$i]+"Shin");
 		parent ($side[$i]+"ShinIK_hlp") ($side[$i]+"ThighTwistIK_hlp");
 		parentConstraint ($side[$i]+"ShinIK") ($side[$i]+"ShinIK_hlp");
-				
+
 		duplicate -po -n ($side[$i]+"FootIK2_hlp") ($side[$i]+"Foot");
 		parent ($side[$i]+"FootIK2_hlp") ($side[$i]+"ShinIK_hlp");
 		pointConstraint ($side[$i]+"FootIK") ($side[$i]+"FootIK2_hlp");
 		orientConstraint -mo ($side[$i]+"FootIK_ctrl") ($side[$i]+"FootIK2_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ThighBendFK_hlp") ($side[$i]+"ThighBend");
 		parent ($side[$i]+"ThighBendFK_hlp") "hipIK_hlp";
 		parentConstraint ($side[$i]+"ThighBend_ctrl") ($side[$i]+"ThighBendFK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ThighTwistFK_hlp") ($side[$i]+"ThighTwist");
 		parent ($side[$i]+"ThighTwistFK_hlp") ($side[$i]+"ThighBendFK_hlp");
 		orientConstraint ($side[$i]+"ThighBend_ctrl") ($side[$i]+"ThighTwistFK_hlp");
 		pointConstraint {($side[$i]+"ThighBend_ctrl"),($side[$i]+"Shin_ctrl")} ($side[$i]+"ThighTwistFK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ShinFK_hlp") ($side[$i]+"Shin");
 		parent ($side[$i]+"ShinFK_hlp") ($side[$i]+"ThighTwistFK_hlp");
 		parentConstraint ($side[$i]+"Shin_ctrl") ($side[$i]+"ShinFK_hlp");
-				
+
 		duplicate -po -n ($side[$i]+"FootFK_hlp") ($side[$i]+"Foot");
 		parent ($side[$i]+"FootFK_hlp") ($side[$i]+"ShinFK_hlp");
 		parentConstraint ($side[$i]+"Foot_ctrl") ($side[$i]+"FootFK_hlp");
@@ -1118,7 +1121,7 @@ global proc int MakeIKFoot()
 		MakeBlendFKIK ($side[$i]+"Foot") ($side[$i]+"FootIK2_hlp") ($side[$i]+"FootFK_hlp") ($side[$i]+"FootIK_loc.ikBlend") ($node+".outputX");
 		MakeBlendFKIK ($side[$i]+"Shin") ($side[$i]+"ShinIK_hlp") ($side[$i]+"ShinFK_hlp") ($side[$i]+"FootIK_loc.ikBlend") ($node+".outputX");
 		MakeBlendFKIK ($side[$i]+"ThighTwist") ($side[$i]+"ThighTwistIK_hlp") ($side[$i]+"ThighTwistFK_hlp") ($side[$i]+"FootIK_loc.ikBlend") ($node+".outputX");
-		
+
 		duplicate -po -n ($side[$i]+"ToeIK_hlp") ($side[$i]+"Toe_ctrl_zero");
 		duplicate -po -n ($side[$i]+"ToeFK_hlp") ($side[$i]+"Toe_ctrl_zero");
 		parent ($side[$i]+"ToeFK_hlp") ($side[$i]+"Metatarsals_ctrl");
@@ -1130,33 +1133,33 @@ global proc int MakeIKFoot()
 		connectAttr -f ($side[$i]+"FootIK_loc.ikBlend") ($side[$i]+"Toe_ctrl_zero_scaleConstraint1."+$side[$i]+"ToeIK_hlpW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"Toe_ctrl_zero_orientConstraint1."+$side[$i]+"ToeFK_hlpW0");
 		connectAttr -f ($node+".outputX") ($side[$i]+"Toe_ctrl_zero_scaleConstraint1."+$side[$i]+"ToeFK_hlpW0");
-		
+
 		orientConstraint {($side[$i]+"ThighTwistFK_hlp"),($side[$i]+"ThighTwistIK_hlp")} ($side[$i]+"ThighTwist");
 		connectAttr -f ($side[$i]+"FootIK_loc.ikBlend") ($side[$i]+"ThighTwist_orientConstraint1."+$side[$i]+"ThighTwistIK_hlpW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ThighTwist_orientConstraint1."+$side[$i]+"ThighTwistFK_hlpW0");
-		
+
 		pointConstraint ($side[$i]+"ThighIK_ctrl") ($side[$i]+"ThighBendIK");
 		scaleConstraint ($side[$i]+"ThighIK_ctrl") ($side[$i]+"ThighBendIK");
 		scaleConstraint ($side[$i]+"ThighIK_ctrl") ($side[$i]+"ThighBendIK_hlp");
 		scaleConstraint ($side[$i]+"ThighBend_ctrl") ($side[$i]+"ThighBendFK_hlp");
 		scaleConstraint ($side[$i]+"Shin_ctrl") ($side[$i]+"ShinFK_hlp");
-		
+
 		float $ra[3] = `getAttr ($side[$i]+"ThighTwist.jointOrient")`;
 		setAttr ($side[$i]+"ThighTwistFK_hlp.jointOrient") $ra[0] $ra[1] $ra[2];
 		setAttr ($side[$i]+"ThighTwistIK_hlp.jointOrient") $ra[0] $ra[1] $ra[2];
-		
+
 		FollowOptions "hip_ctrl" ($side[$i]+"FootIK_ctrl") 1 ($side[$i]+"KneeIK_ctrl") "FollowFoot";
 		FollowOptions "hip_ctrl" "pelvis_ctrl" 0 ($side[$i]+"ThighBend_ctrl") "FollowPelvis";
-		
+
 		if(`objExists ($side[$i]+"Heel_ctrl_zero")`)
 		{
 			parent {($side[$i]+"BigToe_ctrl_zero"), ($side[$i]+"SmallToe1_ctrl_zero"), ($side[$i]+"SmallToe2_ctrl_zero"), ($side[$i]+"SmallToe4_ctrl_zero"), ($side[$i]+"SmallToe3_ctrl_zero")} ($side[$i]+"Toe_ctrl");
 			TRSCtrl 0 "0 3 -8.8" ($side[$i]+"Metatarsals_ctrl");
 		}
-		
+
 		print ("---- "+$side[$i]+"Foot IK set up ----\n");
 	}
-	
+
 	return 1;
 }
 
@@ -1166,7 +1169,7 @@ global proc int MakeIKHand()
 	string $colorA[2]={"red","blue"};
 	string $colorB[2]={"darkRed","darkBlue"};
 	string $colorC[2]={"lightPink","babyBlue"};
-	
+
 	for($i=0;$i<2;$i++)
 	{
 		MakeController "cube" ($side[$i]+"HandIK_ctrl");
@@ -1175,23 +1178,23 @@ global proc int MakeIKHand()
 		if ($side[$i]=="l") TRSCtrl 0 "5 0 0.5" ($side[$i]+"HandIK_ctrl");
 		else TRSCtrl 0 "-5 0 0.5" ($side[$i]+"HandIK_ctrl");
 		AttachToJoint 0 ($side[$i]+"HandIK_ctrl") ($side[$i]+"Hand");
-		
+
 		MakeController "sphere" ($side[$i]+"ElbowIK_ctrl");
 		ColorCtrl $colorA[$i] ($side[$i]+"ElbowIK_ctrl");
 		TRSCtrl 2 "3 3 3" ($side[$i]+"ElbowIK_ctrl");
 		AttachToJoint 0 ($side[$i]+"ElbowIK_ctrl") ($side[$i]+"ForearmBend");
 		move -os -r 0 0 -12 ($side[$i]+"ElbowIK_ctrl_zero");
 		rotate 0 0 0 ($side[$i]+"ElbowIK_ctrl_zero");
-		
+
 		MakeController "directionThin" ($side[$i]+"ShldrIK_ctrl");
 		ColorCtrl $colorB[$i] ($side[$i]+"ShldrIK_ctrl");
 		TRSCtrl 2 "2 2 9" ($side[$i]+"ShldrIK_ctrl");
 		AttachToJoint 0 ($side[$i]+"ShldrIK_ctrl") ($side[$i]+"ShldrBend");
 		parent ($side[$i]+"ShldrIK_ctrl_zero") ($side[$i]+"Collar_ctrl");
-		
+
 		transformLimits -rx 0 0 -erx 0 0 ($side[$i]+"ForearmBend");
 		transformLimits -rz 0 0 -erz 0 0 ($side[$i]+"ForearmBend");
-		
+
 		duplicate -rr -po -n ($side[$i]+"ShldrBendIK") ($side[$i]+"ShldrBend");
 		parent ($side[$i]+"ShldrBendIK") "IKSetup";
 		duplicate -rr -po -n ($side[$i]+"ForearmBendIK") ($side[$i]+"ForearmBend");
@@ -1199,26 +1202,26 @@ global proc int MakeIKHand()
 		duplicate -rr -po -n ($side[$i]+"HandIK") ($side[$i]+"Hand");
 		parent ($side[$i]+"HandIK") ($side[$i]+"ForearmBendIK");
 		transformLimits -rx 0 0 -erx 0 0 ($side[$i]+"ShldrBendIK");
-		
+
 		IKSetup ($side[$i]+"HandIK_ctrl") ($side[$i]+"ElbowIK_ctrl") ($side[$i]+"ShldrBendIK") ($side[$i]+"HandIK");
 
 		$node = `createNode reverse`;
 		connectAttr -f ($side[$i]+"HandIK_ctrl.ikBlend") ($node+".inputX");
-		
+
 		parentConstraint ($side[$i]+"ShldrBendIK") ($side[$i]+"ShldrBend");
 		scaleConstraint ($side[$i]+"ShldrBendIK") ($side[$i]+"ShldrBend");
 		connectAttr -f ($side[$i]+"HandIK_ctrl.ikBlend") ($side[$i]+"ShldrBend_parentConstraint1."+$side[$i]+"ShldrBendIKW1");
 		connectAttr -f ($side[$i]+"HandIK_ctrl.ikBlend") ($side[$i]+"ShldrBend_scaleConstraint1."+$side[$i]+"ShldrBendIKW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ShldrBend_parentConstraint1."+$side[$i]+"ShldrBend_ctrlW0");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ShldrBend_scaleConstraint1."+$side[$i]+"ShldrBend_ctrlW0");
-		
+
 		parentConstraint ($side[$i]+"ForearmBendIK") ($side[$i]+"ForearmBend");
 		scaleConstraint ($side[$i]+"ForearmBendIK") ($side[$i]+"ForearmBend");
 		connectAttr -f ($side[$i]+"HandIK_ctrl.ikBlend") ($side[$i]+"ForearmBend_parentConstraint1."+$side[$i]+"ForearmBendIKW1");
 		connectAttr -f ($side[$i]+"HandIK_ctrl.ikBlend") ($side[$i]+"ForearmBend_scaleConstraint1."+$side[$i]+"ForearmBendIKW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ForearmBend_parentConstraint1."+$side[$i]+"ForearmBend_ctrlW0");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ForearmBend_scaleConstraint1."+$side[$i]+"ForearmBend_ctrlW0");
-		
+
 		parentConstraint ($side[$i]+"HandIK_ctrl") ($side[$i]+"Hand");
 		scaleConstraint ($side[$i]+"HandIK_ctrl") ($side[$i]+"Hand");
 		connectAttr -f ($side[$i]+"HandIK_ctrl.ikBlend") ($side[$i]+"Hand_parentConstraint1."+$side[$i]+"HandIK_ctrlW1");
@@ -1229,10 +1232,10 @@ global proc int MakeIKHand()
 
 		pointConstraint ($side[$i]+"ShldrIK_ctrl") ($side[$i]+"ShldrBendIK");
 		scaleConstraint ($side[$i]+"ShldrIK_ctrl") ($side[$i]+"ShldrBendIK");
-		
+
 		parent ($side[$i]+"ElbowIK_ctrl_zero") "hip_ctrl";
 		parent ($side[$i]+"HandIK_ctrl_zero") "Offset_ctrl";
-		
+
 		MakeController "rombus" ($side[$i]+"HandFKIK_ctrl");
 		ColorCtrl $colorA[$i] ($side[$i]+"HandFKIK_ctrl");
 		TRSCtrl 2 "3 3 3" ($side[$i]+"HandFKIK_ctrl");
@@ -1243,7 +1246,7 @@ global proc int MakeIKHand()
 		addAttr -ln "FKIK" -at double -min 0 -max 1 -dv 0 ($side[$i]+"HandFKIK_ctrl");
 		setAttr -e-keyable true ($side[$i]+"HandFKIK_ctrl.FKIK");
 		connectAttr -f ($side[$i]+"HandFKIK_ctrl.FKIK") ($side[$i]+"HandIK_ctrl.ikBlend");
-			
+
 		$node3 = `createNode condition`;
 		connectAttr -f ($side[$i]+"HandFKIK_ctrl.FKIK") ($node3+".firstTerm");
 		setAttr ($node3+".secondTerm") .1;
@@ -1253,7 +1256,7 @@ global proc int MakeIKHand()
 		connectAttr -f ($node3+".outColorR") ($side[$i]+"HandIK_ctrl_zero.visibility");
 		connectAttr -f ($node3+".outColorR") ($side[$i]+"ElbowIK_ctrl_zero.visibility");
 		connectAttr -f ($node3+".outColorR") ($side[$i]+"ShldrIK_ctrl_zero.visibility");
-		
+
 		$node4 = `createNode condition`;
 		connectAttr -f ($side[$i]+"HandFKIK_ctrl.FKIK") ($node4+".firstTerm");
 		setAttr ($node4+".secondTerm") .9;
@@ -1262,16 +1265,16 @@ global proc int MakeIKHand()
 		setAttr ($node4+".colorIfFalseR") 0;
 		connectAttr -f ($node4+".outColorR") ($side[$i]+"ShldrBend_ctrl_zero.visibility");
 		parent ($side[$i]+"HandFKIK_ctrl_zero") "hip_ctrl";
-		
+
 		setAttr ($side[$i]+"HandIK_ctrl.rotateX") `getAttr ($side[$i]+"HandIK_ctrl_zero.rotateX")`;
 		setAttr ($side[$i]+"HandIK_ctrl_zero.rotateX") 0;
 		setAttr ($side[$i]+"HandIK_ctrl.rotateY") `getAttr ($side[$i]+"HandIK_ctrl_zero.rotateY")`;
 		setAttr ($side[$i]+"HandIK_ctrl_zero.rotateY") 0;
 		setAttr ($side[$i]+"HandIK_ctrl.rotateZ") `getAttr ($side[$i]+"HandIK_ctrl_zero.rotateZ")`;
 		setAttr ($side[$i]+"HandIK_ctrl_zero.rotateZ") 0;
-		
+
 		MakeStretchy ($side[$i]+"Hand");
-		
+
 		orientConstraint {($side[$i]+"ShldrBend_ctrl"),($side[$i]+"ShldrBendIK")} ($side[$i]+"ShldrTwist");
 		connectAttr -f ($side[$i]+"HandIK_ctrl.ikBlend") ($side[$i]+"ShldrTwist_orientConstraint1."+$side[$i]+"ShldrBendIKW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ShldrTwist_orientConstraint1."+$side[$i]+"ShldrBend_ctrlW0");
@@ -1279,59 +1282,59 @@ global proc int MakeIKHand()
 		connectAttr -f ($side[$i]+"HandIK_ctrl.ikBlend") ($side[$i]+"ForearmTwist_orientConstraint1."+$side[$i]+"HandIK_ctrlW1");
 		connectAttr -f ($node+".outputX") ($side[$i]+"ForearmTwist_orientConstraint1."+$side[$i]+"Hand_ctrlW2");
 
-		BreakConnection ($side[$i]+"Hand.tx"); 
+		BreakConnection ($side[$i]+"Hand.tx");
 		BreakConnection ($side[$i]+"Hand.ty");
 		BreakConnection ($side[$i]+"Hand.tz");
 		BreakConnection ($side[$i]+"ForearmBend.tx");
 		BreakConnection ($side[$i]+"ForearmBend.ty");
 		BreakConnection ($side[$i]+"ForearmBend.tz");
-		
+
 		spaceLocator -n ($side[$i]+"CollarIK_hlp");
 		parentConstraint ($side[$i]+"Collar") ($side[$i]+"CollarIK_hlp");
 		parent ($side[$i]+"CollarIK_hlp") "IKSetup";
 		parent ($side[$i]+"ShldrBendIK") ($side[$i]+"CollarIK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ShldrBendIK_hlp") ($side[$i]+"ShldrBend");
 		parent ($side[$i]+"ShldrBendIK_hlp") ($side[$i]+"CollarIK_hlp");
 		parentConstraint ($side[$i]+"ShldrBendIK") ($side[$i]+"ShldrBendIK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ShldrTwistIK_hlp") ($side[$i]+"ShldrTwist");
 		parent ($side[$i]+"ShldrTwistIK_hlp") ($side[$i]+"ShldrBendIK_hlp");
 		orientConstraint ($side[$i]+"ShldrBendIK") ($side[$i]+"ShldrTwistIK_hlp");
 		pointConstraint {($side[$i]+"ShldrBendIK"),($side[$i]+"ForearmBendIK")} ($side[$i]+"ShldrTwistIK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ForearmBendIK_hlp") ($side[$i]+"ForearmBend");
 		parent ($side[$i]+"ForearmBendIK_hlp") ($side[$i]+"ShldrTwistIK_hlp");
 		parentConstraint ($side[$i]+"ForearmBendIK") ($side[$i]+"ForearmBendIK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ForearmTwistIK_hlp") ($side[$i]+"ForearmTwist") ;
 		parent ($side[$i]+"ForearmTwistIK_hlp") ($side[$i]+"ForearmBendIK_hlp");
 		pointConstraint {($side[$i]+"HandIK"),($side[$i]+"ForearmBendIK")} ($side[$i]+"ForearmTwistIK_hlp");
 		orientConstraint {($side[$i]+"ForearmBendIK"),($side[$i]+"HandIK_ctrl")} ($side[$i]+"ForearmTwistIK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"HandIK_hlp") ($side[$i]+"Hand");
 		parent ($side[$i]+"HandIK_hlp") ($side[$i]+"ForearmTwistIK_hlp");
 		pointConstraint ($side[$i]+"HandIK") ($side[$i]+"HandIK_hlp");
 		orientConstraint ($side[$i]+"HandIK_ctrl") ($side[$i]+"HandIK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ShldrBendFK_hlp") ($side[$i]+"ShldrBend");
 		parent ($side[$i]+"ShldrBendFK_hlp") ($side[$i]+"CollarIK_hlp");
 		parentConstraint ($side[$i]+"ShldrBend_ctrl") ($side[$i]+"ShldrBendFK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ShldrTwistFK_hlp") ($side[$i]+"ShldrTwist");
 		parent ($side[$i]+"ShldrTwistFK_hlp") ($side[$i]+"ShldrBendFK_hlp");
 		orientConstraint ($side[$i]+"ShldrBend_ctrl") ($side[$i]+"ShldrTwistFK_hlp");
 		pointConstraint {($side[$i]+"ShldrBend_ctrl"),($side[$i]+"ForearmBend_ctrl")} ($side[$i]+"ShldrTwistFK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ForearmBendFK_hlp") ($side[$i]+"ForearmBend");
 		parent ($side[$i]+"ForearmBendFK_hlp") ($side[$i]+"ShldrTwistFK_hlp");
 		parentConstraint ($side[$i]+"ForearmBend_ctrl") ($side[$i]+"ForearmBendFK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"ForearmTwistFK_hlp") ($side[$i]+"ForearmTwist") ;
 		parent ($side[$i]+"ForearmTwistFK_hlp") ($side[$i]+"ForearmBendFK_hlp");
 		pointConstraint {($side[$i]+"Hand_ctrl"),($side[$i]+"ForearmBend_ctrl")} ($side[$i]+"ForearmTwistFK_hlp");
 		orientConstraint {($side[$i]+"ForearmBend_ctrl"),($side[$i]+"Hand_ctrl")} ($side[$i]+"ForearmTwistFK_hlp");
-		
+
 		duplicate -po -n ($side[$i]+"HandFK_hlp") ($side[$i]+"Hand");
 		parent ($side[$i]+"HandFK_hlp") ($side[$i]+"ForearmTwistFK_hlp");
 		parentConstraint ($side[$i]+"Hand_ctrl") ($side[$i]+"HandFK_hlp");
@@ -1340,21 +1343,21 @@ global proc int MakeIKHand()
 		MakeBlendFKIK ($side[$i]+"ForearmTwist") ($side[$i]+"ForearmTwistIK_hlp") ($side[$i]+"ForearmTwistFK_hlp") ($side[$i]+"HandIK_ctrl.ikBlend") ($node+".outputX");
 		MakeBlendFKIK ($side[$i]+"ForearmBend") ($side[$i]+"ForearmBendIK_hlp") ($side[$i]+"ForearmBendFK_hlp") ($side[$i]+"HandIK_ctrl.ikBlend") ($node+".outputX");
 		MakeBlendFKIK ($side[$i]+"ShldrTwist") ($side[$i]+"ShldrTwistIK_hlp") ($side[$i]+"ShldrTwistFK_hlp") ($side[$i]+"HandIK_ctrl.ikBlend") ($node+".outputX");
-		
+
 		scaleConstraint ($side[$i]+"ShldrIK_ctrl") ($side[$i]+"ShldrBendIK_hlp");
 		scaleConstraint ($side[$i]+"ShldrBend_ctrl") ($side[$i]+"ShldrBendFK_hlp");
 		scaleConstraint ($side[$i]+"ForearmBend_ctrl") ($side[$i]+"ForearmBendFK_hlp");
-		
+
 		float $fra[3] = `getAttr ($side[$i]+"ForearmTwist.jointOrient")`;
 		setAttr ($side[$i]+"ForearmTwistFK_hlp.jointOrient") $fra[0] $fra[1] $fra[2];
 		setAttr ($side[$i]+"ForearmTwistIK_hlp.jointOrient") $fra[0] $fra[1] $fra[2];
 		float $sra[3] = `getAttr ($side[$i]+"ShldrTwist.jointOrient")`;
 		setAttr ($side[$i]+"ShldrTwistFK_hlp.jointOrient") $sra[0] $sra[1] $sra[2];
 		setAttr ($side[$i]+"ShldrTwistIK_hlp.jointOrient") $sra[0] $sra[1] $sra[2];
-		
+
 		FollowOptions "Offset_ctrl" "chestUpper_ctrl" 1 ($side[$i]+"ElbowIK_ctrl") "FollowChest";
 		FollowOptions ($side[$i]+"Collar_ctrl") "chestUpper_ctrl" 0 ($side[$i]+"ShldrBend_ctrl") "FollowChest";
-		
+
 		if(`objExists ($side[$i]+"Heel")`)
 		{
 			if ($i) TRSCtrl 2 "-1 1 1" ($side[$i]+"HandIK_ctrl");
@@ -1362,7 +1365,7 @@ global proc int MakeIKHand()
 			move -rotatePivotRelative -ws $translation[0] $translation[1] $translation[2] ($side[$i]+"HandIK_ctrl_zero");
 			//parentConstraint -st "x" -st "y" -st "z" ($side[$i]+"HandIK_ctrl") ($side[$i]+"Hand");
 		}
-		
+
 		print ("---- "+$side[$i]+"Hand IK set up ----\n");
 	}
 	return 1;
@@ -1437,7 +1440,7 @@ global proc MakeStretchy (string $joint)
 	setAttr ($nodeA+".input1X") 1;
 	setAttr ($nodeA+".input1Y") 1;
 	setAttr ($nodeA+".input1Z") 1;
-	
+
 	for ($jnt in $list)
 	{
 		$node = `createNode -n ($jnt+"InitialNode") multiplyDivide`;
@@ -1452,9 +1455,9 @@ global proc MakeStretchy (string $joint)
 		connectAttr -f ($nodeA+".outputY") ($node+".input2Y");
 		connectAttr -f ($nodeA+".outputZ") ($node+".input2Z");
 	}
-	
+
 	float $initialLength = `DistanceBetween $top $mid` + `DistanceBetween $mid $end`;
-	
+
 	for ($jnt in $list)
 	{
 		connectAttr -f ($jnt+"InitialNode.outputX") ($jnt+".tx");
@@ -1552,7 +1555,7 @@ global proc int MakeController (string $shape, string $name)
 		case "dumbell":
 			curve -d 1 -p -1.207536 0 0.0254483 -p -1.123549 -0.202763 0.0254483 -p -0.920786 -0.28675 0.0254483 -p -0.718023 -0.202763 0.0254483 -p -0.63504 -0.00242492 0.0254483 -p 0.634091 0 0.0254483 -p 0.718023 -0.202763 0.0254483 -p 0.920786 -0.28675 0.0254483 -p 1.123549 -0.202763 0.0254483 -p 1.207536 0 0.0254483 -p 1.123549 0.202763 0.0254483 -p 0.920786 0.28675 0.0254483 -p 0.718023 0.202763 0.0254483 -p 0.634091 0 0.0254483 -p -0.63504 -0.00242492 0.0254483 -p -0.718023 0.202763 0.0254483 -p -0.920786 0.28675 0.0254483 -p -1.123549 0.202763 0.0254483 -p -1.207536 0 0.0254483 -k 0 -k 1 -k 2 -k 3 -k 4 -k 5 -k 6 -k 7 -k 8 -k 9 -k 10 -k 11 -k 12 -k 13 -k 14 -k 15 -k 16 -k 17 -k 18 -n $name;
 		break;
-		
+
 		case "crossThick" :
 		  curve -d 1 -p 2 0 1 -p 2 0 -1 -p 1 0 -1 -p 1 0 -2 -p -1 0 -2 -p -1 0 -1 -p -2 0 -1 -p -2 0 1 -p -1 0 1 -p -1 0 2 -p 1 0 2 -p 1 0 1 -p 2 0 1 -k 0 -k 1 -k 2 -k 3 -k 4 -k 5 -k 6 -k 7 -k 8 -k 9 -k 10 -k 11 -k 12 -n $name ;
 		  break ;
@@ -1567,8 +1570,8 @@ global proc ColorCtrl (string $color, string $obj){
 		case "red":
 			$value = 13;
 		break;
-		
-		case "blue": 
+
+		case "blue":
 			$value = 6;
 		break;
 
@@ -1582,53 +1585,53 @@ global proc ColorCtrl (string $color, string $obj){
 
 		case "darkBlue":
 			$value = 5;
-		break; 
-		
+		break;
+
 		case "babyBlue":
 			$value = 18;
-		break; 
-		
+		break;
+
 		case "darkPurple":
 			$value = 8;
-		break; 
-		
+		break;
+
 		case "darkYellow":
 			$value = 25;
-		break; 
-			
+		break;
+
 		case "darkGreen":
 			$value = 23;
-		break; 
-			
+		break;
+
 		case "brown":
 			$value = 10;
-		break; 
-			
+		break;
+
 		case "lightBrown":
 			$value = 21;
-		break; 
-			
+		break;
+
 		case "lightPink":
 			$value = 20;
-		break; 
-			
+		break;
+
 		case "darkPink":
 			$value = 31;
-		break; 
-			
+		break;
+
 		default:
 			$value = 2;
-		break; 
-		
+		break;
+
 		case "purple":
 			$value = 30;
-		break; 
-		
+		break;
+
 		case "green":
 			$value = 14;
 		break;
 	}
-    setAttr ($obj+".overrideEnabled") true; 
+    setAttr ($obj+".overrideEnabled") true;
     setAttr ($obj+".overrideColor") $value;
 }
 
@@ -1710,7 +1713,7 @@ global proc IKSetup(string $IKControl, string $UpControl, string $topJoint, stri
 
 	addAttr -ln ikBlend -at double  -min 0 -max 1 -dv 1 $IKControl;
 	setAttr -e -keyable true ($IKControl+".ikBlend");
-	
+
 	setAttr ($ik[0]+".tx") 0;
 	setAttr ($ik[0]+".ty") 0;
 	setAttr ($ik[0]+".tz") 0;
@@ -1718,7 +1721,7 @@ global proc IKSetup(string $IKControl, string $UpControl, string $topJoint, stri
 	setAttr ($ik[0]+".ry") 0;
 	setAttr ($ik[0]+".rz") 0;
 	setAttr ($ik[0]+".v") false;
-	
+
 	setAttr -lock true ($ik[0]+".tx");
 	setAttr -lock true ($ik[0]+".ty");
 	setAttr -lock true ($ik[0]+".tz");
@@ -1726,7 +1729,7 @@ global proc IKSetup(string $IKControl, string $UpControl, string $topJoint, stri
 	setAttr -lock true ($ik[0]+".ry");
 	setAttr -lock true ($ik[0]+".rz");
 	setAttr -lock true ($ik[0]+".ikBlend");
-	
+
 	string $elbowJoint[] = `listRelatives -p -type "joint" $bottomJoint`;
 	poleVectorConstraint -weight 1 $UpControl $ik[0];
 }
@@ -1756,11 +1759,11 @@ global proc int SetUpExportSkeleton(string $topJoint)
     setAttr "lForearmTwist_EXP.jointTypeY" 0;
     setAttr "lForearmTwist_EXP.jointTypeZ" 0;
     joint -e -dof "xyz" "lForearmTwist_EXP";
-    
+
     setAttr "rForearmTwist_EXP.jointTypeY" 0;
     setAttr "rForearmTwist_EXP.jointTypeZ" 0;
     joint -e -dof "xyz" "rForearmTwist_EXP";
-    
+
     setAttr "lThighBend_EXP.jointTypeX" 0;
     joint -e -dof "xyz" "lThighBend_EXP";
     setAttr "lThighTwist_EXP.jointTypeY" 0;
@@ -1786,13 +1789,13 @@ global proc int SetUpExportSkeleton(string $topJoint)
 		aimConstraint -aim $x 0 0 -u 0 0 1 -wut "object" -wuo ($side+"Hand") ($side+"ForearmBend") ($side+"ShldrBend_EXP");
 		aimConstraint -aim $x 0 0 -u 0 1 0 -wut "object" -wuo ($side+"BendUp") ($side+"Hand") ($side+"ForearmBend_EXP");
 	}
-	string $jnts[] = {$topJoint, "hip", "pelvis", "lThighBend", "lThighTwist", "lShin", "lFoot", "lMetatarsals", "lToe", "lSmallToe4", "lSmallToe4_2", "lSmallToe3", "lSmallToe3_2", "lSmallToe2", "lSmallToe2_2", "lSmallToe1", "lSmallToe1_2", "lBigToe", "lBigToe_2", "rThighBend", "rThighTwist", "rShin", "rFoot", "rMetatarsals", "rToe", "rSmallToe4", "rSmallToe4_2", "rSmallToe3", "rSmallToe3_2", "rSmallToe2", "rSmallToe2_2", "rSmallToe1", "rSmallToe1_2", "rBigToe", "rBigToe_2", "abdomenLower", "abdomenUpper", "chestLower", "chestUpper", "lCollar", "lThumb1", "lThumb2", "lThumb3", "lCarpal1", "lIndex1", "lIndex2", "lIndex3", "lCarpal2", "lMid1", "lMid2", "lMid3", "lCarpal3", "lRing1", "lRing2", "lRing3", "lCarpal4", "lPinky1", "lPinky2", "lPinky3", "rCollar", "rThumb1", "rThumb2", "rThumb3", "rCarpal1", "rIndex1", "rIndex2", "rIndex3", "rCarpal2", "rMid1", "rMid2", "rMid3", "rCarpal3", "rRing1", "rRing2", "rRing3", "rCarpal4", "rPinky1", "rPinky2", "rPinky3", "neckLower", "neckUpper", "head", "upperTeeth", "lowerJaw", "lowerTeeth", "tongue01", "tongue02", "tongue03", "tongue04", "lowerFaceRig", "lNasolabialLower", "rNasolabialLower", "lNasolabialMouthCorner", "rNasolabialMouthCorner", "lLipCorner", "lLipLowerOuter", "lLipLowerInner", "LipLowerMiddle", "rLipLowerInner", "rLipLowerOuter", "rLipCorner", "LipBelow", "Chin", "lCheekLower", "rCheekLower", "BelowJaw", "lJawClench", "rJawClench", "upperFaceRig", "rBrowInner", "rBrowMid", "rBrowOuter", "lBrowInner", "lBrowMid", "lBrowOuter", "CenterBrow", "MidNoseBridge", "lEyelidInner", "lEyelidUpperInner", "lEyelidUpper", "lEyelidUpperOuter", "lEyelidOuter", "lEyelidLowerOuter", "lEyelidLower", "lEyelidLowerInner", "rEyelidInner", "rEyelidUpperInner", "rEyelidUpper", "rEyelidUpperOuter", "rEyelidOuter", "rEyelidLowerOuter", "rEyelidLower", "rEyelidLowerInner", "lSquintInner", "lSquintOuter", "rSquintInner", "rSquintOuter", "lCheekUpper", "rCheekUpper", "Nose", "lNostril", "rNostril", "lLipBelowNose", "rLipBelowNose", "lLipNasolabialCrease", "rLipNasolabialCrease", "lNasolabialUpper", "rNasolabialUpper", "lNasolabialMiddle", "rNasolabialMiddle", "LipUpperMiddle", "lLipUpperOuter", "lLipUpperInner", "rLipUpperInner", "rLipUpperOuter", "lEye", "rEye", "lEar", "rEar", "lPectoral", "rPectoral"};
+	$jnts = {$topJoint, "hip", "pelvis", "lThighBend", "lThighTwist", "lShin", "lFoot", "lMetatarsals", "lToe", "lSmallToe4", "lSmallToe4_2", "lSmallToe3", "lSmallToe3_2", "lSmallToe2", "lSmallToe2_2", "lSmallToe1", "lSmallToe1_2", "lBigToe", "lBigToe_2", "rThighBend", "rThighTwist", "rShin", "rFoot", "rMetatarsals", "rToe", "rSmallToe4", "rSmallToe4_2", "rSmallToe3", "rSmallToe3_2", "rSmallToe2", "rSmallToe2_2", "rSmallToe1", "rSmallToe1_2", "rBigToe", "rBigToe_2", "abdomenLower", "abdomenUpper", "chestLower", "chestUpper", "lCollar", "lThumb1", "lThumb2", "lThumb3", "lCarpal1", "lIndex1", "lIndex2", "lIndex3", "lCarpal2", "lMid1", "lMid2", "lMid3", "lCarpal3", "lRing1", "lRing2", "lRing3", "lCarpal4", "lPinky1", "lPinky2", "lPinky3", "rCollar", "rThumb1", "rThumb2", "rThumb3", "rCarpal1", "rIndex1", "rIndex2", "rIndex3", "rCarpal2", "rMid1", "rMid2", "rMid3", "rCarpal3", "rRing1", "rRing2", "rRing3", "rCarpal4", "rPinky1", "rPinky2", "rPinky3", "neckLower", "neckUpper", "head", "upperTeeth", "lowerJaw", "lowerTeeth", "tongue01", "tongue02", "tongue03", "tongue04", "lowerFaceRig", "lNasolabialLower", "rNasolabialLower", "lNasolabialMouthCorner", "rNasolabialMouthCorner", "lLipCorner", "lLipLowerOuter", "lLipLowerInner", "LipLowerMiddle", "rLipLowerInner", "rLipLowerOuter", "rLipCorner", "LipBelow", "Chin", "lCheekLower", "rCheekLower", "BelowJaw", "lJawClench", "rJawClench", "upperFaceRig", "rBrowInner", "rBrowMid", "rBrowOuter", "lBrowInner", "lBrowMid", "lBrowOuter", "CenterBrow", "MidNoseBridge", "lEyelidInner", "lEyelidUpperInner", "lEyelidUpper", "lEyelidUpperOuter", "lEyelidOuter", "lEyelidLowerOuter", "lEyelidLower", "lEyelidLowerInner", "rEyelidInner", "rEyelidUpperInner", "rEyelidUpper", "rEyelidUpperOuter", "rEyelidOuter", "rEyelidLowerOuter", "rEyelidLower", "rEyelidLowerInner", "lSquintInner", "lSquintOuter", "rSquintInner", "rSquintOuter", "lCheekUpper", "rCheekUpper", "Nose", "lNostril", "rNostril", "lLipBelowNose", "rLipBelowNose", "lLipNasolabialCrease", "rLipNasolabialCrease", "lNasolabialUpper", "rNasolabialUpper", "lNasolabialMiddle", "rNasolabialMiddle", "LipUpperMiddle", "lLipUpperOuter", "lLipUpperInner", "rLipUpperInner", "rLipUpperOuter", "lEye", "rEye", "lEar", "rEar", "lPectoral", "rPectoral"};
 	string $extra[] = {"lShldrBend", "lShldrTwist", "lForearmBend", "lForearmTwist", "lHand", "rShldrBend", "rShldrTwist", "rForearmBend", "rForearmTwist", "rHand"};
 	for ($jnt in $jnts)
     {
         $atts = `listAttr -k -u ($jnt+"_EXP")`;
         for ($at in $atts) if (`startsWith $at "translate"` || `startsWith $at "rotate"` || `startsWith $at "scale"`)
-            if (`attributeExists $at $jnt`) catch (`connectAttr -f ($jnt+"."+$at) ($jnt+"_EXP."+$at)`); 
+            if (`attributeExists $at $jnt`) catch (`connectAttr -f ($jnt+"."+$at) ($jnt+"_EXP."+$at)`);
     }
     for ($jnt in $extra)
     {
