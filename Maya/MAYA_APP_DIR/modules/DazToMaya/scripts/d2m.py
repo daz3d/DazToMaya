@@ -1959,24 +1959,59 @@ def gen8_rotations_fix():
         print("Gen8RotsFix...")
 
 
+def moisture_mat_fix(material_name):
+    try:
+        cmds.setAttr(material_name + '.transparency', 1, 1, 1, type='double3')
+    except:
+        pass
+    try:
+        cmds.setAttr(material_name + '.specularColor', 0.279221, 0.279221, 0.279221, type='double3')
+    except:
+        pass
+    try:
+        cmds.setAttr(material_name + '.cosinePower', 91.727273)
+    except:
+        pass
+    try:
+        cmds.setAttr(material_name + '.color', 1, 1, 1, type='double3')
+    except:
+        pass
+
+
+def moisture_texture_fix(material_name):
+    # Query the connection between the material's transparency attribute and the texture's outColor attribute
+    connections = cmds.listConnections(material_name + '.transparency', source=True, destination=False, plugs=True)
+    # If a connection is found, extract the texture's name and set the "Alpha Gain" parameter to 0.5
+    if connections:
+        texture_connection = connections[0]
+        texture_name = texture_connection.split('.')[0]
+        cmds.setAttr(texture_name + '.alphaGain', 0.25)
+
+def gen9_mat_fix():
+    moisture_mat_fix("EyeMoisture_Left")
+    moisture_mat_fix("EyeMoisture_Right")
+
 def gen8_mat_fix():
-    try:
-        mel.eval('setAttr "EyeMoisture.transparency" -type double3 1 1 1')
-    except:
-        pass
-    try:
-        mel.eval(
-            'setAttr "EyeMoisture.specularColor" -type double3 0.279221 0.279221 0.279221')
-    except:
-        pass
-    try:
-        mel.eval('setAttr "EyeMoisture.cosinePower" 91.727273')
-    except:
-        pass
-    try:
-        mel.eval('setAttr "EyeMoisture.color" -type double3 1 1 1')
-    except:
-        pass
+    # try:
+    #     mel.eval('setAttr "EyeMoisture.transparency" -type double3 1 1 1')
+    # except:
+    #     pass
+    # try:
+    #     mel.eval(
+    #         'setAttr "EyeMoisture.specularColor" -type double3 0.279221 0.279221 0.279221')
+    # except:
+    #     pass
+    # try:
+    #     mel.eval('setAttr "EyeMoisture.cosinePower" 91.727273')
+    # except:
+    #     pass
+    # try:
+    #     mel.eval('setAttr "EyeMoisture.color" -type double3 1 1 1')
+    # except:
+    #     pass
+    moisture_mat_fix("EyeMoisture")
+    moisture_texture_fix("Tear")
+
     try:
         mel.eval('setAttr "Cornea.cosinePower" 64.36364')
     except:
@@ -2238,7 +2273,7 @@ def auto_ik():
                 # 2 == None
                 # 0 == Bone
                 try:
-                    mel.eval('setAttr "Genesis9.drawStyle" 0')
+                    mel.eval('setAttr "Genesis9.drawStyle" 2')
                 except:
                     pass
 
@@ -2249,6 +2284,11 @@ def auto_ik():
         # -----Probar forzar ojos correctos...... agregado para male3 lion-o...
         if "Genesis8" in daz_figure:
             gen8_mat_fix()
+        
+        if "Genesis9" in daz_figure:
+            # gen9 needs both
+            gen8_mat_fix()
+            gen9_mat_fix()
 
         # ROTATIONS FIX-----------------------------------
         print("------------------------------------")
@@ -2486,7 +2526,12 @@ def auto_import_daz():
     cmds.refresh()
 
     scene_renamer()
+    # DB 2023-03-23: work-around, needs to be called after mat_refresh_fix
+    gen9_mat_fix()
+
     mat_refresh_fix()
+
+
     # Show remember to save with textures...
     try:
         if cmds.checkBox(check_box_save, query=True, value=True) == True:
