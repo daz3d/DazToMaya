@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2022
 DZBRIDGE_VERSION_MINOR = 2
 DZBRIDGE_VERSION_REVISION = 14
-DZBRIDGE_VERSION_BUILD = 38
+DZBRIDGE_VERSION_BUILD = 39
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -1980,7 +1980,10 @@ def moisture_mat_fix(material_name):
 
 def moisture_texture_fix(material_name):
     # Query the connection between the material's transparency attribute and the texture's outColor attribute
-    connections = cmds.listConnections(material_name + '.transparency', source=True, destination=False, plugs=True)
+    try:
+        connections = cmds.listConnections(material_name + '.transparency', source=True, destination=False, plugs=True)
+    except:
+        return
     # If a connection is found, extract the texture's name and set the "Alpha Gain" parameter to 0.5
     if connections:
         texture_connection = connections[0]
