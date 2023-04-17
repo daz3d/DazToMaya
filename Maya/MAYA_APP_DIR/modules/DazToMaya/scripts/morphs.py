@@ -155,7 +155,7 @@ def create_morphs_node(morph_links):
 
     for link in morph_links:
         morph_label = morph_links[link]["Label"]
-        morph_label_ns = morph_label.replace(" ", "")
+        morph_label_ns = morph_label.replace(" ", "").replace("-", "FBXASC045")
         morph_min = morph_links[link]["Minimum"]
         morph_max = morph_links[link]["Maximum"]
         cmds.addAttr(longName=morph_label_ns, niceName=morph_label, min=morph_min, max=morph_max)
@@ -167,17 +167,23 @@ def create_morphs_node(morph_links):
         for blend_target in blend_targets:
             link = clean_name(blend_target)
             if link not in morph_links.keys(): continue
-            morph_label_ns = morph_links[link]["Label"].replace(" ", "")
+            morph_label_ns = morph_links[link]["Label"].replace(" ", "").replace("-", "FBXASC045")
             source = morph_node + "." + morph_label_ns
             dest = blendshape + "." + blend_target
 
             if (create_autojcm(morph_links[link], dest)):
+                # remove attribute
+                if cmds.objExists(source):
+                    try:
+                        cmds.deleteAttr(source)
+                    except Exception as e:
+                        print("DazToMaya ERROR: unable to remove unused morph, " + source + ", from Morphs node:" + str(e))
                 continue
 
             try:
                 cmds.connectAttr(source, dest)
-            except:
-                pass
+            except Exception as e:
+                print("DazToMaya ERROR: unable to connect morph, " + source + ", to Morphs node target, " + dest + ":" + str(e))
 
 
 def create_custom_template(morph_links):

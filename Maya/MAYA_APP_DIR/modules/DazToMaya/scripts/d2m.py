@@ -2299,10 +2299,11 @@ def auto_ik():
         clamp_textures()
         transparency_fix()
 
-        try:
-            morphs.fix_morphs()
-        except:
-            pass
+        # try:
+        #     morphs.fix_morphs()
+        # except:
+        #     pass
+        morphs.fix_morphs()
 
         scene_modified_check()
         remove_hidden_objs()
