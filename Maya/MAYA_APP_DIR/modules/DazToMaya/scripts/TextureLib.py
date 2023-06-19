@@ -4,6 +4,16 @@ import Definitions
 texture_maps = Definitions.DAZTOMAYA_MODULE_DIR + "/scripts/textures/"
 
 texture_library = {
+    "makeup-weight":{
+        "Name": [
+            "Makeup Weight",
+        ],
+    },
+    "makeup-base":{
+        "Name": [
+            "Makeup Base Color",
+        ],
+    },
     "normal": {
         "Name": [
             "Normal Map",

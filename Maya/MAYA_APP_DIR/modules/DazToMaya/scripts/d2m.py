@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2022
 DZBRIDGE_VERSION_MINOR = 2
 DZBRIDGE_VERSION_REVISION = 14
-DZBRIDGE_VERSION_BUILD = 39
+DZBRIDGE_VERSION_BUILD = 40
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -91,6 +91,7 @@ figure = ""
 
 check_box_save = 0
 check_box_merge = 0
+check_box_keep_phong = 0
 cfg_settings = ""
 window_daz_main = ""
 window_name = "DazToMayaMain12225"
@@ -698,8 +699,25 @@ def hide_bone(target):
     target = target + ".drawStyle"
     cmds.setAttr('%s' % target, 2)
 
+def print_HIKNodeName_Lookup_Table():
+    # DB 4-18-2023: to query MEL API for Human IK Module
+    max_humanik_node_id = 50 ## arbitrary number, I don't know what real value is
+    for i in range(max_humanik_node_id):
+       print(str(i) + "=" + mel.eval('GetHIKNodeName(' + str(i) + ')'))
+    # 0=Reference
+    # 1=Hips
+    # 2=LeftUpLeg
+    # 8=Spine
+    # 9=LeftArm
+    # 15=Head
+    # 16=LeftToeBase
+    # 20=Neck
+    # 23=Spine1
+    # 32=Neck1
 
 def daz_to_ik():
+    # print_HIKNodeName_Lookup_Table()
+
     # Load Skeleton
     try:
         hide_bone("Genesis2Female")
@@ -743,6 +761,8 @@ def daz_to_ik():
 
     if "neckLower" in joints_list:
         mel.eval('setCharacterObject("neckLower","Character1",20,0)')
+    if "neckUpper" in joints_list:
+        mel.eval('setCharacterObject("neckUpper","Character1",32,0)')
     if "neck" in joints_list:
         mel.eval('setCharacterObject("neck","Character1",20,0)')
 
@@ -2535,6 +2555,7 @@ def auto_import_daz():
 
     mat_refresh_fix()
 
+    dzm.DazMaterials(True).update_phong_shaders()
 
     # Show remember to save with textures...
     try:
@@ -2551,7 +2572,7 @@ def auto_import_daz():
 
 def d2mstart():
     cmds.showWindow(window_daz_main)
-    cmds.window(window_name, edit=True, widthHeight=(343, 470))
+    cmds.window(window_name, edit=True, widthHeight=(343, 495))
 
 
 def initialize():
@@ -2606,6 +2627,7 @@ def open_main_window():
     global window_daz_main
     global check_box_save
     global check_box_merge
+    global check_box_keep_phong
 
     if cmds.window(window_name, exists=True):
         cmds.deleteUI(window_name)
@@ -2616,7 +2638,9 @@ def open_main_window():
                                     maximizeButton=False,
                                     minimizeButton=True,
                                     sizeable=False,
-                                    title="DazToMaya 2022.1"
+                                    title="DazToMaya " + 
+                                    str(DZBRIDGE_VERSION_MAJOR) + "." + 
+                                    str(DZBRIDGE_VERSION_MINOR)
                                 )
 
     cmds.columnLayout("columnName01", adjustableColumn=True)
@@ -2696,6 +2720,12 @@ def open_main_window():
     cmds.optionMenu("matConvertMenu", w=50, label="")
     cmds.menuItem(label="Arnold")
     cmds.menuItem(label="Vray")
+    # DB 2023-June-17: option to remove or keep phong shaders
+    cmds.setParent('..')
+    cmds.separator(height=5, style='none')
+    cmds.columnLayout("CheckBox_DeletePhong_Column", columnOffset=("left", 10))
+    keep_phong_label = "Keep default Phong shaders after converting"
+    check_box_keep_phong = cmds.checkBox(label=keep_phong_label,value=0)
     cmds.setParent('..')
     cmds.separator(height=20, style='in')
 
@@ -2724,7 +2754,12 @@ def open_main_window():
                         )
     cmds.separator(height=18, style='in')
 
-    # Copyright section
+    # Full version and Copyright section
+    cmds.separator(style='none')
+    cmds.text(label='DazToMaya Bridge ' + str(DZBRIDGE_VERSION_MAJOR) + "." + 
+              str(DZBRIDGE_VERSION_MINOR) + " revision " + 
+              str(DZBRIDGE_VERSION_REVISION) + "." + 
+              str(DZBRIDGE_VERSION_BUILD))
     cmds.separator(height=5, style='none')
     cmds.rowColumnLayout(
                             numberOfColumns=4,
@@ -2741,7 +2776,7 @@ def open_main_window():
                         )
     cmds.separator(style='none')
     cmds.setParent('..')
-    cmds.separator(height=5, style='none')
+    cmds.separator(height=10, style='none')
 
 
 def btn_save_with_text_callback():
@@ -2786,6 +2821,7 @@ def btn_convert_callback():
 
     mat_conv = cmds.optionMenu("matConvertMenu", query=True, value=True)
     mats = mel.eval('ls -type "phong"')
+    keep_phong = cmds.checkBox(check_box_keep_phong, query=True, value=True)
     if mats == None or len(mats) < 1:
         errormsg = "Re-Convert Materials not supported yet:\nOriginal materials were already changed.\nImport again and convert to other material if needed."
         result = cmds.confirmDialog(
@@ -2800,7 +2836,7 @@ def btn_convert_callback():
         if mat_conv == "Arnold":
             pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
             # convert_all_to_arnold_daz_fixes()
-            dzm.DazMaterials().convert_to_arnold()
+            dzm.DazMaterials(keep_phong).convert_to_arnold()
 
 
         if mat_conv == "Vray":

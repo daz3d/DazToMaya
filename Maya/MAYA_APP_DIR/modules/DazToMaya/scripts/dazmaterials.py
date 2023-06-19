@@ -11,6 +11,10 @@ from TextureLib import texture_library, texture_maps
 
 class DazMaterials:
     material_dict = {}
+    keep_phong = False
+
+    def __init__(self, keep_phong):
+        self.keep_phong = keep_phong
 
     def convert_color(self, color):
         '''Takes a hex rgb string (e.g. #ffffff) and returns an RGB tuple (float, float, float).'''
@@ -81,7 +85,9 @@ class DazMaterials:
                         surface = pm.shadingNode("aiStandardSurface", n = shader.name() + "_ai", asShader = True)
                         
                         # set material to shader
-                        surface.outColor >> se.surfaceShader
+                        surface.outColor >> se.aiSurfaceShader
+                        if not self.keep_phong:
+                            surface.outColor >> se.surfaceShader
                         surface.base.set(1)
                         
 
@@ -94,8 +100,33 @@ class DazMaterials:
                                             continue
                                     avail_tex[tex_type] = tex_name
 
+                        blend_color_node = None
+                        clr_node = None
+                        if "makeup-weight" in avail_tex.keys() and "makeup-base" in avail_tex.keys() and "color" in avail_tex.keys():
+                            makeup_weight = avail_tex["makeup-weight"]
+                            makeup_base = avail_tex["makeup-base"]
+                            skin_color = avail_tex["color"]
+                            if props[makeup_weight]["Texture"] != "" and props[makeup_base]["Texture"] != "" and props[skin_color]["Texture"] != "":
+                                # create blend color
+                                blend_color_node = pm.shadingNode("blendColors", n = "makeup_blend", asUtility = True)
+                                blend_color_node.output >> surface.baseColor
+                                blend_color_node.output >> shader.color
+                                # weight
+                                weight_node = pm.shadingNode("file", n=makeup_weight, asTexture = True)
+                                weight_node.setAttr('fileTextureName', props[makeup_weight]["Texture"])
+                                rgb_to_hsv_node = pm.shadingNode("rgbToHsv", n = "rgbToHsv", asUtility = True)
+                                weight_node.outColor >> rgb_to_hsv_node.inRgb
+                                rgb_to_hsv_node.outHsvV >> blend_color_node.blender
+                                # makeup base
+                                base_node = pm.shadingNode("file", n=makeup_base, asTexture = True)
+                                base_node.setAttr('fileTextureName', props[makeup_base]["Texture"])
+                                base_node.outColor >> blend_color_node.color1
+                                # skin color
+                                skin_node = pm.shadingNode("file", n = skin_color, asTexture = True)
+                                skin_node.setAttr('fileTextureName',props[skin_color]["Texture"])
+                                skin_node.outColor >> blend_color_node.color2
 
-                        if "color" in avail_tex.keys():
+                        if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
                             if props[prop]["Texture"] != "":
                                 clr_node = pm.shadingNode("file", n = prop, asTexture = True)
@@ -204,7 +235,10 @@ class DazMaterials:
                             
                             detail = pm.shadingNode("aiStandardSurface", n = shader.name() + "_detail_ai", asShader = True)
                             detail.base.set(1)
-                            clr_node.outColor >> detail.baseColor
+                            if clr_node:
+                                clr_node.outColor >> detail.baseColor
+                            elif blend_color_node:
+                                blend_color_node.output >> detail.baseColor
                             normal_map.outValue >> detail.normalCamera 
                             rgh_node.outAlpha >> detail.specularRoughness
 
@@ -227,9 +261,15 @@ class DazMaterials:
 
                         if "sss-radius" in avail_tex.keys():
                             if props[avail_tex["color"]]["Texture"] != "":
-                                clr_node.outColor >> surface.subsurfaceColor
+                                if clr_node:
+                                    clr_node.outColor >> surface.subsurfaceColor
+                                elif blend_color_node:
+                                    blend_color_node.output >> surface.subsurfaceColor
                                 if "detail-mask" in avail_tex.keys():
-                                    clr_node.outColor >> detail.subsurfaceColor
+                                    if clr_node:
+                                        clr_node.outColor >> detail.subsurfaceColor
+                                    elif blend_color_node:
+                                        blend_color_node.output >> detail.subsurfaceColor
                             else:
                                 color_as_vector = self.convert_color(props[avail_tex["color"]]["Value"])
                                 surface.setAttr("subsurfaceColor", color_as_vector)
@@ -247,4 +287,59 @@ class DazMaterials:
                                 detail.setAttr("subsurface", 1)
                                 detail.setAttr("subsurfaceRadius", radius_as_vector)
                                 detail.setAttr("subsurfaceScale", 0.5)
-                        pm.delete(shader)
+                        if not self.keep_phong:
+                            pm.delete(shader)
+
+    def update_phong_shaders(self):
+        allshaders = self.get_materials_in_scene()
+        self.load_materials()
+        
+        for shader in allshaders:
+            # get shading engine
+            se = shader.shadingGroups()[0]
+            shader_connections = shader.listConnections()
+            # get assigned shapes
+            members = se.members()
+            
+            if len(members) > 0:
+                split = members[0].split("Shape")
+                if len(split) > 1:
+                    obj_name = split[0]
+                    props = self.find_mat_properties(obj_name, shader.name())
+                    
+                    if props:
+
+                        avail_tex = {}
+                        for tex_type in texture_library.keys():
+                            for tex_name in texture_library[tex_type]["Name"]:
+                                if tex_name in props.keys():
+                                    if tex_type in avail_tex.keys():
+                                        if props[tex_name]["Texture"] == "":
+                                            continue
+                                    avail_tex[tex_type] = tex_name
+
+                        blend_color_node = None
+                        clr_node = None
+                        if "makeup-weight" in avail_tex.keys() and "makeup-base" in avail_tex.keys() and "color" in avail_tex.keys():
+                            makeup_weight = avail_tex["makeup-weight"]
+                            makeup_base = avail_tex["makeup-base"]
+                            skin_color = avail_tex["color"]
+                            if props[makeup_weight]["Texture"] != "" and props[makeup_base]["Texture"] != "" and props[skin_color]["Texture"] != "":
+                                # create blend color
+                                blend_color_node = pm.shadingNode("blendColors", n = "makeup_blend", asUtility = True)
+                                blend_color_node.output >> shader.color
+                                # weight
+                                weight_node = pm.shadingNode("file", n=makeup_weight, asTexture = True)
+                                weight_node.setAttr('fileTextureName', props[makeup_weight]["Texture"])
+                                rgb_to_hsv_node = pm.shadingNode("rgbToHsv", n = "rgbToHsv", asUtility = True)
+                                weight_node.outColor >> rgb_to_hsv_node.inRgb
+                                rgb_to_hsv_node.outHsvV >> blend_color_node.blender
+                                # makeup base
+                                base_node = pm.shadingNode("file", n=makeup_base, asTexture = True)
+                                base_node.setAttr('fileTextureName', props[makeup_base]["Texture"])
+                                base_node.outColor >> blend_color_node.color1
+                                # skin color
+                                skin_node = pm.shadingNode("file", n = skin_color, asTexture = True)
+                                skin_node.setAttr('fileTextureName',props[skin_color]["Texture"])
+                                skin_node.outColor >> blend_color_node.color2
+
