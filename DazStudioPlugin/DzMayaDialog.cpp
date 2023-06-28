@@ -54,24 +54,30 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 // Set the dialog title
 	 int revision = PLUGIN_REV % 1000;
 #ifdef _DEBUG
-	 setWindowTitle(tr("Daz To Maya Bridge %1.%2 Build %3.%4").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(revision).arg(PLUGIN_BUILD));
+	 setWindowTitle(tr("Daz To Maya Bridge %1 v%2.%3.%4").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(revision).arg(PLUGIN_BUILD));
 #else
-	 setWindowTitle(tr("Daz To Maya Bridge %1.%2").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR));
+	 setWindowTitle(tr("Daz To Maya Bridge %1 v%2.%3").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(revision));
 #endif
 
 	 // Welcome String for Setup/Welcome Mode
-	 QString sSetupModeString = tr("<h4>\
-If this is your first time using the Daz To Maya Bridge, please be sure to read or watch \
-the tutorials or videos below to install and enable the Maya Plugin for the bridge:</h4>\
-<ul>\
-<li><a href=\"https://github.com/daz3d/DazToMaya#3-how-do-i-install-the-daz-to-maya-bridge\">How To Install and Configure the Bridge (Github)</a></li>\
-<li><a href=\"https://www.daz3d.com/maya-bridge#faq\">Daz To Maya FAQ (Daz 3D)</a></li>\
-<li><a href=\"https://youtu.be/H3ukRuEyLCM\">How To Install DazToMaya Bridge (Youtube)</a></li>\
-<li><a href=\"https://knowledge.autodesk.com/support/maya/learn-explore/caas/CloudHelp/cloudhelp/2023/ENU/Maya-EnvVar/files/GUID-228CCA33-4AFE-4380-8C3D-18D23F7EAC72-htm.html\">Maya File Paths (Autodesk Knowledge Base)</a></li>\
-<li><a href=\"https://www.daz3d.com/forums/discussion/574846/official-daztomaya-bridge-2022-what-s-new-and-how-to-use-it/p1\">What's New and How To Use It (Daz 3D Forums)</a></li>\
-</ul>\
-Once the maya plugin is enabled, please add a Character or Prop to the Scene to transfer assets using the Daz To Maya Bridge.<br><br>\
-To find out more about Daz Bridges, go to <a href=\"https://www.daz3d.com/daz-bridges\">https://www.daz3d.com/daz-bridges</a><br>\
+	 QString sDazAppDir = dzApp->getHomePath().replace("\\","/");
+	 QString sPdfPath = sDazAppDir + "/docs/Plugins" + "/Daz to Maya/Daz to Maya.pdf";
+	 QString sSetupModeString = tr("\
+<div style=\"background-color:#282f41;\" align=center>\
+<img src=\":/DazBridgeMaya/banner.jpg\" width=\"370\" height=\"95\" align=\"center\" hspace=\"0\" vspace=\"0\">\
+<table width=100% cellpadding=8 cellspacing=2 style=\"vertical-align:middle; font-size:x-large; font-weight:bold; background-color:#FFAA00;foreground-color:#FFFFFF\" align=center>\
+  <tr>\
+    <td width=33% style=\"text-align:center; background-color:#282f41;\"><div align=center><a href=\"https://www.daz3d.com/maya-bridge#faq\">FAQ</a></div></td>\
+    <td width=33% style=\"text-align:center; background-color:#282f41;\"><div align=center><a href=\"https://youtu.be/gck7raZ2N84\">Installation Video</a></td>\
+    <td width=33% style=\"text-align:center; background-color:#282f41;\"><div align=center><a href=\"https://youtu.be/QMFFliYu_kw\">Tutorial Video</a></td>\
+  </tr>\
+  <tr>\
+    <td width=33% style=\"text-align:center; background-color:#282f41;\"><div align=center><a href=\"file:///") + sPdfPath + tr("\">PDF</a></td>\
+    <td width=33% style=\"text-align:center; background-color:#282f41;\"><div align=center><a href=\"https://www.daz3d.com/forums/categories/maya-discussion\">Forums</a></td>\
+    <td width=33% style=\"text-align:center; background-color:#282f41;\"><div align=center><a href=\"https://github.com/daz3d/DazToMaya/issues\">Report Bug</a></td>\
+  </tr>\
+</table>\
+</div>\
 ");
 	 m_WelcomeLabel->setText(sSetupModeString);
 
@@ -105,7 +111,7 @@ To find out more about Daz Bridges, go to <a href=\"https://www.daz3d.com/daz-br
 		 advancedLayout->addRow("Intermediate Folder", intermediateFolderLayout);
 	 }
 #endif
-	 QString sMayaVersionString = tr("DazToMaya Bridge %1.%2  revision %3.%4").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(revision).arg(PLUGIN_BUILD);
+	 QString sMayaVersionString = tr("DazToMaya Bridge %1 v%2.%3.%4").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(revision).arg(PLUGIN_BUILD);
 	 setBridgeVersionStringAndLabel(sMayaVersionString);
 
 	 // Configure Target Plugin Installer

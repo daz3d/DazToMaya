@@ -2,8 +2,7 @@
 <RCC version="1.0">
     <qresource prefix="/DazBridgeMaya">
         <file alias="mayaplugin.zip">mayaplugin.zip</file>
-    </qresource>
-    <qresource prefix="/DazBridgeMaya/Images">
         <file alias="icon">Images/Daz to Maya.png</file>
+        <file alias="banner.jpg">Images/banner.jpg</file>
     </qresource>
 </RCC>
