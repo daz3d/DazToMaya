@@ -24,7 +24,7 @@ class DazMaterials:
         """
         Load materials from Dtu file
         """
-        dtu_path = os.path.abspath(EXPORT_DIR + "\FIG\FIG0")
+        dtu_path = os.path.abspath(EXPORT_DIR + "/FIG/FIG0")
         dtu_loader = DtuLoader(dtu_path)
         mats = dtu_loader.get_materials_list()
         for mat in mats:

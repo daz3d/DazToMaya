@@ -30,7 +30,7 @@ def fix_morphs():
 
 def load_dtu():
     global dtu_loader
-    dtu_path = os.path.abspath(Definitions.EXPORT_DIR + "\FIG\FIG0")
+    dtu_path = os.path.abspath(Definitions.EXPORT_DIR + "/FIG/FIG0")
     dtu_loader = DtuLoader.DtuLoader(dtu_path)
     return dtu_loader
 
