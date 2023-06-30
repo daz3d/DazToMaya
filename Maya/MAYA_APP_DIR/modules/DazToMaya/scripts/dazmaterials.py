@@ -343,3 +343,36 @@ class DazMaterials:
                                 skin_node.setAttr('fileTextureName',props[skin_color]["Texture"])
                                 skin_node.outColor >> blend_color_node.color2
 
+                        if "color" in avail_tex.keys() and blend_color_node is None:
+                            prop = avail_tex["color"]
+                            if props[prop]["Texture"] != "":
+                                clr_node = pm.shadingNode("file", n = prop, asTexture = True)
+                                clr_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                clr_node.outColor >> shader.color
+                            else:
+                                color_as_vector = self.convert_color(props[prop]["Value"])
+                                shader.setAttr('color', color_as_vector)
+
+                        # if "normal" in avail_tex.keys():
+                        #     prop = avail_tex["normal"]
+                        #     if props[prop]["Texture"] != "":
+                        #         normal_map = pm.shadingNode("aiNormalMap", asUtility = True)
+                        #         file_node = pm.shadingNode("file", n = prop, asTexture = True)
+                        #         file_node.setAttr('fileTextureName', props[prop]["Texture"])
+                        #         file_node.setAttr('colorSpace', 'Raw', type='string')
+                        #         file_node.outColor >> normal_map.input
+                        #         if float(props[prop]["Value"]) < 0:
+                        #            normal_map.setAttr('strength', (-1* float(props[prop]["Value"]))) 
+                        #            normal_map.setAttr('invertY', 1)
+                        #         else:
+                        #             normal_map.setAttr('strength', float(props[prop]["Value"]))
+                        #         normal_map.outValue >> shader.normalCamera
+
+                        # if "specular" in avail_tex.keys():
+                        #     prop = avail_tex["specular"]
+                        #     if props[prop]["Texture"] != "":
+                        #         file_node = pm.shadingNode("file", n = prop, asTexture = True)
+                        #         file_node.setAttr('fileTextureName', props[prop]["Texture"]) 
+                        #         file_node.setAttr('colorSpace', 'Raw', type='string')
+                        #         file_node.setAttr('alphaIsLuminance', True)
+                        #         file_node.outColor >> shader.specularColor
