@@ -131,6 +131,8 @@ class DazMaterials:
                             if props[prop]["Texture"] != "":
                                 clr_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 clr_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                color_as_vector = self.convert_color(props[prop]["Value"])
+                                clr_node.setAttr('colorGain', color_as_vector)
                                 clr_node.outColor >> surface.baseColor
                             else:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
@@ -348,6 +350,8 @@ class DazMaterials:
                             if props[prop]["Texture"] != "":
                                 clr_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 clr_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                color_as_vector = self.convert_color(props[prop]["Value"])
+                                clr_node.setAttr('colorGain', color_as_vector)
                                 clr_node.outColor >> shader.color
                             else:
                                 color_as_vector = self.convert_color(props[prop]["Value"])

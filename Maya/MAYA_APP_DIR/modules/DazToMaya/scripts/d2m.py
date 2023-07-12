@@ -2110,7 +2110,11 @@ def eyelash_fix():
         pass
 
 
-def clean_mat_names():
+### DB 2023-July-11 - DO NOT USE. This function only breaks material names since
+### the materials are used as keys into the DTU material dictionary.
+### Additionally, the logic is flawed since .split() will create multiple parts
+### but only index 1 is used for renaming the material.
+def clean_mat_names_DO_NOT_USE():
     try:
         mats = mel.eval('ls -type "phong"')
         for mat in mats:
@@ -2211,7 +2215,7 @@ def auto_ik():
         except:
             pass
         clean_namespace()
-        clean_mat_names()
+        # clean_mat_names()
         eyelash_fix()
         eyelash_fix_gen3()
         hide_root_bone()
