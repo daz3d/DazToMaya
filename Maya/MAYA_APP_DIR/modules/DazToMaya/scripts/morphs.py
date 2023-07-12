@@ -218,7 +218,7 @@ def create_custom_template(morph_links):
 
     template_text += "</templates>\n"
 
-    template_path = Definitions.DAZTOMAYA_MODULE_DIR + "\scripts\\AETemplates\AEtransform.MorphsTemplate.xml"
+    template_path = Definitions.DAZTOMAYA_MODULE_DIR + "/scripts/AETemplates/AEtransform.MorphsTemplate.xml"
     template_file = open(template_path, "w")
     template_file.write(template_text)
     template_file.close()

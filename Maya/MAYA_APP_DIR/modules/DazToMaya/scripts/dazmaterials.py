@@ -114,16 +114,23 @@ class DazMaterials:
                                 # weight
                                 weight_node = pm.shadingNode("file", n=makeup_weight, asTexture = True)
                                 weight_node.setAttr('fileTextureName', props[makeup_weight]["Texture"])
+                                scalar = float(props[makeup_weight]["Value"])
+                                weight_node.setAttr('colorGain', [scalar, scalar, scalar])
+                                weight_node.setAttr('colorSpace', 'Raw', type='string')
                                 rgb_to_hsv_node = pm.shadingNode("rgbToHsv", n = "rgbToHsv", asUtility = True)
                                 weight_node.outColor >> rgb_to_hsv_node.inRgb
                                 rgb_to_hsv_node.outHsvV >> blend_color_node.blender
                                 # makeup base
                                 base_node = pm.shadingNode("file", n=makeup_base, asTexture = True)
                                 base_node.setAttr('fileTextureName', props[makeup_base]["Texture"])
+                                color_as_vector = self.convert_color(props[makeup_base]["Value"])
+                                base_node.setAttr('colorGain', color_as_vector)
                                 base_node.outColor >> blend_color_node.color1
                                 # skin color
                                 skin_node = pm.shadingNode("file", n = skin_color, asTexture = True)
                                 skin_node.setAttr('fileTextureName',props[skin_color]["Texture"])
+                                color_as_vector = self.convert_color(props[skin_color]["Value"])
+                                skin_node.setAttr('colorGain', color_as_vector)
                                 skin_node.outColor >> blend_color_node.color2
 
                         if "color" in avail_tex.keys() and blend_color_node is None:
@@ -143,6 +150,8 @@ class DazMaterials:
                             if props[prop]["Texture"] != "":
                                 file_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 file_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                scalar = float(props[prop]["Value"])
+                                file_node.setAttr('colorGain', [scalar, scalar, scalar])
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outColor >> surface.opacity
@@ -333,16 +342,23 @@ class DazMaterials:
                                 # weight
                                 weight_node = pm.shadingNode("file", n=makeup_weight, asTexture = True)
                                 weight_node.setAttr('fileTextureName', props[makeup_weight]["Texture"])
+                                scalar = float(props[makeup_weight]["Value"])
+                                weight_node.setAttr('colorGain', [scalar, scalar, scalar])
+                                weight_node.setAttr('colorSpace', 'Raw', type='string')
                                 rgb_to_hsv_node = pm.shadingNode("rgbToHsv", n = "rgbToHsv", asUtility = True)
                                 weight_node.outColor >> rgb_to_hsv_node.inRgb
                                 rgb_to_hsv_node.outHsvV >> blend_color_node.blender
                                 # makeup base
                                 base_node = pm.shadingNode("file", n=makeup_base, asTexture = True)
                                 base_node.setAttr('fileTextureName', props[makeup_base]["Texture"])
+                                color_as_vector = self.convert_color(props[makeup_base]["Value"])
+                                base_node.setAttr('colorGain', color_as_vector)
                                 base_node.outColor >> blend_color_node.color1
                                 # skin color
                                 skin_node = pm.shadingNode("file", n = skin_color, asTexture = True)
                                 skin_node.setAttr('fileTextureName',props[skin_color]["Texture"])
+                                color_as_vector = self.convert_color(props[skin_color]["Value"])
+                                skin_node.setAttr('colorGain', color_as_vector)
                                 skin_node.outColor >> blend_color_node.color2
 
                         if "color" in avail_tex.keys() and blend_color_node is None:
@@ -356,6 +372,49 @@ class DazMaterials:
                             else:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 shader.setAttr('color', color_as_vector)
+
+                        if "opacity" in avail_tex.keys():
+                            prop = avail_tex["opacity"]
+                            if props[prop]["Texture"] != "":
+                                file_node = pm.shadingNode("file", n = prop, asTexture = True)
+                                file_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                scalar = float(props[prop]["Value"])
+                                file_node.setAttr('alphaGain', scalar)
+                                file_node.setAttr('colorSpace', 'Raw', type='string')
+                                file_node.setAttr('alphaIsLuminance', True)
+                                file_node.outTransparency >> shader.transparency
+
+                        # if "transparency" in avail_tex.keys():
+                        #     prop = avail_tex["transparency"]
+                        #     shader.setAttr('transmission', props[prop]["Value"])
+                        #     color_as_vector = self.convert_color(props[avail_tex["color"]]["Value"])
+                        #     shader.setAttr('transmissionColor', color_as_vector)
+
+                        # if "roughness" in avail_tex.keys():
+                        #     prop = avail_tex["roughness"]
+                        #     if props[prop]["Texture"] != "":
+                        #         file_node = pm.shadingNode("file", n = prop, asTexture = True)
+                        #         file_node.setAttr('fileTextureName', props[prop]["Texture"])
+                        #         scalar = float(props[prop]["Value"])
+                        #         file_node.setAttr('alphaGain', scalar)
+                        #         file_node.setAttr('colorSpace', 'Raw', type='string')
+                        #         file_node.setAttr('alphaIsLuminance', True)
+                        #         file_node.setAttr('invert', True)
+                        #         multiply100 = pm.shadingNode("floatMath", asUtility = True)
+                        #         multiply100.setAttr('operation', 2) # add=0, subtract, multiply, divide, min, max, power
+                        #         multiply100.setAttr('floatB', 100.0)
+                        #         file_node.outAlpha >> multiply100.floatA
+                        #         clamp = pm.shadingNode("clamp", asUtility = True)
+                        #         clamp.setAttr('min', [2.0, 2.0, 2.0])
+                        #         clamp.setAttr('max', [100.0, 100.0, 100.0])
+                        #         multiply100.outFloat >> clamp.inputR
+                        #         clamp.outputR >> shader.cosinePower
+                        #     else:
+                        #         roughness_val = props[prop]["Value"]
+                        #         cosinePower_val = (1.0 - roughness_val)*100.0
+                        #         cosinePower_val = max(cosinePower_val, 2.0)
+                        #         cosinePower_val = min(cosinePower_val, 100.0)
+                        #         shader.setAttr('cosinePower', cosinePower_val)
 
                         # if "normal" in avail_tex.keys():
                         #     prop = avail_tex["normal"]
@@ -372,6 +431,20 @@ class DazMaterials:
                         #             normal_map.setAttr('strength', float(props[prop]["Value"]))
                         #         normal_map.outValue >> shader.normalCamera
 
+                        # if "bump" in avail_tex.keys():
+                        #     prop = avail_tex["bump"]
+                        #     if props[prop]["Texture"] != "":
+                        #         bump_node = pm.shadingNode("aiBump2d", asUtility = True)
+                        #         file_node = pm.shadingNode("file", n = shader.name() + "_" + prop + "_tx", asTexture = True)
+                        #         file_node.setAttr('fileTextureName', props[prop]["Texture"])
+                        #         file_node.setAttr('colorSpace', 'Raw', type='string')
+                        #         file_node.setAttr('alphaIsLuminance', True)
+                        #         file_node.outAlpha >> bump_node.bumpMap
+                        #         # if "normal" in avail_tex.keys():
+                        #         #     if props[avail_tex["normal"]]["Texture"] != "":
+                        #         #         normal_map.outValue >> bump_node.normal
+                        #         bump_node.outValue >> shader.normalCamera
+
                         # if "specular" in avail_tex.keys():
                         #     prop = avail_tex["specular"]
                         #     if props[prop]["Texture"] != "":
@@ -380,3 +453,4 @@ class DazMaterials:
                         #         file_node.setAttr('colorSpace', 'Raw', type='string')
                         #         file_node.setAttr('alphaIsLuminance', True)
                         #         file_node.outColor >> shader.specularColor
+
