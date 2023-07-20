@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2023
 DZBRIDGE_VERSION_MINOR = 1
 DZBRIDGE_VERSION_REVISION = 0
-DZBRIDGE_VERSION_BUILD = 8
+DZBRIDGE_VERSION_BUILD = 9
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -2559,7 +2559,16 @@ def auto_import_daz():
 
     mat_refresh_fix()
 
-    dzm.DazMaterials(True).update_phong_shaders()
+    # DB 2023-July-17: work-around for HD Makeup missing face textures
+    daz_materials = dzm.DazMaterials(True)
+    user_choice_apply_makeup = False
+    if daz_materials.has_hd_makeup():
+        ## ask user if they want to apply hd makeup
+        user_choice_apply_makeup = ask_user_to_apply_hd_makeup()
+    if user_choice_apply_makeup:
+        daz_materials.update_phong_shaders_with_makeup()
+    else:
+        daz_materials.update_phong_shaders_safe()
 
     # Show remember to save with textures...
     try:
@@ -2569,6 +2578,17 @@ def auto_import_daz():
         pass
 
     print("DazToMaya Complete!")
+
+
+def ask_user_to_apply_hd_makeup():
+    info_text = "HD Makeup was detcted.  Would you like to apply it now?  If no, you can apply HD Makeup later by converting to Arnold textures.\n"
+    warning_text = "WARNING: Applying HD Makeup will break compatibility with Maya Fbx Exporter.  If you plan to export to Fbx from Maya, we recommend you click NO and bake the HD Makeup textures into your diffuse textures.\n"
+    yes_text = "Yes, apply HD Makeup now."
+    no_text = "No, I will apply HD Makeup later."
+    user_choice = cmds.confirmDialog(title="HD Makeup Detected", message=info_text + "\n\n" + warning_text, button=[yes_text, no_text], defaultButton=no_text, cancelButton=no_text, dismissString=no_text)
+    if (user_choice == yes_text):
+        return True
+    return False
 
 
 # --------- Initialize ----------

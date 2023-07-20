@@ -301,7 +301,80 @@ class DazMaterials:
                         if not self.keep_phong:
                             pm.delete(shader)
 
-    def update_phong_shaders(self):
+    ## DB 2023-July-17: find if any HD makeup properties are present
+    def has_hd_makeup(self):
+        self.load_materials()
+        for obj in self.material_dict.keys():
+            # print("DEBUG: HD Makeup check, obj=" + str(obj) )
+            for mat in self.material_dict[obj].keys():
+                # print("DEBUG: HD Makeup check, mat=" + str(mat) )
+                for prop in self.material_dict[obj][mat]["Properties"]:
+                    # print("DEBUG: HD Makeup check, prop=" + prop["Name"])
+                    if "Name" in prop.keys() and prop["Name"] == "Makeup Enable":
+                        if "Value" in prop.keys() and prop["Value"] == 1:
+                            print("DEBUG: HD Makeup found")
+                            return True
+        return False
+
+
+    ## DB 2023-July-17: save shader update which will not break Maya's Fbx Exporter
+    def update_phong_shaders_safe(self):
+        allshaders = self.get_materials_in_scene()
+        self.load_materials()
+        
+        for shader in allshaders:
+            # get shading engine
+            se = shader.shadingGroups()[0]
+            shader_connections = shader.listConnections()
+            # get assigned shapes
+            members = se.members()
+            
+            if len(members) > 0:
+                split = members[0].split("Shape")
+                if len(split) > 1:
+                    obj_name = split[0]
+                    props = self.find_mat_properties(obj_name, shader.name())
+                    
+                    if props:
+
+                        avail_tex = {}
+                        for tex_type in texture_library.keys():
+                            for tex_name in texture_library[tex_type]["Name"]:
+                                if tex_name in props.keys():
+                                    if tex_type in avail_tex.keys():
+                                        if props[tex_name]["Texture"] == "":
+                                            continue
+                                    avail_tex[tex_type] = tex_name
+
+                        blend_color_node = None
+                        clr_node = None
+
+                        if "color" in avail_tex.keys() and blend_color_node is None:
+                            prop = avail_tex["color"]
+                            if props[prop]["Texture"] != "":
+                                clr_node = pm.shadingNode("file", n = prop, asTexture = True)
+                                clr_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                color_as_vector = self.convert_color(props[prop]["Value"])
+                                clr_node.setAttr('colorGain', color_as_vector)
+                                clr_node.outColor >> shader.color
+                            else:
+                                color_as_vector = self.convert_color(props[prop]["Value"])
+                                shader.setAttr('color', color_as_vector)
+
+                        if "opacity" in avail_tex.keys():
+                            prop = avail_tex["opacity"]
+                            if props[prop]["Texture"] != "":
+                                file_node = pm.shadingNode("file", n = prop, asTexture = True)
+                                file_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                scalar = float(props[prop]["Value"])
+                                file_node.setAttr('alphaGain', scalar)
+                                file_node.setAttr('colorSpace', 'Raw', type='string')
+                                file_node.setAttr('alphaIsLuminance', True)
+                                file_node.outTransparency >> shader.transparency
+
+
+    ## DB 2023-July-17: enhanced shader update which may break Maya's Fbx Exporter
+    def update_phong_shaders_with_makeup(self):
         allshaders = self.get_materials_in_scene()
         self.load_materials()
         
