@@ -48,7 +48,11 @@ class DazMaterials:
         if obj not in self.material_dict.keys():
             return
         if mat not in self.material_dict[obj].keys():
-            return
+            alt_mat = mat.split("_")[0]
+            if alt_mat not in self.material_dict[obj].keys():
+                return
+            print("WARNING: Unable to find material: " + str(mat) + " in object: " + str(obj) + ", using: " + str(alt_mat))
+            mat = alt_mat
         properties = {}
         for prop in self.material_dict[obj][mat]["Properties"]:
             if "Texture" in prop.keys():
@@ -68,6 +72,7 @@ class DazMaterials:
         self.load_materials()
         
         for shader in allshaders:
+            #print("DEBUG: convert_to_arnold(): shader=" + str(shader) )
             # get shading engine
             se = shader.shadingGroups()[0]
             shader_connections = shader.listConnections()
@@ -79,17 +84,18 @@ class DazMaterials:
                 if len(split) > 1:
                     obj_name = split[0]
                     props = self.find_mat_properties(obj_name, shader.name())
-                    
+                    #print("    - obj_name=" + str(obj_name) + ", shader.name()=" + str(shader.name()) + ", props=" + str(props) )
+
                     if props:
                         # create shader and connect shader
                         surface = pm.shadingNode("aiStandardSurface", n = shader.name() + "_ai", asShader = True)
+                        #print("    - surface=" + str(surface) )
                         
                         # set material to shader
                         surface.outColor >> se.aiSurfaceShader
                         if not self.keep_phong:
                             surface.outColor >> se.surfaceShader
                         surface.base.set(1)
-                        
 
                         avail_tex = {}
                         for tex_type in texture_library.keys():
@@ -165,8 +171,7 @@ class DazMaterials:
 
                         if "ior" in avail_tex.keys():
                             prop = avail_tex["ior"]
-                            surface.setAttr('specularIOR', props[prop]["Value"])
-                            
+                            surface.setAttr('specularIOR', props[prop]["Value"])                            
 
                         if "metalness" in avail_tex.keys():
                             prop = avail_tex["metalness"]
@@ -205,11 +210,19 @@ class DazMaterials:
                                 file_node.setAttr('fileTextureName', props[prop]["Texture"])
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.outColor >> normal_map.input
-                                if float(props[prop]["Value"]) < 0:
-                                   normal_map.setAttr('strength', (-1* float(props[prop]["Value"]))) 
+                                normal_strength = props[prop]["Value"]
+                                # detect if normal_strength is a hexadecimal string and convert to float
+                                if type(normal_strength) == str:
+                                    try:
+                                        normal_strength = self.convert_color(normal_strength)[0]
+                                    except Exception as e:
+                                        print("Error: convert_to_arnold(): Error processing normal map: " + str(e) + ", setting normal_strength to 1.0")
+                                        normal_strength = 1.0
+                                if float(normal_strength) < 0:
+                                   normal_map.setAttr('strength', (-1* float(normal_strength))) 
                                    normal_map.setAttr('invertY', 1)
                                 else:
-                                    normal_map.setAttr('strength', float(props[prop]["Value"]))
+                                    normal_map.setAttr('strength', float(normal_strength))
                                 normal_map.outValue >> surface.normalCamera             
 
                         if "bump" in avail_tex.keys():
@@ -298,8 +311,13 @@ class DazMaterials:
                                 detail.setAttr("subsurface", 1)
                                 detail.setAttr("subsurfaceRadius", radius_as_vector)
                                 detail.setAttr("subsurfaceScale", 0.5)
+
                         if not self.keep_phong:
                             pm.delete(shader)
+
+        #print("DEBUG: convert_to_arnold(): done")
+        return
+
 
     ## DB 2023-July-17: find if any HD makeup properties are present
     def has_hd_makeup(self):
