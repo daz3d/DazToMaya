@@ -28,7 +28,23 @@ import importlib
 
 import maya.mel as mel
 import maya.cmds as cmds
-import pymel.core as pm
+
+try:
+    import pymel.core as pm
+except Exception as e:
+    error_title = "DazToMaya Error: Unable to load PyMEL"
+    error_message = "Please make sure you have installed PyMEL for your version of Maya"
+    error_message += "\n\nhttps://help.autodesk.com/view/MAYAUL/2024/ENU/?guid=GUID-2AA5EFCE-53B1-46A0-8E43-4CD0B2C72FB4\n"
+    print(error_title + ": " + error_message)
+    # show error dialog
+    result = cmds.confirmDialog(title=error_title,
+                       message=error_message,
+                       button=["Instructions to install PyMEL", "Cancel"],
+                       defaultButton="Instructions to install PyMEL")
+    if result == "Instructions to install PyMEL":
+        cmds.webBrowser(url="https://help.autodesk.com/view/MAYAUL/2024/ENU/?guid=GUID-2AA5EFCE-53B1-46A0-8E43-4CD0B2C72FB4")
+    raise(e)
+
 import xml.etree.cElementTree as ET
 
 from xml.etree import ElementTree
