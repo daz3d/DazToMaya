@@ -2191,6 +2191,10 @@ def scene_renamer():
                 pass
 
 
+## DB 2023-Aug-07: Modify genesis skeletons and generate HIK rig
+##   TODO: move all material fixes to a separate function
+##   Please see group_props() header for information about issues related to group_props() and auto_ik() and use of
+##   is_genesis_XXX_skeleton() functions to work-around the issues.
 def auto_ik():
     global global_current_dtu
     if global_current_dtu is None:
@@ -2437,6 +2441,12 @@ def get_parents_list():
     return parents_list
 
 
+# DB 2023-July-26: This function is problematic. It's trying to group "props" aka "unrigged meshes" (NOT "properties")
+#    However, it assumes that anything without a "hip" is a prop. This is causing all figures without "hip" joints,
+#    which includes many non-humanoid figures, to have their entire skeleton deleted.
+#    My current work-around is to only run this function on figures which are verified to be compatible, aka
+#    Genesis 2, 3, 8/8.1 and 9.  Everything else will gracefully stop and return False
+#    Actual check for compatible skeleton is done in auto_import_daz().  This function should not be called anywhere else.
 def group_props():
     parents_list = get_parents_list()
     for x in parents_list:
@@ -2539,8 +2549,6 @@ def auto_import_daz():
     print("Importing Daz...")
     cmds.refresh()
     import_fbx(daz_file_path)
-    print("AutoIK...")
-
     try:
         pm.setAttr("defaultRenderGlobals.currentRenderer", "mayaSoftware")
     except:
@@ -2551,9 +2559,13 @@ def auto_import_daz():
 
     # Auto IK if figure in the scene, else it is a Prop
     all_joints = mel.eval('ls -type joint')
-    group_props()
-    if all_joints != None and "head" in all_joints:
-        auto_ik()
+    # DB 2023-July-24: group_props() is deleting everything that is not a humanoid rig, please see group_props() header for work-around notes
+    if is_genesis_9_skeleton() or is_genesis_3_or_8_skeleton() or is_genesis_2_skeleton():
+        group_props()
+        if all_joints != None and "head" in all_joints:
+            #print("DEBUG: about to run auto_ik() because all_joints=" + str(all_joints) + ", type = " + str(type(all_joints)) + "\n")
+            print("AutoIK...")
+            auto_ik()
     else:
         mel.eval('viewFit -all')  # View Fit All
         clamp_textures()
@@ -3737,3 +3749,54 @@ def gen9_apply_t_pose():
         '''
     except:
         print("Error trying to apply Genesis 9 t-Pose, skipping...")
+
+
+## DB 2023-Aug-07: is_genesis_XXX_skeleton() were created to as a work-around for group_props() and auto_ik() issues.
+##   Please see group_props() header for more info.
+def is_genesis_9_skeleton():
+    all_joints = cmds.ls(type='joint')
+    if "hip" in all_joints and "pelvis" in all_joints:
+        if "spine1" in all_joints and "spine2" in all_joints and "spine3" in all_joints and "spine4" in all_joints:
+            if "l_thigh" in all_joints and "l_shin" in all_joints and "l_foot" in all_joints and "l_toes" in all_joints:
+                if "l_pectoral" in all_joints:
+                    if "l_shoulder" in all_joints and "l_upperarm" in all_joints and "l_forearm" in all_joints and "l_hand" in all_joints:
+                        if "l_forearmtwist1" in all_joints and "l_forearmtwist2" in all_joints:
+                            #print("DEBUG: is_genesis_9() = True")
+                            return True
+    return False
+
+def is_genesis_3_or_8_skeleton():
+    all_joints = cmds.ls(type='joint')
+    if "hip" in all_joints and "pelvis" in all_joints:
+        if "abdomenLower" in all_joints and "abdomenUpper" in all_joints and "chestLower" in all_joints and "chestUpper" in all_joints:
+            if "lThighBend" in all_joints and "lShin" in all_joints and "lFoot" in all_joints and "lToe" in all_joints:
+                if "lCollar" in all_joints and "lShldrBend" in all_joints and "lForearm" in all_joints and "lHand" in all_joints:
+                    if "lForearmTwist" in all_joints:
+                        #print("DEBUG: is_genesis_3_or_8() = True")
+                        return True
+    return False
+
+def is_genesis_3_skeleton():
+    if is_genesis_3_or_8_skeleton():
+        all_joints = cmds.ls(type='joint')
+        if "Genesis3" in all_joints:
+            return True
+    return False
+
+def is_genesis_8_skeleton():
+    if is_genesis_3_or_8_skeleton():
+        all_joints = cmds.ls(type='joint')
+        if "Genesis8" in all_joints:
+            return True
+    return False
+
+def is_genesis_2_skeleton():
+    all_joints = cmds.ls(type='joint')
+    if "hip" in all_joints and "pelvis" in all_joints:
+        if "abdomen" in all_joints and "abdomen2" in all_joints and "chest" in all_joints:
+            if "lThigh" in all_joints and "lShin" in all_joints and "lFoot" in all_joints and "lToe" in all_joints:
+                if "lCollar" in all_joints and "lShldr" in all_joints and "lForeArm" in all_joints and "lHand" in all_joints:
+                    if "lForearmTwist" not in all_joints:
+                        #print("DEBUG: is_genesis_2() = True")
+                        return True
+    return False
