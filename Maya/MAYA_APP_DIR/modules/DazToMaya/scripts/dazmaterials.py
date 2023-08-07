@@ -330,7 +330,7 @@ class DazMaterials:
                     # print("DEBUG: HD Makeup check, prop=" + prop["Name"])
                     if "Name" in prop.keys() and prop["Name"] == "Makeup Enable":
                         if "Value" in prop.keys() and prop["Value"] == 1:
-                            print("DEBUG: HD Makeup found")
+                            #print("DEBUG: HD Makeup found")
                             return True
         return False
 

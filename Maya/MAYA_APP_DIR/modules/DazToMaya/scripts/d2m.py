@@ -2583,6 +2583,8 @@ def auto_import_daz():
 
     scene_renamer()
     # DB 2023-03-23: work-around, needs to be called after mat_refresh_fix
+    # DB 2023-08-04: additional fix for Daz Dog (requires gen8 mat fix)
+    gen8_mat_fix()
     gen9_mat_fix()
 
     mat_refresh_fix()
