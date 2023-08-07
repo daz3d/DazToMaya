@@ -3603,9 +3603,9 @@ def gen9_apply_t_pose():
         mel.eval('setAttr "r_indexmetacarpal.rotateY" 0.0')
         mel.eval('setAttr "r_indexmetacarpal.rotateZ" 0.0')
 
-        mel.eval('setAttr "l_index.rotateX" -0.0')
-        mel.eval('setAttr "l_index.rotateY" 0.0')
-        mel.eval('setAttr "l_index.rotateZ" -0.0')
+        mel.eval('setAttr "l_index1.rotateX" -0.0')
+        mel.eval('setAttr "l_index1.rotateY" 0.0')
+        mel.eval('setAttr "l_index1.rotateZ" -0.0')
 
         mel.eval('setAttr "r_index1.rotateX" -0.0')
         mel.eval('setAttr "r_index1.rotateY" -0.0')
@@ -3731,25 +3731,31 @@ def gen9_apply_t_pose():
         mel.eval('setAttr "r_shin.rotateY" 9.66')
         mel.eval('setAttr "r_shin.rotateZ" -0.0')
 
-        mel.eval('setAttr "l_thigh.rotateX" 0.54')
-        mel.eval('setAttr "l_thigh.rotateY" -0.16')
-        mel.eval('setAttr "l_thigh.rotateZ" -6.23')
+#        mel.eval('setAttr "l_thigh.rotateX" 0.54')
+#        mel.eval('setAttr "l_thigh.rotateY" -0.16')
+#        mel.eval('setAttr "l_thigh.rotateZ" -6.23')
+        mel.eval('setAttr "l_thigh.rotateX" 0.44')
+        mel.eval('setAttr "l_thigh.rotateY" 2.84')
+        mel.eval('setAttr "l_thigh.rotateZ" -0.23')
 
-        mel.eval('setAttr "r_thigh.rotateX" 0.54')
-        mel.eval('setAttr "r_thigh.rotateY" 0.16')
-        mel.eval('setAttr "r_thigh.rotateZ" 6.23')
-        '''
-        mel.eval('setAttr "l_foot.rotateX" -1.96')
-        mel.eval('setAttr "l_foot.rotateY" -4.88')
-        mel.eval('setAttr "l_foot.rotateZ" 3.53')
+#        mel.eval('setAttr "r_thigh.rotateX" 0.54')
+#        mel.eval('setAttr "r_thigh.rotateY" 0.16')
+#        mel.eval('setAttr "r_thigh.rotateZ" 6.23')
+        mel.eval('setAttr "r_thigh.rotateX" 0.44')
+        mel.eval('setAttr "r_thigh.rotateY" -2.84')
+        mel.eval('setAttr "r_thigh.rotateZ" 0.23')
 
-        mel.eval('setAttr "r_foot.rotateX" -1.96')
-        mel.eval('setAttr "r_foot.rotateY" 4.88')
-        mel.eval('setAttr "r_foot.rotateZ" -3.53')
-        '''
-    except:
-        print("Error trying to apply Genesis 9 t-Pose, skipping...")
+        # '''
+        # mel.eval('setAttr "l_foot.rotateX" -1.96')
+        # mel.eval('setAttr "l_foot.rotateY" -4.88')
+        # mel.eval('setAttr "l_foot.rotateZ" 3.53')
 
+        # mel.eval('setAttr "r_foot.rotateX" -1.96')
+        # mel.eval('setAttr "r_foot.rotateY" 4.88')
+        # mel.eval('setAttr "r_foot.rotateZ" -3.53')
+        # '''
+    except Exception as e:
+        print("Error trying to apply Genesis 9 t-Pose:\n" + str(e) + ", skipping...")
 
 ## DB 2023-Aug-07: is_genesis_XXX_skeleton() were created to as a work-around for group_props() and auto_ik() issues.
 ##   Please see group_props() header for more info.
