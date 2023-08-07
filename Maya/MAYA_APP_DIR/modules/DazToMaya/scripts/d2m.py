@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2023
 DZBRIDGE_VERSION_MINOR = 1
-DZBRIDGE_VERSION_REVISION = 0
-DZBRIDGE_VERSION_BUILD = 9
+DZBRIDGE_VERSION_REVISION = 1
+DZBRIDGE_VERSION_BUILD = 13
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -2639,7 +2639,7 @@ def initialize():
     print("DazToMaya: Python Version is {}.{}.{} {}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro, sys.version_info.releaselevel))
     if Definitions.MAYA_VERSION < 2014:
         print("DazToMaya: ERROR: Maya Version below 2014 not Supported.  Please visit www.daz3d.com")
-        return false
+        return False
 
     # Get settings configuration
     with open(txtConf, 'r') as output:
@@ -2693,8 +2693,9 @@ def open_main_window():
                                     minimizeButton=True,
                                     sizeable=False,
                                     title="DazToMaya " + 
-                                    str(DZBRIDGE_VERSION_MAJOR) + "." + 
-                                    str(DZBRIDGE_VERSION_MINOR)
+                                    str(DZBRIDGE_VERSION_MAJOR) + " " + 
+                                    "v" + str(DZBRIDGE_VERSION_MINOR) + "." +
+                                    str(DZBRIDGE_VERSION_REVISION)
                                 )
 
     cmds.columnLayout("columnName01", adjustableColumn=True)
@@ -2810,8 +2811,8 @@ def open_main_window():
 
     # Full version and Copyright section
     cmds.separator(style='none')
-    cmds.text(label='DazToMaya Bridge ' + str(DZBRIDGE_VERSION_MAJOR) + "." + 
-              str(DZBRIDGE_VERSION_MINOR) + " revision " + 
+    cmds.text(label='DazToMaya Bridge ' + str(DZBRIDGE_VERSION_MAJOR) + " " + 
+              "v" + str(DZBRIDGE_VERSION_MINOR) + "." + 
               str(DZBRIDGE_VERSION_REVISION) + "." + 
               str(DZBRIDGE_VERSION_BUILD))
     cmds.separator(height=5, style='none')
