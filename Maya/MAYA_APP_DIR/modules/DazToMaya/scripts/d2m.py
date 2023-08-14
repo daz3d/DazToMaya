@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2023
 DZBRIDGE_VERSION_MINOR = 1
 DZBRIDGE_VERSION_REVISION = 1
-DZBRIDGE_VERSION_BUILD = 13
+DZBRIDGE_VERSION_BUILD = 14
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -3779,7 +3779,7 @@ def is_genesis_3_or_8_skeleton():
     if "hip" in all_joints and "pelvis" in all_joints:
         if "abdomenLower" in all_joints and "abdomenUpper" in all_joints and "chestLower" in all_joints and "chestUpper" in all_joints:
             if "lThighBend" in all_joints and "lShin" in all_joints and "lFoot" in all_joints and "lToe" in all_joints:
-                if "lCollar" in all_joints and "lShldrBend" in all_joints and "lForearm" in all_joints and "lHand" in all_joints:
+                if "lCollar" in all_joints and "lShldrBend" in all_joints and "lForearmBend" in all_joints and "lHand" in all_joints:
                     if "lForearmTwist" in all_joints:
                         #print("DEBUG: is_genesis_3_or_8() = True")
                         return True
