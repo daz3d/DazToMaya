@@ -2860,10 +2860,12 @@ def btn_save_with_text_callback():
             just_file_name = os.path.basename(image_path)
             out_file_name = out_path + "images/" + str(just_file_name)
             if image_path != out_file_name:
+                color_space = file_node.getAttr('colorSpace')
                 from shutil import copyfile
                 copyfile(image_path, out_file_name)
                 file_node.setAttr('fileTextureName',
                                  "images/" + str(just_file_name))
+                file_node.setAttr('colorSpace', color_space)
 
         cmds.file(rename=save_file_result[0])
         if ".ma" in save_file_result[0]:
