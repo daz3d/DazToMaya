@@ -144,6 +144,10 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 // Load Settings
 	 loadSavedSettings();
 
+	 // Daz Ultra
+	 m_WelcomeLabel->hide();
+	 setWindowTitle(tr("Maya Export Options"));
+
 }
 
 bool DzMayaDialog::loadSavedSettings()

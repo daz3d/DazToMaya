@@ -38,7 +38,7 @@
 #include "dzbridge.h"
 
 DzMayaAction::DzMayaAction() :
-	DzBridgeAction(tr("Daz To &Maya"), tr("Send the selected node to Maya."))
+	DzBridgeAction(tr("Send to &Maya..."), tr("Send the selected node to Maya."))
 {
 	m_nNonInteractiveMode = 0;
 	m_sAssetType = QString("SkeletalMesh");
