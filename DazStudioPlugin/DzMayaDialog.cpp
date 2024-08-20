@@ -279,7 +279,7 @@ void DzMayaDialog::HandleTargetPluginInstallerButton()
 {
 	// Get Software Versio
 	DzBridgeDialog::m_sEmbeddedFilesPath = ":/DazBridgeMaya";
-	QString sBinariesFile = "/mayaplugin.zip";
+	QString sBinariesFile = "/mayamodule.zip";
 	QProcessEnvironment env(QProcessEnvironment::systemEnvironment());
 	QString sMayaAppDir = env.value("MAYA_APP_DIR");
 #ifdef __APPLE__
