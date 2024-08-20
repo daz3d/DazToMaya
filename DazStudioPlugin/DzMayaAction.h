@@ -13,32 +13,38 @@ class UnitTest_DzMayaAction;
 
 #include "dzbridge.h"
 
-class DzMayaAsciiExporter : public DzExporter {
+class DzMayaExporter : public DzExporter {
 	Q_OBJECT
 public:
-	DzMayaAsciiExporter() : DzExporter(QString("ma")) {};
+	DzMayaExporter(QString sExt) : DzExporter(sExt) {};
 
 public slots:
 	virtual void getDefaultOptions(DzFileIOSettings* options) const {};
-	virtual QString getDescription() const override { return QString("Maya Ascii File"); };
 	virtual bool isFileExporter() const override { return true; };
 
 protected:
 	virtual DzError	write(const QString& filename, const DzFileIOSettings* options) override;
+
+	friend class DzMayaAsciiExporter;
+	friend class DzMayaBinaryExporter;
 };
 
-class DzMayaBinaryExporter : public DzExporter {
+class DzMayaAsciiExporter : public DzMayaExporter {
 	Q_OBJECT
 public:
-	DzMayaBinaryExporter() : DzExporter(QString("mb")) {};
+	DzMayaAsciiExporter() : DzMayaExporter(QString("ma")) {};
 
 public slots:
-	virtual void getDefaultOptions(DzFileIOSettings* options) const {};
-	virtual QString getDescription() const override { return QString("Maya Binary File"); };
-	virtual bool isFileExporter() const override { return true; };
+	virtual QString getDescription() const override { return QString("Maya Ascii File"); };
+};
 
-protected:
-	virtual DzError	write(const QString& filename, const DzFileIOSettings* options) override;
+class DzMayaBinaryExporter : public DzMayaExporter {
+	Q_OBJECT
+public:
+	DzMayaBinaryExporter() : DzMayaExporter(QString("mb")) {};
+
+public slots:
+	virtual QString getDescription() const override { return QString("Maya Binary File"); };
 };
 
 class DzMayaAction : public DZ_BRIDGE_NAMESPACE::DzBridgeAction {
@@ -54,6 +60,7 @@ protected:
 	 Q_INVOKABLE void setExportOptions(DzFileIOSettings& ExportOptions);
 	 QString readGuiRootFolder();
 
+	 friend class DzMayaExporter;
 #ifdef UNITTEST_DZBRIDGE
 	friend class UnitTest_DzMayaAction;
 #endif

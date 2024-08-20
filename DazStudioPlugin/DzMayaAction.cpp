@@ -38,29 +38,50 @@
 
 #include "dzbridge.h"
 
-DzError	DzMayaAsciiExporter::write(const QString& filename, const DzFileIOSettings* options)
+DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* options)
 {
-	QString scriptContents = "\
-var action = new DzMayaAction;\
-action.executeAction();";
-	DzScript oScript;
-	oScript.addCode(scriptContents);
-	oScript.execute();
+	if (dzScene->getNumSelectedNodes() != 1)
+	{
+		DzNodeList rootNodes = DZ_BRIDGE_NAMESPACE::DzBridgeAction::BuildRootNodeList();
+		if (rootNodes.length() == 1)
+		{
+			dzScene->setPrimarySelection(rootNodes[0]);
+		}
+		else if (rootNodes.length() > 1)
+		{
+			QMessageBox::critical(0, tr("Error: No Selection"),
+				tr("Please select one Character or Prop in the scene to export."), QMessageBox::Abort);
+			return DZ_OPERATION_FAILED_ERROR;
+		}
+	}
+
+	QString sMayaOutputPath = QFileInfo(filename).dir().path().replace("\\", "/");
+
+	// process options
+	QMap<QString, QString> optionsMap;
+	int numKeys = options->getNumValues();
+	for (int i = 0; i < numKeys; i++) {
+		auto key = options->getKey(i);
+		auto val = options->getValue(i);
+		optionsMap.insert(key, val);
+		dzApp->log(QString("DEBUG: DzMayaExporter: Options[%1]=[%2]").arg(key).arg(val));
+	}
+
+	DzProgress exportProgress(tr("Maya Exporter starting..."), 100, false, true);
+	exportProgress.setInfo(QString("Exporting to:\n    \"%1\"\n").arg(filename));
+
+	exportProgress.setInfo("Generating intermediate file");
+	exportProgress.step(25);
+
+	DzMayaAction* pMaya = new DzMayaAction();
+	pMaya->executeAction();
+	
+
+	exportProgress.finish();
 
 	return DZ_NO_ERROR;
 };
 
-DzError	DzMayaBinaryExporter::write(const QString& filename, const DzFileIOSettings* options)
-{
-	QString scriptContents = "\
-var action = new DzMayaAction;\
-action.executeAction();";
-	DzScript oScript;
-	oScript.addCode(scriptContents);
-	oScript.execute();
-
-	return DZ_NO_ERROR;
-};
 
 DzMayaAction::DzMayaAction() :
 	DzBridgeAction(tr("Send to &Maya..."), tr("Send the selected node to Maya."))
