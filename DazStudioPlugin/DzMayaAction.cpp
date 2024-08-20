@@ -25,6 +25,7 @@
 #include "dzfacetmesh.h"
 #include "dzfacegroup.h"
 #include "dzprogress.h"
+#include "dzscript.h"
 
 #include "DzMayaAction.h"
 #include "DzMayaDialog.h"
@@ -36,6 +37,30 @@
 #endif
 
 #include "dzbridge.h"
+
+DzError	DzMayaAsciiExporter::write(const QString& filename, const DzFileIOSettings* options)
+{
+	QString scriptContents = "\
+var action = new DzMayaAction;\
+action.executeAction();";
+	DzScript oScript;
+	oScript.addCode(scriptContents);
+	oScript.execute();
+
+	return DZ_NO_ERROR;
+};
+
+DzError	DzMayaBinaryExporter::write(const QString& filename, const DzFileIOSettings* options)
+{
+	QString scriptContents = "\
+var action = new DzMayaAction;\
+action.executeAction();";
+	DzScript oScript;
+	oScript.addCode(scriptContents);
+	oScript.execute();
+
+	return DZ_NO_ERROR;
+};
 
 DzMayaAction::DzMayaAction() :
 	DzBridgeAction(tr("Send to &Maya..."), tr("Send the selected node to Maya."))

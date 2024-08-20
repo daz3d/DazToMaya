@@ -37,3 +37,6 @@ DZ_PLUGIN_CLASS_GUID(UnitTest_DzMayaAction, 536d9096-a3b2-41c9-bfa8-8ddeec674ec9
 DZ_PLUGIN_CLASS_GUID(UnitTest_DzMayaDialog, 39242fe6-17e3-4018-9ced-4879385fb423);
 
 #endif
+
+DZ_PLUGIN_CLASS_GUID(DzMayaAsciiExporter, f823002f-db9d-408f-9a28-694a536a726f);
+DZ_PLUGIN_CLASS_GUID(DzMayaBinaryExporter, f823002f-db9d-408f-9a28-694a536a7270);
