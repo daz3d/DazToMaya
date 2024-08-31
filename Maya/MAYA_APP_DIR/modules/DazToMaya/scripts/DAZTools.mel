@@ -370,9 +370,9 @@ global proc float roundoff(float $value,int $precision)
 
 global proc DAZRigger()
 {
-    print "---- Running DAZ Rigger v1.02 ----\n";
+    print "---- Running DAZ Rigger v1.02.2 ----\n";
     global string $DAZVersion;
-    $DAZVersion = "1.02.1";
+    $DAZVersion = "1.02";
 	global string $SourceFolder;
     $SourceFolder = "";
 	string $source[];
