@@ -38,6 +38,17 @@ Local definitions
 
 #include "dzbridge.h"
 
+QValidator::State DzFileValidator::validate(QString& input, int& pos) const {
+	QFileInfo fi(input);
+	if (fi.exists() == false) {
+		dzApp->log("DzBridge: DzFileValidator: DEBUG: file does not exist: " + input);
+		return QValidator::Intermediate;
+	}
+
+	return QValidator::Acceptable;
+};
+
+
 DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 DzBridgeDialog(parent, DAZ_BRIDGE_PLUGIN_NAME)
 {
@@ -91,6 +102,20 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 
 	 // Connect new asset type handler
 	 connect(assetTypeCombo, SIGNAL(activated(int)), this, SLOT(HandleAssetTypeComboChange(int)));
+
+	 m_wMayaExecutablePathEdit = new QLineEdit(this);
+	 m_wMayaExecutablePathEdit->setValidator(&m_dzValidatorFileExists);
+	 m_wMayaExecutablePathButton = new DzBridgeBrowseButton(this);
+	 m_wMayaExecutablePathLayout = new QHBoxLayout();
+	 m_wMayaExecutablePathLayout->setSpacing(0);
+	 m_wMayaExecutablePathLayout->addWidget(m_wMayaExecutablePathEdit);
+	 m_wMayaExecutablePathLayout->addWidget(m_wMayaExecutablePathButton);
+	 connect(m_wMayaExecutablePathButton, SIGNAL(released()), this, SLOT(HandleSelectMayaExecutablePathButton()));
+	 connect(m_wMayaExecutablePathEdit, SIGNAL(textChanged(const QString&)), this, SLOT(HandleTextChanged(const QString&)));
+
+	 m_wMayaExecutableRowLabel = new QLabel(tr("Maya Executable"));
+	 advancedLayout->insertRow(0, m_wMayaExecutableRowLabel, m_wMayaExecutablePathLayout);
+	 m_aRowLabels.append(m_wMayaExecutableRowLabel);
 
 	 // Intermediate Folder
 	 QHBoxLayout* intermediateFolderLayout = new QHBoxLayout();
@@ -148,6 +173,9 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 m_WelcomeLabel->hide();
 	 setWindowTitle(tr("Maya Export Options"));
 
+	 fixRowLabelStyle();
+	 fixRowLabelWidths();
+
 }
 
 bool DzMayaDialog::loadSavedSettings()
@@ -164,8 +192,31 @@ bool DzMayaDialog::loadSavedSettings()
 		QString DefaultPath = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + QDir::separator() + "DazToMaya";
 		intermediateFolderEdit->setText(DefaultPath);
 	}
+	if (!settings->value("MayaExecutablePath").isNull())
+	{
+		m_wMayaExecutablePathEdit->setText(settings->value("MayaExecutablePath").toString());
+	}
 
 	return true;
+}
+
+void DzMayaDialog::saveSettings()
+{
+	if (settings == nullptr || m_bDontSaveSettings) return;
+
+	DzBridgeDialog::saveSettings();
+
+	// Intermediate Path
+	QString sIntermdiateFolderpath = intermediateFolderEdit->text();
+	if (sIntermdiateFolderpath == "") {
+		// reset to default
+		QString DefaultPath = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + QDir::separator() + "DazToMaya";
+		sIntermdiateFolderpath = DefaultPath;
+	}
+	settings->setValue("IntermediatePath", sIntermdiateFolderpath);
+
+	// Maya Executable Path
+	settings->setValue("MayaExecutablePath", m_wMayaExecutablePathEdit->text());
 }
 
 void DzMayaDialog::resetToDefaults()
@@ -419,6 +470,111 @@ void DzMayaDialog::HandleOpenIntermediateFolderButton(QString sFolderPath)
 #endif
 	sIntermediateFolder = sIntermediateFolder.replace("\\", "/");
 	DzBridgeDialog::HandleOpenIntermediateFolderButton(sIntermediateFolder);
+}
+
+void DzMayaDialog::HandleSelectMayaExecutablePathButton()
+{
+	QString directoryName = "";
+	QString sMayaExePath = m_wMayaExecutablePathEdit->text();
+	directoryName = QFileInfo(sMayaExePath).dir().path();
+	if (directoryName == "." || directoryName == "") {
+		if (settings != nullptr && settings->value("MayaExecutablePath").isNull() != true) {
+			sMayaExePath = settings->value("MayaExecutablePath").toString();
+			directoryName = QFileInfo(sMayaExePath).dir().path();
+		}
+	}
+#ifdef WIN32
+	QString sExeFilter = tr("Executable Files (*.exe)");
+#elif defined(__APPLE__)
+	QString sExeFilter = tr("Application Bundle (*.app)");
+#endif
+	QString fileName = QFileDialog::getOpenFileName(this,
+		tr("Select Maya Executable"),
+		directoryName,
+		sExeFilter,
+		&sExeFilter,
+		QFileDialog::ReadOnly |
+		QFileDialog::DontResolveSymlinks);
+
+#if defined(__APPLE__)
+	if (fileName != "")
+	{
+		fileName = fileName + "/Contents/MacOS/Blender";
+	}
+#endif
+
+	if (fileName != "")
+	{
+		m_wMayaExecutablePathEdit->setText(fileName);
+		if (settings != nullptr)
+		{
+			settings->setValue("MayaExecutablePath", fileName);
+		}
+	}
+
+}
+
+// TODO *****************
+void DzMayaDialog::HandleTextChanged(const QString& text)
+{
+	QObject* senderWidget = sender();
+	if (senderWidget == m_wMayaExecutablePathEdit) {
+		updateMayaExecutablePathEdit(isMayaTextBoxValid());
+	}
+	disableAcceptUntilAllRequirementsValid();
+}
+
+bool DzMayaDialog::isMayaTextBoxValid(const QString& arg_text)
+{
+	QString temp_text(arg_text);
+
+	if (temp_text == "") {
+		// check widget text
+		temp_text = m_wMayaExecutablePathEdit->text();
+	}
+
+	// validate blender executable
+	QFileInfo fi(temp_text);
+	if (fi.exists() == false) {
+		dzApp->log("DzBridge: disableAcceptUntilBlenderValid: DEBUG: file does not exist: " + temp_text);
+		return false;
+	}
+
+	return true;
+}
+
+void DzMayaDialog::updateMayaExecutablePathEdit(bool isValid)
+{
+	if (!isValid && m_bMayaRequired) {
+		m_wMayaExecutablePathButton->setHighlightStyle(true);
+	}
+	else {
+		m_wMayaExecutablePathButton->setHighlightStyle(false);
+	}
+
+}
+
+bool DzMayaDialog::disableAcceptUntilAllRequirementsValid()
+{
+	if (!isMayaTextBoxValid() && m_bMayaRequired)
+	{
+		this->setAcceptButtonText("Unable to Proceed");
+		return false;
+	}
+	this->setAcceptButtonText("Accept");
+	return true;
+
+}
+
+void DzMayaDialog::requireMayaExecutableWidget(bool bRequired)
+{
+	m_bMayaRequired = bRequired;
+
+	if (bRequired) {
+		// move GUI
+	}
+	updateMayaExecutablePathEdit(isMayaTextBoxValid());
+
 }
 
 

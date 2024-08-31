@@ -38,6 +38,25 @@
 
 #include "dzbridge.h"
 
+QString DzMayaUtils::FindMayaPyExe(QString sMayaExecutablePath)
+{
+	if (sMayaExecutablePath.isEmpty()) return QString();
+
+	if (QFileInfo(sMayaExecutablePath).exists() == false) return QString();
+
+	if (sMayaExecutablePath.contains("mayapy", Qt::CaseInsensitive)) return sMayaExecutablePath;
+
+#ifdef WIN32
+	QString sMayaPyExe = sMayaExecutablePath.replace(".exe", "py.exe", Qt::CaseInsensitive);
+#elif defined(__APPLE__)
+	QString sMayaPyExe = sMayaExecutablePath + "/Contents/MacOS/mayapy";
+#endif
+
+	if (QFileInfo(sMayaPyExe).exists() == false) return sMayaExecutablePath;
+
+	return sMayaPyExe;
+}
+
 DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* options)
 {
 	if (dzScene->getNumSelectedNodes() != 1)
@@ -73,12 +92,127 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 	exportProgress.setInfo("Generating intermediate file");
 	exportProgress.step(25);
 
-	DzMayaAction* pMaya = new DzMayaAction();
-	pMaya->executeAction();
-	
+	DzMayaAction* pMayaAction = new DzMayaAction();
+	pMayaAction->m_sOutputMayaFilepath = QString(filename).replace("\\", "/");
+	pMayaAction->setNonInteractiveMode(DZ_BRIDGE_NAMESPACE::eNonInteractiveMode::DzExporterMode);
+	pMayaAction->createUI();
+	DzMayaDialog* pDialog = qobject_cast<DzMayaDialog*>( pMayaAction->getBridgeDialog() );
+	if (pDialog == NULL) 
+	{
+		exportProgress.cancel();
+		dzApp->log("Maya Exporter: CRITICAL ERROR: Unable to initialize DzMayaDialog. Aborting operation.");
+		return DZ_OPERATION_FAILED_ERROR;
+	}
+
+	pDialog->requireMayaExecutableWidget(true);
+	pMayaAction->executeAction();
+	pDialog->requireMayaExecutableWidget(false);
+
+	if (pDialog->result() == QDialog::Rejected) {
+		exportProgress.cancel();
+		return DZ_USER_CANCELLED_OPERATION;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+	QString sIntermediatePath = QFileInfo(pMayaAction->m_sDestinationFBX).dir().path().replace("\\", "/");
+	QString sIntermediateScriptsPath = sIntermediatePath + "/Scripts";
+	QDir().mkdir(sIntermediateScriptsPath);
+
+	QStringList aScriptFilelist = (QStringList() <<
+		"create_maya_file.py" 
+		);
+	// copy 
+	foreach(auto sScriptFilename, aScriptFilelist)
+	{
+		bool replace = true;
+		QString sEmbeddedFolderPath = ":/DazBridgeMaya";
+		QString sEmbeddedFilepath = sEmbeddedFolderPath + "/" + sScriptFilename;
+		QFile srcFile(sEmbeddedFilepath);
+		QString tempFilepath = sIntermediateScriptsPath + "/" + sScriptFilename;
+		DZ_BRIDGE_NAMESPACE::DzBridgeAction::copyFile(&srcFile, &tempFilepath, replace);
+		srcFile.close();
+	}
+
+	exportProgress.setInfo("Generating Maya File");
+	exportProgress.step(25);
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+
+	QString sMayaLogPath = sIntermediatePath + "/" + "create_maya_file.log";
+	QString sScriptPath = sIntermediateScriptsPath + "/" + "create_maya_file.py";
+	QString sCommandArgs = QString("%1;%2").arg(sScriptPath).arg(pMayaAction->m_sDestinationFBX);
+#if WIN32
+	QString batchFilePath = sIntermediatePath + "/" + "create_maya_file.bat";
+#else
+	QString batchFilePath = sIntermediatePath + "/" + "create_maya_file.sh";
+#endif
+//	DzBlenderUtils::generateBlenderBatchFile(batchFilePath, pMayaAction->m_sMayaExecutablePath, sCommandArgs);
+
+	QString sMayaPyExecutable = DzMayaUtils::FindMayaPyExe(pMayaAction->m_sMayaExecutablePath);
+	if (sMayaPyExecutable.isEmpty() || sMayaPyExecutable == "") 
+	{
+		QString sNoMayaPyExe = tr("Daz To Maya: CRITICAL ERROR: Unable to find a valid Maya Python executable. Aborting operation.");
+		dzApp->log(sNoMayaPyExe);
+		QMessageBox::critical(0, tr("No Maya Py Executable Found"),
+			sNoMayaPyExe, QMessageBox::Abort);
+		exportProgress.cancel();
+		return DZ_OPERATION_FAILED_ERROR;
+	}
+	bool result = pMayaAction->executeMayaScripts(sMayaPyExecutable, sCommandArgs, 120);
+	if (!result) 
+	{
+		exportProgress.cancel();
+		return DZ_OPERATION_FAILED_ERROR;
+	}
+
+	exportProgress.step(25);
+	//////////////////////////////////////////////////////////////////////////////////////////
+
+	exportProgress.update(100);
+	QMessageBox::information(0, tr("Maya Exporter"), tr("Export from Daz Studio complete."), QMessageBox::Ok);
+
+	if (result) {
+#ifdef WIN32
+	ShellExecuteA(NULL, "open", sMayaOutputPath.toLocal8Bit().data(), NULL, NULL, SW_SHOWDEFAULT);
+#elif defined(__APPLE__)
+	QStringList args;
+	args << "-e";
+	args << "tell application \"Finder\"";
+	args << "-e";
+	args << "activate";
+	args << "-e";
+	if (QFileInfo(filename).exists()) {
+		args << "select POSIX file \"" + filename + "\"";
+	}
+	else {
+		args << "select POSIX file \"" + sBlenderOutputPath + "/." + "\"";
+	}
+	args << "-e";
+	args << "end tell";
+	QProcess::startDetached("osascript", args);
+#endif
+	} else {
+		QString sErrorString;
+		sErrorString += QString("An error occured during the export process (ExitCode=%1).\n").arg(pMayaAction->m_nMayaExitCode);
+		sErrorString += QString("Please check log files at : %1\n").arg(pMayaAction->m_sDestinationPath);
+		QMessageBox::critical(0, "Maya Exporter", tr(sErrorString.toLocal8Bit()), QMessageBox::Ok);
+#ifdef WIN32
+		ShellExecuteA(NULL, "open", pMayaAction->m_sDestinationPath.toLocal8Bit().data(), NULL, NULL, SW_SHOWDEFAULT);
+#elif defined(__APPLE__)
+		QStringList args;
+		args << "-e";
+		args << "tell application \"Finder\"";
+		args << "-e";
+		args << "activate";
+		args << "-e";
+		args << "select POSIX file \"" + batchFilePath + "\"";
+		args << "-e";
+		args << "end tell";
+		QProcess::startDetached("osascript", args);
+#endif
+	}
 
 	exportProgress.finish();
-
 	return DZ_NO_ERROR;
 };
 
@@ -110,15 +244,6 @@ bool DzMayaAction::createUI()
 		return false;
 	}
 
-	// m_subdivisionDialog creation REQUIRES valid Character or Prop selected
-	if (dzScene->getNumSelectedNodes() != 1)
-	{
-		if (m_nNonInteractiveMode == 0) QMessageBox::warning(0, tr("Error"),
-			tr("Please select one Character or Prop to send."), QMessageBox::Ok);
-
-		return false;
-	}
-
 	 // Create the dialog
 	if (!m_bridgeDialog)
 	{
@@ -132,6 +257,15 @@ bool DzMayaAction::createUI()
 			mayaDialog->resetToDefaults();
 			mayaDialog->loadSavedSettings();
 		}
+	}
+
+	// m_subdivisionDialog creation REQUIRES valid Character or Prop selected
+	if (dzScene->getNumSelectedNodes() != 1)
+	{
+		if (m_nNonInteractiveMode == 0) QMessageBox::warning(0, tr("Error"),
+			tr("Please select one Character or Prop to send."), QMessageBox::Ok);
+
+		return false;
 	}
 
 	if (!m_subdivisionDialog) m_subdivisionDialog = DZ_BRIDGE_NAMESPACE::DzBridgeSubdivisionDialog::Get(m_bridgeDialog);
@@ -199,7 +333,7 @@ void DzMayaAction::executeAction()
 	}
 
 	// Prepare member variables when not using GUI
-	if (m_nNonInteractiveMode == 1)
+	if (isInteractiveMode() == false)
 	{
 //		if (m_sRootFolder != "") m_bridgeDialog->getIntermediateFolderEdit()->setText(m_sRootFolder);
 
@@ -230,30 +364,17 @@ void DzMayaAction::executeAction()
 
 	// If the Accept button was pressed, start the export
 	int dlgResult = -1;
-	if (m_nNonInteractiveMode == 0)
+	if ( isInteractiveMode() )
 	{
 		dlgResult = m_bridgeDialog->exec();
 	}
-	if (m_nNonInteractiveMode == 1 || dlgResult == QDialog::Accepted)
+	if (isInteractiveMode() == false || dlgResult == QDialog::Accepted)
 	{
 		// DB 2021-10-11: Progress Bar
 		DzProgress* exportProgress = new DzProgress("Sending to Maya...", 10);
 
 		// Read Common GUI values
 		readGui(m_bridgeDialog);
-
-		// Read Custom GUI values
-//		DzMayaDialog* mayaDialog = qobject_cast<DzMayaDialog*>(m_bridgeDialog);
-
-#if __LEGACY_PATHS__
-		m_sRootFolder = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + "/DAZ 3D/Bridges/Daz To Maya/Exports/FIG";
-		m_sRootFolder = m_sRootFolder.replace("\\", "/");
-		m_sExportSubfolder = "FIG0";
-		m_sExportFbx = "B_FIG";
-		m_sAssetName = "FIG";
-		m_sDestinationPath = m_sRootFolder + "/" + m_sExportSubfolder + "/";
-		m_sDestinationFBX = m_sDestinationPath + m_sExportFbx + ".fbx";
-#endif
 
 		//Create Daz3D folder if it doesn't exist
 		QDir dir;
@@ -285,6 +406,15 @@ void DzMayaAction::writeConfiguration()
 	writer.startObject(true);
 
 	writeDTUHeader(writer);
+
+	// Plugin-specific items
+//	writer.addMember("Use Blender Tools", m_bUseBlenderTools);
+	writer.addMember("Output Maya Filepath", m_sOutputMayaFilepath);
+//	writer.addMember("Texture Atlas Mode", m_sTextureAtlasMode);
+//	writer.addMember("Texture Atlas Size", m_nTextureAtlasSize);
+//	writer.addMember("Export Rig Mode", m_sExportRigMode);
+//	writer.addMember("Enable GPU Baking", m_bEnableGpuBaking);
+//	writer.addMember("Embed Textures", m_bEmbedTexturesInOutputFile);
 
 	if (m_sAssetType.toLower().contains("mesh") || m_sAssetType == "Animation")
 	{
@@ -370,5 +500,118 @@ QString DzMayaAction::readGuiRootFolder()
 
 	return rootFolder;
 }
+
+bool DzMayaAction::executeMayaScripts(QString sFilePath, QString sCommandlineArguments, float fTimeoutInSeconds)
+{
+	// fork or spawn child process
+	QString sWorkingPath = m_sDestinationPath;
+	QStringList args = sCommandlineArguments.split(";");
+
+//	float fTimeoutInSeconds = 2 * 60;
+	float fMilliSecondsPerTick = 200;
+	int numTotalTicks = fTimeoutInSeconds * 1000 / fMilliSecondsPerTick;
+	DzProgress* progress = new DzProgress("Running Maya Script", numTotalTicks, false, true);
+	progress->enable(true);
+	QProcess* pToolProcess = new QProcess(this);
+	pToolProcess->setWorkingDirectory(sWorkingPath);
+	pToolProcess->start(sFilePath, args);
+	int currentTick = 0;
+	int timeoutTicks = numTotalTicks;
+	bool bUserInitiatedTermination = false;
+	while (pToolProcess->waitForFinished(fMilliSecondsPerTick) == false) {
+		// if timeout reached, then terminate process
+		if (currentTick++ > timeoutTicks) {
+			if (!bUserInitiatedTermination)
+			{
+				QString sTimeoutText = tr("\
+The current Maya operation is taking a long time.\n\
+Do you want to Ignore this time-out and wait a little longer, or \n\
+Do you want to Abort the operation now?");
+				int result = QMessageBox::critical(0,
+					tr("Daz To Maya: Maya Timout Error"),
+					sTimeoutText,
+					QMessageBox::Ignore,
+					QMessageBox::Abort);
+				if (result == QMessageBox::Ignore) {
+					int snoozeTime = 60 * 1000 / fMilliSecondsPerTick;
+					timeoutTicks += snoozeTime;
+				}
+				else {
+					bUserInitiatedTermination = true;
+				}
+			}
+			else
+			{
+				if (currentTick - timeoutTicks < 5) {
+					pToolProcess->terminate();
+				}
+				else {
+					pToolProcess->kill();
+				}
+			}
+		}
+		if (pToolProcess->state() == QProcess::Running) {
+			progress->step();
+		}
+		else {
+			break;
+		}
+	}
+	progress->setCurrentInfo("Maya Script Completed.");
+	progress->finish();
+	delete progress;
+	m_nMayaExitCode = pToolProcess->exitCode();
+//#ifdef __APPLE__
+//	if (m_nMayaExitCode != 0 && m_nMayaExitCode != 120)
+#//else
+	if (m_nMayaExitCode != 0)
+//#endif
+	{
+		//if (m_nMayaExitCode == m_nPythonExceptionExitCode) {
+		//	dzApp->log(QString("Daz To Maya: ERROR: Python error:.... %1").arg(m_nMayaExitCode));
+		//}
+		//else {
+		//	dzApp->log(QString("Daz To Maya: ERROR: exit code = %1").arg(m_nMayaExitCode));
+		//}
+		dzApp->log(QString("Daz To Maya: ERROR: exit code = %1").arg(m_nMayaExitCode));
+		return false;
+	}
+
+	return true;
+}
+
+bool DzMayaAction::readGui(DZ_BRIDGE_NAMESPACE::DzBridgeDialog* BridgeDialog)
+{
+	bool bResult = DzBridgeAction::readGui(BridgeDialog);
+	if (!bResult)
+	{
+		return false;
+	}
+
+#if __LEGACY_PATHS__
+	m_sRootFolder = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation) + "/DAZ 3D/Bridges/Daz To Maya/Exports/FIG";
+	m_sRootFolder = m_sRootFolder.replace("\\", "/");
+	m_sExportSubfolder = "FIG0";
+	m_sExportFbx = "B_FIG";
+	m_sAssetName = "FIG";
+	m_sDestinationPath = m_sRootFolder + "/" + m_sExportSubfolder + "/";
+	m_sDestinationFBX = m_sDestinationPath + m_sExportFbx + ".fbx";
+#endif
+
+	// Read Custom GUI values
+	DzMayaDialog* pMayaDialog = qobject_cast<DzMayaDialog*>(m_bridgeDialog);
+	if (pMayaDialog) {
+
+		if (m_sMayaExecutablePath == "" || isInteractiveMode() ) m_sMayaExecutablePath = pMayaDialog->getMayaExecutablePath().replace("\\", "/");
+
+	}
+	else {
+		// Issue error, fail gracefully
+		dzApp->log("Daz To Maya: ERROR: Maya Dialog was not initialized.  Cancelling operation...");
+	}
+
+	return true;
+}
+
 
 #include "moc_DzMayaAction.cpp"

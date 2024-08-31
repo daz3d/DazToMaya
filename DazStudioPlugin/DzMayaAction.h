@@ -13,6 +13,12 @@ class UnitTest_DzMayaAction;
 
 #include "dzbridge.h"
 
+class DzMayaUtils
+{
+public:
+	static QString FindMayaPyExe(QString sMayaExecutablePath);
+};
+
 class DzMayaExporter : public DzExporter {
 	Q_OBJECT
 public:
@@ -54,11 +60,19 @@ public:
 
 protected:
 
-	 void executeAction();
+	 void executeAction() override;
 	 Q_INVOKABLE bool createUI();
-	 Q_INVOKABLE void writeConfiguration();
-	 Q_INVOKABLE void setExportOptions(DzFileIOSettings& ExportOptions);
-	 QString readGuiRootFolder();
+	 Q_INVOKABLE void writeConfiguration() override;
+	 Q_INVOKABLE void setExportOptions(DzFileIOSettings& ExportOptions) override;
+	 QString readGuiRootFolder() override;
+	 Q_INVOKABLE virtual bool readGui(DZ_BRIDGE_NAMESPACE::DzBridgeDialog*) override;
+
+	 bool executeMayaScripts(QString sFilePath, QString sCommandlineArguments, float fTimeoutInSeconds=120);
+	 int m_nPythonExceptionExitCode = 11;  // arbitrary exit code to check for blener python exceptions
+	 int m_nMayaExitCode = 0;
+	 QString m_sMayaExecutablePath = "";
+	 QString m_sOutputMayaFilepath = "";
+
 
 	 friend class DzMayaExporter;
 #ifdef UNITTEST_DZBRIDGE

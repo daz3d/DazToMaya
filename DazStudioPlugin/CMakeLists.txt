@@ -91,7 +91,7 @@ endif()
 set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/Maya/MAYA_APP_DIR/modules")
 set(ZIP_DEST_DIR "${CMAKE_SOURCE_DIR}/DazStudioPlugin/Resources")
 set(ZIP_NAME "mayamodule.zip")
-set(INIT_PY_FILE "${SOURCE_DIR}/DazToMaya/scripts/__init__.py")
+set(VERSION_PY_FILE "${SOURCE_DIR}/DazToMaya/scripts/d2m.py")
 # Get all files in the PluginData directory
 file(GLOB_RECURSE PLUGINDATA_FILES "${SOURCE_DIR}/*")
 # Create the destination directory if it doesn't exist
@@ -123,7 +123,7 @@ add_dependencies(${DZ_PLUGIN_TGT_NAME} plugindata)
 # Add the __init__.py file to the project
 target_sources(plugindata
     PRIVATE
-    ${INIT_PY_FILE}
+    ${VERSION_PY_FILE}
 )
 set_target_properties (plugindata
 	PROPERTIES

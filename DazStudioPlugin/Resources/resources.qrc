@@ -4,5 +4,6 @@
         <file alias="mayamodule.zip">mayamodule.zip</file>
         <file alias="icon">Images/Daz to Maya.png</file>
         <file alias="banner.jpg">Images/banner.jpg</file>
+        <file alias="create_maya_file.py">Scripts/create_maya_file.py</file>
     </qresource>
 </RCC>
