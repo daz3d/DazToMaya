@@ -117,6 +117,17 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 advancedLayout->insertRow(0, m_wMayaExecutableRowLabel, m_wMayaExecutablePathLayout);
 	 m_aRowLabels.append(m_wMayaExecutableRowLabel);
 
+	 QString sMayaExeHelp = tr("Select a Maya executable to run scripts");
+	 QString sMayaExeHelp2 = tr("Select a Maya executable to run scripts. \
+Maya scripts are used for generating maya files when File->Export is used. \
+Recommend using the lowest version of Maya that is compatible with your projects.");
+	 m_wMayaExecutablePathEdit->setToolTip(sMayaExeHelp);
+	 m_wMayaExecutablePathButton->setToolTip(sMayaExeHelp);
+	 m_wMayaExecutableRowLabel->setToolTip(sMayaExeHelp);
+	 m_wMayaExecutablePathEdit->setWhatsThis(sMayaExeHelp2);
+	 m_wMayaExecutablePathButton->setWhatsThis(sMayaExeHelp2);
+	 m_wMayaExecutableRowLabel->setWhatsThis(sMayaExeHelp2);
+
 	 // Intermediate Folder
 	 QHBoxLayout* intermediateFolderLayout = new QHBoxLayout();
 	 intermediateFolderEdit = new QLineEdit(this);
@@ -161,11 +172,31 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 update();
 
 	 // Help
-	 assetNameEdit->setWhatsThis("This is the name the asset will use in Maya.");
-	 assetTypeCombo->setWhatsThis("Skeletal Mesh for something with moving parts, like a character\nStatic Mesh for things like props\nAnimation for a character animation.");
-	 intermediateFolderEdit->setWhatsThis("Daz To Maya will collect the assets in a subfolder under this folder.  Maya will import them from here.");
-	 intermediateFolderButton->setWhatsThis("Daz To Maya will collect the assets in a subfolder under this folder.  Maya will import them from here.");
-	 m_wTargetPluginInstaller->setWhatsThis("You can install the Maya Plugin by selecting the desired Maya version and then clicking Install.");
+	 QString sAssetNameHelp = tr("This is the name the asset will use in Maya.");
+	 QString sAssetTypeHelp = tr("\
+<b>Skeletal Mesh</b> for something with moving parts, like a character.<br>\
+<b>Static Mesh</b> for things like props.<br>\
+<b>Animation</b> for a character animation.");
+	 QString sIntermediateFolderHelp = tr("Daz To Maya will collect the assets in a subfolder under this folder.  Maya will import them from here.");
+	 QString sTargetPluginInstallerHelp = tr("You can install the Maya Plugin by clicking Install.");
+
+	 assetNameEdit->setToolTip(sAssetNameHelp);
+	 m_wAssetNameRowLabelWidget->setToolTip(sAssetNameHelp);
+	 assetTypeCombo->setToolTip(sAssetTypeHelp);
+	 m_wAssetTypeRowLabelWidget->setToolTip(sAssetTypeHelp);
+	 intermediateFolderEdit->setToolTip(sIntermediateFolderHelp);
+	 intermediateFolderButton->setToolTip(sIntermediateFolderHelp);
+	 m_OpenIntermediateFolderButton->setToolTip(sIntermediateFolderHelp);
+	 m_wTargetPluginInstaller->setToolTip(sTargetPluginInstallerHelp);
+
+	 assetNameEdit->setWhatsThis(sAssetNameHelp);
+	 m_wAssetNameRowLabelWidget->setWhatsThis(sAssetNameHelp);
+	 assetTypeCombo->setWhatsThis(sAssetTypeHelp);
+	 m_wAssetTypeRowLabelWidget->setWhatsThis(sAssetTypeHelp);
+	 intermediateFolderEdit->setWhatsThis(sIntermediateFolderHelp);
+	 intermediateFolderButton->setWhatsThis(sIntermediateFolderHelp);
+	 m_OpenIntermediateFolderButton->setWhatsThis(sIntermediateFolderHelp);
+	 m_wTargetPluginInstaller->setWhatsThis(sTargetPluginInstallerHelp);
 
 	 // Set Defaults
 	 resetToDefaults();
@@ -176,6 +207,7 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 // GUI Refresh
 	 m_WelcomeLabel->hide();
 	 setWindowTitle(tr("Maya Export Options"));
+	 wHelpMenuButton->show();
 
 	 disableAcceptUntilAllRequirementsValid();
 
@@ -629,6 +661,26 @@ bool DzMayaDialog::HandleAcceptButtonValidationFeedback()
 	}
 
 	return true;
+}
+
+#include <QUrl>
+void DzMayaDialog::HandlePdfButton()
+{
+	QString sDazAppDir = dzApp->getHomePath().replace("\\", "/");
+	QString sPdfPath = sDazAppDir + "/docs/Plugins" + "/Daz to Maya/Daz to Maya.pdf";
+	QDesktopServices::openUrl(QUrl(sPdfPath));
+}
+
+void DzMayaDialog::HandleYoutubeButton()
+{
+	QString url = "https://youtu.be/QMFFliYu_kw";
+	QDesktopServices::openUrl(QUrl(url));
+}
+
+void DzMayaDialog::HandleSupportButton()
+{
+	QString url = "https://bugs.daz3d.com/hc/en-us/requests/new";
+	QDesktopServices::openUrl(QUrl(url));
 }
 
 

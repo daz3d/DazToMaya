@@ -60,6 +60,9 @@ protected slots:
 	void HandleAssetTypeComboChange(int state);
 	void HandleTargetPluginInstallerButton();
 	virtual void HandleOpenIntermediateFolderButton(QString sFolderPath = "");
+	void HandlePdfButton() override;
+	void HandleYoutubeButton() override;
+	void HandleSupportButton() override;
 
 	bool HandleAcceptButtonValidationFeedback();
 
