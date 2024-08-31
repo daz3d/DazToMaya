@@ -129,13 +129,17 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 #if __LEGACY_PATHS__
 	 intermediateFolderEdit->setVisible(false);
 	 intermediateFolderButton->setVisible(false);
-#else
-	 QFormLayout* advancedLayout = qobject_cast<QFormLayout*>(advancedWidget->layout());
+#endif
 	 if (advancedLayout)
 	 {
+#if __LEGACY_PATHS__
+		 // reposition the Open Intermediate Folder button so it aligns with the center section
+		 advancedLayout->removeWidget(m_OpenIntermediateFolderButton);
+		 advancedLayout->addRow("", m_OpenIntermediateFolderButton);
+#else
 		 advancedLayout->addRow("Intermediate Folder", intermediateFolderLayout);
-	 }
 #endif
+	 }
 	 QString sMayaVersionString = tr("DazToMaya Bridge %1 v%2.%3.%4").arg(PLUGIN_MAJOR).arg(PLUGIN_MINOR).arg(revision).arg(PLUGIN_BUILD);
 	 setBridgeVersionStringAndLabel(sMayaVersionString);
 
@@ -169,9 +173,11 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 // Load Settings
 	 loadSavedSettings();
 
-	 // Daz Ultra
+	 // GUI Refresh
 	 m_WelcomeLabel->hide();
 	 setWindowTitle(tr("Maya Export Options"));
+
+	 disableAcceptUntilAllRequirementsValid();
 
 	 fixRowLabelStyle();
 	 fixRowLabelWidths();
@@ -482,6 +488,14 @@ void DzMayaDialog::HandleSelectMayaExecutablePathButton()
 			sMayaExePath = settings->value("MayaExecutablePath").toString();
 			directoryName = QFileInfo(sMayaExePath).dir().path();
 		}
+		if (directoryName == "." || directoryName == "") {
+			// DEFAULT APPLICATION PATH
+#ifdef WIN32
+			directoryName = "C:/Program Files/";
+#elif defined (__APPLE__)
+			directoryName = "/Applications/";
+#endif
+		}
 	}
 #ifdef WIN32
 	QString sExeFilter = tr("Executable Files (*.exe)");
@@ -514,7 +528,6 @@ void DzMayaDialog::HandleSelectMayaExecutablePathButton()
 
 }
 
-// TODO *****************
 void DzMayaDialog::HandleTextChanged(const QString& text)
 {
 	QObject* senderWidget = sender();
@@ -572,9 +585,50 @@ void DzMayaDialog::requireMayaExecutableWidget(bool bRequired)
 
 	if (bRequired) {
 		// move GUI
+		advancedLayout->removeItem(m_wMayaExecutablePathLayout);
+		mainLayout->insertRow(0, m_wMayaExecutableRowLabel, m_wMayaExecutablePathLayout);
+	} else {
+		mainLayout->removeItem(m_wMayaExecutablePathLayout);
+		advancedLayout->insertRow(0, m_wMayaExecutableRowLabel, m_wMayaExecutablePathLayout);
 	}
 	updateMayaExecutablePathEdit(isMayaTextBoxValid());
 
+}
+
+void DzMayaDialog::accept()
+{
+	if (m_bSetupMode) {
+		saveSettings();
+		return DzBasicDialog::reject();
+	}
+
+	bool bResult = HandleAcceptButtonValidationFeedback();
+	if (bResult == true)
+	{
+		saveSettings();
+		return DzBasicDialog::accept();
+	}
+
+}
+
+bool DzMayaDialog::HandleAcceptButtonValidationFeedback()
+{
+	// Check if Intermedia Folder and Blender Executable are valid, if not issue Error and fail gracefully
+	if (
+		(m_bMayaRequired) &&
+		(m_wMayaExecutablePathEdit->text() == "" || isMayaTextBoxValid() == false)
+		)
+	{
+		QMessageBox::warning(0, tr("Maya Executable Path"), tr("Maya Executable Path must be set."), QMessageBox::Ok);
+		return false;
+	}
+	else if (assetTypeCombo->itemData(assetTypeCombo->currentIndex()).toString() == "__")
+	{
+		QMessageBox::warning(0, tr("Select Asset Type"), tr("Please select an asset type from the dropdown menu."), QMessageBox::Ok);
+		return false;
+	}
+
+	return true;
 }
 
 

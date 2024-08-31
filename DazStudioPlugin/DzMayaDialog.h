@@ -42,6 +42,7 @@ public:
 	Q_INVOKABLE void resetToDefaults() override;
 	Q_INVOKABLE bool loadSavedSettings() override;
 	Q_INVOKABLE void saveSettings() override;
+	void accept() override;
 
 	// Maya Exectuable
 	DzFileValidator m_dzValidatorFileExists;
@@ -51,11 +52,16 @@ public:
 
 	Q_INVOKABLE QString getMayaExecutablePath() { return m_wMayaExecutablePathEdit->text(); }
 
+protected:
+	virtual void showEvent(QShowEvent* event) override { disableAcceptUntilAllRequirementsValid(); DzBridgeDialog::showEvent(event); }
+
 protected slots:
 	void HandleSelectIntermediateFolderButton();
 	void HandleAssetTypeComboChange(int state);
 	void HandleTargetPluginInstallerButton();
 	virtual void HandleOpenIntermediateFolderButton(QString sFolderPath = "");
+
+	bool HandleAcceptButtonValidationFeedback();
 
 	void HandleSelectMayaExecutablePathButton();
 	void HandleTextChanged(const QString& text);
