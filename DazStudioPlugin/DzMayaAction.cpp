@@ -26,6 +26,7 @@
 #include "dzfacegroup.h"
 #include "dzprogress.h"
 #include "dzscript.h"
+#include "dzexportmgr.h"
 
 #include "DzMayaAction.h"
 #include "DzMayaDialog.h"
@@ -381,7 +382,43 @@ void DzMayaAction::executeAction()
 		dir.mkpath(m_sRootFolder);
 		exportProgress->step();
 
-		exportHD(exportProgress);
+		if (m_sAssetType == "Environment") {
+			QDir().mkdir(m_sDestinationPath);
+			m_pSelectedNode = dzScene->getPrimarySelection();
+
+			auto objectList = dzScene->getNodeList();
+			foreach(auto el, objectList) {
+				DzNode* pNode = qobject_cast<DzNode*>(el);
+				preProcessScene(pNode);
+			}
+			DzExportMgr* ExportManager = dzApp->getExportMgr();
+			DzExporter* Exporter = ExportManager->findExporterByClassName("DzFbxExporter");
+			DzFileIOSettings ExportOptions;
+			ExportOptions.setBoolValue("IncludeSelectedOnly", false);
+			ExportOptions.setBoolValue("IncludeVisibleOnly", true);
+			ExportOptions.setBoolValue("IncludeFigures", true);
+			ExportOptions.setBoolValue("IncludeProps", true);
+			ExportOptions.setBoolValue("IncludeLights", false);
+			ExportOptions.setBoolValue("IncludeCameras", false);
+			ExportOptions.setBoolValue("IncludeAnimations", true);
+			ExportOptions.setIntValue("RunSilent", !m_bShowFbxOptions);
+			setExportOptions(ExportOptions);
+			// NOTE: be careful to use m_sExportFbx and NOT m_sExportFilename since FBX and DTU base name may differ
+			QString sEnvironmentFbx = m_sDestinationPath + m_sExportFbx + ".fbx";
+			DzError result = Exporter->writeFile(sEnvironmentFbx, &ExportOptions);
+			if (result != DZ_NO_ERROR) {
+				undoPreProcessScene();
+				return;
+			}
+
+			writeConfiguration();
+			undoPreProcessScene();
+
+		} 
+		else 
+		{
+			exportHD(exportProgress);
+		}
 
 		// DB 2021-10-11: Progress Bar
 		exportProgress->finish();
