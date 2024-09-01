@@ -545,7 +545,7 @@ void DzMayaDialog::HandleSelectMayaExecutablePathButton()
 #if defined(__APPLE__)
 	if (fileName != "")
 	{
-		fileName = fileName + "/Contents/MacOS/Blender";
+		fileName = fileName + "/Contents/MacOS/Maya";
 	}
 #endif
 

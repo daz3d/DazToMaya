@@ -47,9 +47,9 @@ QString DzMayaUtils::FindMayaPyExe(QString sMayaExecutablePath)
 	if (sMayaExecutablePath.contains("mayapy", Qt::CaseInsensitive)) return sMayaExecutablePath;
 
 #ifdef WIN32
-	QString sMayaPyExe = sMayaExecutablePath.replace(".exe", "py.exe", Qt::CaseInsensitive);
+	QString sMayaPyExe = QString(sMayaExecutablePath).replace("maya.exe", "mayapy.exe", Qt::CaseInsensitive);
 #elif defined(__APPLE__)
-	QString sMayaPyExe = sMayaExecutablePath + "/Contents/MacOS/mayapy";
+	QString sMayaPyExe = QString(sMayaExecutablePath).replace("/Contents/MacOS/Maya", "/Contents/MacOS/mayapy", Qt::CaseInsensitive);
 #endif
 
 	if (QFileInfo(sMayaPyExe).exists() == false) return sMayaExecutablePath;
