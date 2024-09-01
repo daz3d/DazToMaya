@@ -186,7 +186,7 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 		args << "select POSIX file \"" + filename + "\"";
 	}
 	else {
-		args << "select POSIX file \"" + sBlenderOutputPath + "/." + "\"";
+		args << "select POSIX file \"" + sMayaOutputPath + "/." + "\"";
 	}
 	args << "-e";
 	args << "end tell";
