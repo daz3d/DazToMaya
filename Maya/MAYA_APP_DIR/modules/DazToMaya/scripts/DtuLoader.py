@@ -21,6 +21,7 @@ class DtuLoader:
 
     def __init__(self, imported_dir):
         self.import_dir = imported_dir
+        self.dtu_path = imported_dir
 
     def load_dtu(self):
         for file in os.listdir(self.import_dir):
@@ -132,7 +133,10 @@ class DtuLoader:
 
     def load_materials_list(self):
         dtu_dict = self.get_dtu_dict()
-        self.materials_list = dtu_dict["Materials"]
+        if "Materials" in dtu_dict:
+            self.materials_list = dtu_dict["Materials"]
+        else:
+            print("ERROR: DtuLoader.py, load_materials_list(): unable to find \"Materials\" in dtu header.  [" + self.dtu_path + "]")
 
     def get_materials_list(self):
         if len(self.materials_list) == 0:

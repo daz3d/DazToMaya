@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2024
 DZBRIDGE_VERSION_MINOR = 2
 DZBRIDGE_VERSION_REVISION = 0
-DZBRIDGE_VERSION_BUILD = 4
+DZBRIDGE_VERSION_BUILD = 8
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -48,7 +48,6 @@ except Exception as e:
 import xml.etree.cElementTree as ET
 
 from xml.etree import ElementTree
-from pymel import versions
 from shutil import copyfile
 
 import Definitions
@@ -2567,7 +2566,8 @@ def auto_import_daz():
             print("AutoIK...")
             auto_ik()
     else:
-        mel.eval('viewFit -all')  # View Fit All
+        # DB 2024-Sep-11: viewFit crashes mayapy in headless mode. TODO: replace with conditional check for headless mode
+        # mel.eval('viewFit -all')  # View Fit All
         clamp_textures()
         try:
             mel.eval('modelEditor -e -displayTextures true modelPanel4')

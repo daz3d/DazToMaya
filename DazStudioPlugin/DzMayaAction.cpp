@@ -58,6 +58,38 @@ QString DzMayaUtils::FindMayaPyExe(QString sMayaExecutablePath)
 	return sMayaPyExe;
 }
 
+bool DzMayaUtils::GenerateExporterBatchFile(QString batchFilePath, QString sExecutablePath, QString sCommandArgs)
+{
+	QString sBatchFileFolder = QFileInfo(batchFilePath).dir().path().replace("\\", "/");
+	QDir().mkdir(sBatchFileFolder);
+
+	// 4. Generate manual batch file to launch exporter scripts
+	QString sBatchString = QString("\"%1\"").arg(sExecutablePath);
+	foreach(QString arg, sCommandArgs.split(";"))
+	{
+		if (arg.contains(" "))
+		{
+			sBatchString += QString(" \"%1\"").arg(arg);
+		}
+		else
+		{
+			sBatchString += " " + arg;
+		}
+	}
+	// write batch
+	QFile batchFileOut(batchFilePath);
+	bool bResult = batchFileOut.open(QIODevice::WriteOnly | QIODevice::OpenModeFlag::Truncate);
+	if (bResult) {
+		batchFileOut.write(sBatchString.toAscii().constData());
+		batchFileOut.close();
+	}
+	else {
+		dzApp->log("ERROR: GenerateExporterBatchFile(): Unable to open batch file for writing: " + batchFilePath);
+	}
+
+	return true;
+}
+
 DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* options)
 {
 	if (dzScene->getNumSelectedNodes() != 1)
@@ -147,8 +179,6 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 #else
 	QString batchFilePath = sIntermediatePath + "/" + "create_maya_file.sh";
 #endif
-//	DzBlenderUtils::generateBlenderBatchFile(batchFilePath, pMayaAction->m_sMayaExecutablePath, sCommandArgs);
-
 	QString sMayaPyExecutable = DzMayaUtils::FindMayaPyExe(pMayaAction->m_sMayaExecutablePath);
 	if (sMayaPyExecutable.isEmpty() || sMayaPyExecutable == "") 
 	{
@@ -159,20 +189,19 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 		exportProgress.cancel();
 		return DZ_OPERATION_FAILED_ERROR;
 	}
+	DzMayaUtils::GenerateExporterBatchFile(batchFilePath, sMayaPyExecutable, sCommandArgs);
+
 	bool result = pMayaAction->executeMayaScripts(sMayaPyExecutable, sCommandArgs, 120);
-	if (!result) 
-	{
-		exportProgress.cancel();
-		return DZ_OPERATION_FAILED_ERROR;
-	}
 
 	exportProgress.step(25);
 	//////////////////////////////////////////////////////////////////////////////////////////
 
-	exportProgress.update(100);
-	QMessageBox::information(0, tr("Maya Exporter"), tr("Export from Daz Studio complete."), QMessageBox::Ok);
+	if (result) 
+	{
+		exportProgress.update(100);
+		QMessageBox::information(0, tr("Maya Exporter"), 
+			tr("Export from Daz Studio complete."), QMessageBox::Ok);
 
-	if (result) {
 #ifdef WIN32
 	ShellExecuteA(NULL, "open", sMayaOutputPath.toLocal8Bit().data(), NULL, NULL, SW_SHOWDEFAULT);
 #elif defined(__APPLE__)
@@ -192,7 +221,9 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 	args << "end tell";
 	QProcess::startDetached("osascript", args);
 #endif
-	} else {
+	} 
+	else 
+	{
 		QString sErrorString;
 		sErrorString += QString("An error occured during the export process (ExitCode=%1).\n").arg(pMayaAction->m_nMayaExitCode);
 		sErrorString += QString("Please check log files at : %1\n").arg(pMayaAction->m_sDestinationPath);
@@ -211,6 +242,9 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 		args << "end tell";
 		QProcess::startDetached("osascript", args);
 #endif
+
+		exportProgress.cancel();
+		return DZ_OPERATION_FAILED_ERROR;
 	}
 
 	exportProgress.finish();
@@ -453,7 +487,8 @@ void DzMayaAction::writeConfiguration()
 //	writer.addMember("Enable GPU Baking", m_bEnableGpuBaking);
 //	writer.addMember("Embed Textures", m_bEmbedTexturesInOutputFile);
 
-	if (m_sAssetType.toLower().contains("mesh") || m_sAssetType == "Animation")
+//	if (m_sAssetType.toLower().contains("mesh") || m_sAssetType == "Animation")
+	if (true)
 	{
 		QTextStream *pCVSStream = nullptr;
 		if (m_bExportMaterialPropertiesCSV)
@@ -486,15 +521,15 @@ void DzMayaAction::writeConfiguration()
 		writeAllDforceInfo(m_pSelectedNode, writer);
 	}
 
-	if (m_sAssetType == "Pose")
-	{
-	   writeAllPoses(writer);
-	}
+	//if (m_sAssetType == "Pose")
+	//{
+	//   writeAllPoses(writer);
+	//}
 
-	if (m_sAssetType == "Environment")
-	{
-		writeEnvironment(writer);
-	}
+	//if (m_sAssetType == "Environment")
+	//{
+	//	writeEnvironment(writer);
+	//}
 
 	writer.finishObject();
 	DTUfile.close();

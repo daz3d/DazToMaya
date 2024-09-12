@@ -17,6 +17,7 @@ class DzMayaUtils
 {
 public:
 	static QString FindMayaPyExe(QString sMayaExecutablePath);
+	static bool GenerateExporterBatchFile(QString batchFilePath, QString sExecutablePath, QString sCommandArgs);
 };
 
 class DzMayaExporter : public DzExporter {

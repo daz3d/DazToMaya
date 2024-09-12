@@ -1,15 +1,9 @@
 import maya.cmds as cmds
-import pymel.core as pm
 import os
 import xml.etree.ElementTree as ET
 import maya.mel as mel
-class generateMenu():
-	import maya.cmds as cmds
-	import pymel.core as pm
-	import os
-	import xml.etree.ElementTree as ET
-	import maya.mel as mel
 
+class generateMenu():
 	menuName = "- Daz 3D -" #parent menu to create if not found
 	oldMenuNameToDelete = "IKMAX" #old menu to delete if found
 	gMainWindow = mel.eval('$tmpVar=$gMainWindow')

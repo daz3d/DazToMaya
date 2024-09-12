@@ -3,9 +3,9 @@ maya.standalone.initialize()
 import maya.cmds as cmds
 try:
     import maya.mel as mel
-    print("PyMEL loaded successfully")
+    print("MEL loaded successfully")
 except:
-    print("error trying to load PyMEL")
+    print("error trying to load MEL")
 
 import sys
 import os
