@@ -40,6 +40,7 @@ texture_library = {
         "Name": [
             "Glossy Roughness",
             "Specular Lobe 1 Roughness",
+            "Top Coat Roughness",
         ],
     },
     "specular": {

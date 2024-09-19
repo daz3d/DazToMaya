@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2024
 DZBRIDGE_VERSION_MINOR = 2
 DZBRIDGE_VERSION_REVISION = 1
-DZBRIDGE_VERSION_BUILD = 10
+DZBRIDGE_VERSION_BUILD = 13
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -2567,7 +2567,12 @@ def auto_import_daz():
             auto_ik()
     else:
         # DB 2024-Sep-11: viewFit crashes mayapy in headless mode. TODO: replace with conditional check for headless mode
-        # mel.eval('viewFit -all')  # View Fit All
+        try:
+            mel.eval('viewFit -all')  # View Fit All
+        except Exception as e:
+            print("Exception occured during viewFit command.  This is known to occur with mayapy in headless mode.  Continuing...")
+            print("Exception: " + str(e))
+
         clamp_textures()
         try:
             mel.eval('modelEditor -e -displayTextures true modelPanel4')
@@ -2774,6 +2779,8 @@ def open_main_window():
     cmds.separator(height=8, style='none')
     cmds.optionMenu("matConvertMenu", w=50, label="")
     cmds.menuItem(label="Arnold")
+    cmds.menuItem(label="Standard Surface")
+    cmds.menuItem(label="Stingray PBS")
     cmds.menuItem(label="Vray")
     # DB 2023-June-17: option to remove or keep phong shaders
     cmds.setParent('..')
@@ -2893,6 +2900,13 @@ def btn_convert_callback():
             # convert_all_to_arnold_daz_fixes()
             dzm.DazMaterials(keep_phong).convert_to_arnold()
 
+        if mat_conv == "Standard Surface":
+            pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
+            dzm.DazMaterials(keep_phong).convert_to_standard_surface()
+
+        if mat_conv == "Stingray PBS":
+            pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
+            dzm.DazMaterials(keep_phong).convert_to_stingray_pbs()
 
         if mat_conv == "Vray":
             ConvertToVray().start_convert()
