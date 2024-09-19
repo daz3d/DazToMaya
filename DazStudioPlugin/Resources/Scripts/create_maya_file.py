@@ -68,11 +68,39 @@ def _main(argv):
     if "Output Maya Filepath" in dtu_dict:
         file_path = dtu_dict["Output Maya Filepath"]
 
+    # Save Textures
+    root_path = os.path.dirname(file_path)
+    images_foldername = os.path.basename(file_path) + "_images"
+    images_folderpath = root_path + "/" + images_foldername
+    if not os.path.exists(images_folderpath):
+        try:
+            os.makedirs(images_folderpath)
+        except Exception as e:
+            _add_to_log("Unable to create image folder: " + images_folderpath)
+            _add_to_log(str(e))
+            raise e
+    texture_file_nodes = cmds.ls(type='file')
+    for file_node in texture_file_nodes:
+        _add_to_log("DEBUG: processing file_node: " + file_node)
+        image_path = cmds.getAttr(file_node + '.fileTextureName')
+        just_file_name = os.path.basename(image_path)
+        out_file_name = images_folderpath + "/" + str(just_file_name)
+        if image_path != out_file_name:
+            from shutil import copyfile
+            copyfile(image_path, out_file_name)
+            cmds.setAttr(file_node + '.fileTextureName', 
+                         images_foldername + "/" + str(just_file_name),
+                         type='string')
+
+    # Save Maya File
     cmds.file(rename=file_path)
     if ".ma" in file_path:
         cmds.file(save=True, type="mayaAscii")
     else:
         cmds.file(save=True, type="mayaBinary")
+
+
+
 
     print("Done.")
 
