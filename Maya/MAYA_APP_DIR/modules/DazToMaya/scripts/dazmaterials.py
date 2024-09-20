@@ -400,8 +400,11 @@ class DazMaterials:
                             for tex_name in texture_library[tex_type]["Name"]:
                                 if tex_name in props.keys():
                                     if tex_type in avail_tex.keys():
+                                        existing_texture = props[avail_tex[tex_type]]["Texture"]
                                         # if tex_type already in lookup table, only override if tex_name has a texture or non-zero value
-                                        if props[tex_name]["Texture"] == "" and props[tex_name]["Value"] == 0:
+                                        if props[tex_name]["Texture"] == "" and existing_texture != "":
+                                            continue
+                                        elif props[tex_name]["Value"] == 0.0:
                                             continue
                                     avail_tex[tex_type] = tex_name
 
@@ -438,6 +441,7 @@ class DazMaterials:
                         if "opacity" in avail_tex.keys():
                             prop = avail_tex["opacity"]
                             if props[prop]["Texture"] != "":
+                                print("DEBUG: update_phong_shaders_safe(): opacity found for material: " + str(shader.name()))
                                 opacity_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 opacity_node.setAttr('fileTextureName',props[prop]["Texture"])
                                 scalar = float(props[prop]["Value"])
@@ -457,6 +461,7 @@ class DazMaterials:
                         if "roughness" in avail_tex.keys():
                             prop = avail_tex["roughness"]
                             if props[prop]["Texture"] != "":
+                                print("DEBUG: update_phong_shaders_safe(): roughness found for material: " + str(shader.name()))
                                 file_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 file_node.setAttr('fileTextureName', props[prop]["Texture"])
                                 scalar = float(props[prop]["Value"])
@@ -500,6 +505,7 @@ class DazMaterials:
                         if "metalness" in avail_tex.keys():
                             prop = avail_tex["metalness"]
                             if props[prop]["Texture"] != "":
+                                print("DEBUG: update_phong_shaders_safe(): metalness found for material: " + str(shader.name()))
                                 file_node = pm.shadingNode("file", n=prop, asTexture=True)
                                 file_node.setAttr('fileTextureName', props[prop]["Texture"])
                                 scalar = float(props[prop]["Value"])
@@ -558,9 +564,9 @@ class DazMaterials:
                         #         file_node.setAttr('alphaIsLuminance', True)
                         #         file_node.outColor >> shader.specularColor
 
-                        # print("DEBUG: update_phong_shaders_safe(): done for material: " + str(shader.name()))
+                        print("DEBUG: update_phong_shaders_safe(): done for material: " + str(shader.name()))
 
-        # print("DEBUG: update_phong_shaders_safe(): done")
+        print("DEBUG: update_phong_shaders_safe(): done")
 
 
     ## DB 2023-July-17: enhanced shader update which may break Maya's Fbx Exporter
