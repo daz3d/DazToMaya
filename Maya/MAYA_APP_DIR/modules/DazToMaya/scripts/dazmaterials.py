@@ -118,6 +118,18 @@ class DazMaterials:
 
                         blend_color_node = None
                         clr_node = None
+                        uv_tile = None
+
+                        # set up UV tile scale
+                        if "Horizontal Tiles" in props.keys() and "Vertical Tiles" in props.keys():
+                            horizontal_tiles = props["Horizontal Tiles"]["Value"]
+                            vertical_tiles = props["Vertical Tiles"]["Value"]
+                            if horizontal_tiles != 1.0 or vertical_tiles != 1.0:
+                                # print("DEBUG: update_phong_shaders_safe(): UV Tile found for material: " + str(shader.name()) + ", horizontal_tiles=" + str(horizontal_tiles) + ", vertical_tiles=" + str(vertical_tiles))
+                                uv_tile = pm.shadingNode("place2dTexture", asUtility=True)
+                                uv_tile.setAttr('repeatU', horizontal_tiles)
+                                uv_tile.setAttr('repeatV', vertical_tiles)
+
                         if "makeup-weight" in avail_tex.keys() and "makeup-base" in avail_tex.keys() and "color" in avail_tex.keys():
                             makeup_weight = avail_tex["makeup-weight"]
                             makeup_base = avail_tex["makeup-base"]
@@ -148,6 +160,10 @@ class DazMaterials:
                                 color_as_vector = self.convert_color(props[skin_color]["Value"])
                                 skin_node.setAttr('colorGain', color_as_vector)
                                 skin_node.outColor >> blend_color_node.color2
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> weight_node.uvCoord
+                                    uv_tile.outUV >> base_node.uvCoord
+                                    uv_tile.outUV >> skin_node.uvCoord
 
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
@@ -157,6 +173,8 @@ class DazMaterials:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 clr_node.setAttr('colorGain', color_as_vector)
                                 clr_node.outColor >> surface.baseColor
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> clr_node.uvCoord
                             else:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 surface.setAttr('baseColor', color_as_vector)
@@ -171,6 +189,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outColor >> surface.opacity
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                                 cmds.setAttr('hardwareRenderingGlobals.transparencyAlgorithm', 5)
 
                         if "transparency" in avail_tex.keys():
@@ -191,6 +211,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outAlpha >> surface.metalness
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                         
                         if "roughness" in avail_tex.keys():
                             prop = avail_tex["roughness"]
@@ -200,6 +222,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outAlpha >> surface.specularRoughness
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                             else:
                                 surface.setAttr('specularRoughness', props[prop]["Value"])
 
@@ -211,6 +235,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outColor >> surface.specularColor
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
 
                         if "normal" in avail_tex.keys():
                             prop = avail_tex["normal"]
@@ -220,6 +246,8 @@ class DazMaterials:
                                 file_node.setAttr('fileTextureName', props[prop]["Texture"])
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.outColor >> normal_map.input
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                                 normal_strength = props[prop]["Value"]
                                 # detect if normal_strength is a hexadecimal string and convert to float
                                 if type(normal_strength) == str:
@@ -244,28 +272,30 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outAlpha >> bump_node.bumpMap
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                                 if "normal" in avail_tex.keys():
                                     if props[avail_tex["normal"]]["Texture"] != "":
                                         normal_map.outValue >> bump_node.normal
                                 bump_node.outValue >> surface.normalCamera           
                         
                         if "detail-mask" in avail_tex.keys():
-                            uv_tile = pm.shadingNode("place2dTexture", asUtility = True)
-                            uv_tile.setAttr('repeatU', props["Detail Horizontal Tiles"]['Value'])
-                            uv_tile.setAttr('repeatV', props["Detail Vertical Tiles"]['Value'])
+                            uv_tile2 = pm.shadingNode("place2dTexture", asUtility = True)
+                            uv_tile2.setAttr('repeatU', props["Detail Horizontal Tiles"]['Value'])
+                            uv_tile2.setAttr('repeatV', props["Detail Vertical Tiles"]['Value'])
 
                             detail_normal_map = pm.shadingNode("aiNormalMap", asUtility = True)
                             nrm_node = pm.shadingNode("file", n = shader.name() + "_detail_nrm_tx", asTexture = True)
                             nrm_node.setAttr('fileTextureName', props[avail_tex['detail-normal']]["Texture"])
                             nrm_node.setAttr('colorSpace', 'Raw', type='string')
                             nrm_node.outColor >> detail_normal_map.input
-                            uv_tile.outUV >> nrm_node.uvCoord
+                            uv_tile2.outUV >> nrm_node.uvCoord
 
                             rgh_node = pm.shadingNode("file", n = shader.name() + "_detail_rough_tx", asTexture = True)
                             rgh_node.setAttr('fileTextureName', props[avail_tex['detail-roughness']]["Texture"])
                             rgh_node.setAttr('colorSpace', 'Raw', type='string')
                             rgh_node.setAttr('alphaIsLuminance', True)
-                            uv_tile.outUV >> rgh_node.uvCoord
+                            uv_tile2.outUV >> rgh_node.uvCoord
                             
                             detail = pm.shadingNode("aiStandardSurface", n = shader.name() + "_detail_ai", asShader = True)
                             detail.base.set(1)
@@ -379,6 +409,17 @@ class DazMaterials:
                         clr_node = None
                         file_node = None
                         opacity_node = None
+                        uv_tile = None
+
+                        # set up UV tile scale
+                        if "Horizontal Tiles" in props.keys() and "Vertical Tiles" in props.keys():
+                            horizontal_tiles = props["Horizontal Tiles"]["Value"]
+                            vertical_tiles = props["Vertical Tiles"]["Value"]
+                            if horizontal_tiles != 1.0 or vertical_tiles != 1.0:
+                                # print("DEBUG: update_phong_shaders_safe(): UV Tile found for material: " + str(shader.name()) + ", horizontal_tiles=" + str(horizontal_tiles) + ", vertical_tiles=" + str(vertical_tiles))
+                                uv_tile = pm.shadingNode("place2dTexture", asUtility=True)
+                                uv_tile.setAttr('repeatU', horizontal_tiles)
+                                uv_tile.setAttr('repeatV', vertical_tiles)
 
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
@@ -388,6 +429,8 @@ class DazMaterials:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 clr_node.setAttr('colorGain', color_as_vector)
                                 clr_node.outColor >> shader.color
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> clr_node.uvCoord
                             else:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 shader.setAttr('color', color_as_vector)
@@ -402,6 +445,8 @@ class DazMaterials:
                                 opacity_node.setAttr('colorSpace', 'Raw', type='string')
                                 opacity_node.setAttr('alphaIsLuminance', True)
                                 opacity_node.outTransparency >> shader.transparency
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> opacity_node.uvCoord
 
                         # if "transparency" in avail_tex.keys():
                         #     prop = avail_tex["transparency"]
@@ -420,6 +465,8 @@ class DazMaterials:
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.setAttr('invert', True)
                                 file_node.outAlpha >> shader.cosinePower
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                             else:
                                 # print("DEBUG: update_phong_shaders_safe(): no roughness image file, using roughness_val=" + str(props[prop]["Value"]) + ", for material: " + str(shader.name()))
                                 roughness_val = props[prop]["Value"]
@@ -447,6 +494,8 @@ class DazMaterials:
                                         normal_strength = 1.0
                                 bump_node.bumpDepth.set(float(normal_strength))
                                 bump_node.outNormal >> shader.normalCamera
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
 
                         if "metalness" in avail_tex.keys():
                             prop = avail_tex["metalness"]
@@ -458,6 +507,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outAlpha >> shader.reflectivity
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                             else:
                                 shader.setAttr('reflectivity', props[prop]["Value"])
 
@@ -498,7 +549,6 @@ class DazMaterials:
                                 except Exception as e:
                                     print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set specular and reflected color: " + str(e))
                                     
-
                         # if "specular" in avail_tex.keys():
                         #     prop = avail_tex["specular"]
                         #     if props[prop]["Texture"] != "":
@@ -507,6 +557,10 @@ class DazMaterials:
                         #         file_node.setAttr('colorSpace', 'Raw', type='string')
                         #         file_node.setAttr('alphaIsLuminance', True)
                         #         file_node.outColor >> shader.specularColor
+
+                        # print("DEBUG: update_phong_shaders_safe(): done for material: " + str(shader.name()))
+
+        # print("DEBUG: update_phong_shaders_safe(): done")
 
 
     ## DB 2023-July-17: enhanced shader update which may break Maya's Fbx Exporter
@@ -542,6 +596,17 @@ class DazMaterials:
                         clr_node = None
                         file_node = None
                         opacity_node = None
+                        uv_tile = None
+
+                        # set up UV tile scale
+                        if "Horizontal Tiles" in props.keys() and "Vertical Tiles" in props.keys():
+                            horizontal_tiles = props["Horizontal Tiles"]["Value"]
+                            vertical_tiles = props["Vertical Tiles"]["Value"]
+                            if horizontal_tiles != 1.0 or vertical_tiles != 1.0:
+                                # print("DEBUG: update_phong_shaders_safe(): UV Tile found for material: " + str(shader.name()) + ", horizontal_tiles=" + str(horizontal_tiles) + ", vertical_tiles=" + str(vertical_tiles))
+                                uv_tile = pm.shadingNode("place2dTexture", asUtility=True)
+                                uv_tile.setAttr('repeatU', horizontal_tiles)
+                                uv_tile.setAttr('repeatV', vertical_tiles)
 
                         if "makeup-weight" in avail_tex.keys() and "makeup-base" in avail_tex.keys() and "color" in avail_tex.keys():
                             makeup_weight = avail_tex["makeup-weight"]
@@ -572,6 +637,10 @@ class DazMaterials:
                                 color_as_vector = self.convert_color(props[skin_color]["Value"])
                                 skin_node.setAttr('colorGain', color_as_vector)
                                 skin_node.outColor >> blend_color_node.color2
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> weight_node.uvCoord
+                                    uv_tile.outUV >> base_node.uvCoord
+                                    uv_tile.outUV >> skin_node.uvCoord
 
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
@@ -581,6 +650,8 @@ class DazMaterials:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 clr_node.setAttr('colorGain', color_as_vector)
                                 clr_node.outColor >> shader.color
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> clr_node.uvCoord
                             else:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 shader.setAttr('color', color_as_vector)
@@ -595,6 +666,8 @@ class DazMaterials:
                                 opacity_node.setAttr('colorSpace', 'Raw', type='string')
                                 opacity_node.setAttr('alphaIsLuminance', True)
                                 opacity_node.outTransparency >> shader.transparency
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> opacity_node.uvCoord
 
                         if "roughness" in avail_tex.keys():
                             prop = avail_tex["roughness"]
@@ -607,6 +680,8 @@ class DazMaterials:
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.setAttr('invert', True)
                                 file_node.outAlpha >> shader.cosinePower
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                             else:
                                 roughness_val = props[prop]["Value"]
                                 cosinePower_val = roughnessToCosinePower(roughness_val)
@@ -633,6 +708,8 @@ class DazMaterials:
                                         normal_strength = 1.0
                                 bump_node.bumpDepth.set(float(normal_strength))
                                 bump_node.outNormal >> shader.normalCamera
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
 
                         if "metalness" in avail_tex.keys():
                             prop = avail_tex["metalness"]
@@ -644,12 +721,14 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outAlpha >> shader.reflectivity
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                             else:
                                 shader.setAttr('reflectivity', props[prop]["Value"])
 
                         if "Refraction Weight" in props.keys():
                             refraction_weight = props["Refraction Weight"]["Value"]
-                            # print("DEBUG: update_phong_shaders_safe(): Refraction Weight found for material: " + str(shader.name()) + ", refraction_weight=" + str(refraction_weight))
+                            # print("DEBUG: update_phong_shaders_with_makeup(): Refraction Weight found for material: " + str(shader.name()) + ", refraction_weight=" + str(refraction_weight))
                             if refraction_weight != 0.0:
                                 transparency_value = float(cmds.getAttr(shader + ".transparency")[0][0])
                                 if transparency_value < refraction_weight:
@@ -657,7 +736,7 @@ class DazMaterials:
                                         try:
                                             cmds.setAttr(shader + ".transparency", refraction_weight, refraction_weight, refraction_weight)
                                         except Exception as e:
-                                            print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set transparency value: " + str(e))
+                                            print("DEBUG: update_phong_shaders_with_makeup(): Refraction Weight Handler: Unable to set transparency value: " + str(e))
                                     else:
                                         # set alphaGain to 1-refraction_weight
                                         opacity_node.setAttr('alphaGain', 1-refraction_weight)                                        
@@ -667,7 +746,7 @@ class DazMaterials:
                                     try:
                                         cmds.setAttr(shader + ".reflectivity", 1-refraction_weight)
                                     except Exception as e:
-                                        print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set metalness value: " + str(e))
+                                        print("DEBUG: update_phong_shaders_with_makeup(): Refraction Weight Handler: Unable to set metalness value: " + str(e))
                                 cosinePower_val = float(cmds.getAttr(shader + ".cosinePower"))
                                 roughness_value = cosinePowerToRoughness(cosinePower_val)
                                 new_roughness_value = roughness_value * (1.0 - refraction_weight)
@@ -677,12 +756,12 @@ class DazMaterials:
                                 try:
                                     cmds.setAttr(shader + ".cosinePower", new_cosinePower)
                                 except Exception as e:
-                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set roughness value: " + str(e))
+                                    print("DEBUG: update_phong_shaders_with_makeup(): Refraction Weight Handler: Unable to set roughness value: " + str(e))
                                 try:
                                     cmds.setAttr(shader + ".specularColor", 1.0, 1.0, 1.0, type="double3")
                                     cmds.setAttr(shader + ".reflectedColor", 1.0, 1.0, 1.0, type="double3")
                                 except Exception as e:
-                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set specular and reflected color: " + str(e))
+                                    print("DEBUG: update_phong_shaders_with_makeup(): Refraction Weight Handler: Unable to set specular and reflected color: " + str(e))
 
                         # if "transparency" in avail_tex.keys():
                         #     prop = avail_tex["transparency"]
@@ -792,6 +871,18 @@ class DazMaterials:
 
                         blend_color_node = None
                         clr_node = None
+                        uv_tile = None
+
+                        # set up UV tile scale
+                        if "Horizontal Tiles" in props.keys() and "Vertical Tiles" in props.keys():
+                            horizontal_tiles = props["Horizontal Tiles"]["Value"]
+                            vertical_tiles = props["Vertical Tiles"]["Value"]
+                            if horizontal_tiles != 1.0 or vertical_tiles != 1.0:
+                                # print("DEBUG: update_phong_shaders_safe(): UV Tile found for material: " + str(shader.name()) + ", horizontal_tiles=" + str(horizontal_tiles) + ", vertical_tiles=" + str(vertical_tiles))
+                                uv_tile = pm.shadingNode("place2dTexture", asUtility=True)
+                                uv_tile.setAttr('repeatU', horizontal_tiles)
+                                uv_tile.setAttr('repeatV', vertical_tiles)
+
                         if "makeup-weight" in avail_tex.keys() and "makeup-base" in avail_tex.keys() and "color" in avail_tex.keys():
                             makeup_weight = avail_tex["makeup-weight"]
                             makeup_base = avail_tex["makeup-base"]
@@ -821,6 +912,10 @@ class DazMaterials:
                                 color_as_vector = self.convert_color(props[skin_color]["Value"])
                                 skin_node.setAttr('colorGain', color_as_vector)
                                 skin_node.outColor >> blend_color_node.color2
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> weight_node.uvCoord
+                                    uv_tile.outUV >> base_node.uvCoord
+                                    uv_tile.outUV >> skin_node.uvCoord
 
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
@@ -830,6 +925,8 @@ class DazMaterials:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 clr_node.setAttr('colorGain', color_as_vector)
                                 clr_node.outColor >> surface.baseColor
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> clr_node.uvCoord
                             else:
                                 color_as_vector = self.convert_color(props[prop]["Value"])
                                 surface.setAttr('baseColor', color_as_vector)
@@ -844,6 +941,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outColor >> surface.opacity
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                                 cmds.setAttr('hardwareRenderingGlobals.transparencyAlgorithm', 5)
 
                         if "transparency" in avail_tex.keys():
@@ -864,6 +963,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outAlpha >> surface.metalness
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
 
                         if "roughness" in avail_tex.keys():
                             prop = avail_tex["roughness"]
@@ -873,6 +974,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outAlpha >> surface.specularRoughness
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                             else:
                                 surface.setAttr('specularRoughness', props[prop]["Value"])
 
@@ -884,6 +987,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outColor >> surface.specularColor
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
 
                         if "normal" in avail_tex.keys():
                             prop = avail_tex["normal"]
@@ -895,6 +1000,8 @@ class DazMaterials:
                                 file_node.setAttr('fileTextureName', props[prop]["Texture"])
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.outAlpha >> bump_node.bumpValue  # Use outAlpha for normal maps
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                                 normal_strength = props[prop]["Value"]
                                 # Adjust bump depth
                                 if isinstance(normal_strength, str):
@@ -916,6 +1023,8 @@ class DazMaterials:
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
                                 file_node.setAttr('alphaIsLuminance', True)
                                 file_node.outAlpha >> bump_node.bumpValue
+                                if uv_tile is not None:
+                                    uv_tile.outUV >> file_node.uvCoord
                                 bump_node.bumpDepth.set(props[prop]["Value"])
                                 bump_node.outNormal >> surface.normalCamera           
 
@@ -987,6 +1096,14 @@ class DazMaterials:
                         else:
                             cmds.shaderfx(sfxnode=shaderfx_node, loadGraph=standard_path)
                         
+                        # set up UV tile scale
+                        if "Horizontal Tiles" in props.keys() and "Vertical Tiles" in props.keys():
+                            horizontal_tiles = props["Horizontal Tiles"]["Value"]
+                            vertical_tiles = props["Vertical Tiles"]["Value"]
+                            if horizontal_tiles != 1.0 or vertical_tiles != 1.0:
+                                surface.setAttr('uv_scaleX', horizontal_tiles)
+                                surface.setAttr('uv_scaleY', vertical_tiles)
+
                         # Assign textures and set attributes as before
 
                         if "color" in avail_tex:

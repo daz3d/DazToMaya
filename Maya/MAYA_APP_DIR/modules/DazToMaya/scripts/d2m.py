@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2024
 DZBRIDGE_VERSION_MINOR = 2
 DZBRIDGE_VERSION_REVISION = 1
-DZBRIDGE_VERSION_BUILD = 16
+DZBRIDGE_VERSION_BUILD = 17
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -2910,6 +2910,10 @@ def btn_convert_callback():
                                         dismissString='No'
                                     )
     else:
+
+        wait_dialog = WaitDialog()
+        wait_dialog.show()
+
         if mat_conv == "Arnold":
             pm.setAttr("defaultRenderGlobals.currentRenderer", "arnold")
             # convert_all_to_arnold_daz_fixes()
@@ -2929,7 +2933,13 @@ def btn_convert_callback():
             eyelashes_fix2()
             extra_eye_fixes()
             vray_fixes()
-            print("Convert Done")
+        
+        try:
+            wait_dialog.close()
+        except Exception as e:
+            print("DazToMaya: ERROR: Exception occured while closing wait dialog: " + str(e))
+
+        print("Convert Materials Done.")
 
 
 def config_save_callback():
