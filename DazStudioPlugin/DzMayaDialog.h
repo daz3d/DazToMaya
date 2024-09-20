@@ -51,6 +51,8 @@ public:
 	Q_INVOKABLE void requireMayaExecutableWidget(bool bRequired);
 
 	Q_INVOKABLE QString getMayaExecutablePath() { return m_wMayaExecutablePathEdit->text(); }
+	Q_INVOKABLE bool getGenerateFbxFile() { return m_wGenerateFbxCheckBox->isChecked();  }
+	Q_INVOKABLE QString getShaderConversion() { return m_wShaderConversionComboBox->itemData(m_wShaderConversionComboBox->currentIndex()).toString(); }
 
 protected:
 	virtual void showEvent(QShowEvent* event) override { disableAcceptUntilAllRequirementsValid(); DzBridgeDialog::showEvent(event); }
@@ -78,6 +80,10 @@ protected:
 	DzBridgeBrowseButton* m_wMayaExecutablePathButton;
 	QHBoxLayout* m_wMayaExecutablePathLayout;
 	QLabel* m_wMayaExecutableRowLabel;
+
+	QGroupBox* m_wMayaFileExportOptionsGroupBox;
+	QCheckBox* m_wGenerateFbxCheckBox;
+	QComboBox* m_wShaderConversionComboBox;
 
 	bool m_bMayaRequired = false;
 

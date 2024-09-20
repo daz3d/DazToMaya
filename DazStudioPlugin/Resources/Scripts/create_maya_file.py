@@ -64,9 +64,29 @@ def _main(argv):
     DazToMaya.d2m.auto_import_daz()
 
     file_path = ""
+    generate_final_fbx = False
+    shader_target = None
     dtu_dict = DazToMaya.d2m.global_current_dtu.get_dtu_dict()
     if "Output Maya Filepath" in dtu_dict:
         file_path = dtu_dict["Output Maya Filepath"]
+    try:
+        generate_final_fbx = dtu_dict["Generate Final Fbx"]
+        shader_target = dtu_dict["Shader Target"]
+    except Exception as e:
+        _add_to_log("ERROR while querying values from dtu_dict")
+        _add_to_log(str(e))
+
+    if shader_target:
+        import dazmaterials as dzm
+        if shader_target == "arnold":
+            _add_to_log("DEBUG: converting to arnold")
+            dzm.DazMaterials(True).convert_to_arnold()
+        elif shader_target == "standard":
+            _add_to_log("DEBUG: converting to standard")
+            dzm.DazMaterials(False).convert_to_standard_surface()
+        elif shader_target == "stingray":
+            _add_to_log("DEBUG: converting to stingray")
+            dzm.DazMaterials(False).convert_to_stingray_pbs()         
 
     # Delete unused nodes
     mel.eval('MLdeleteUnused()')
@@ -96,6 +116,7 @@ def _main(argv):
         out_file_name = images_folderpath + "/" + str(just_file_name)
         if image_path != out_file_name:
             from shutil import copyfile
+            _add_to_log("DEBUG: copying file: " + image_path + " to " + out_file_name)
             copyfile(image_path, out_file_name)
             cmds.setAttr(file_node + '.fileTextureName', 
                          images_foldername + "/" + str(just_file_name),
@@ -114,8 +135,19 @@ def _main(argv):
     else:
         cmds.file(save=True, type="mayaBinary")
 
-
-
+    if generate_final_fbx:
+        _add_to_log("DEBUG: generate_final_fbx=True")
+        # Generate FBX
+        fbx_file_path = file_path.replace(".ma", ".fbx").replace(".mb", ".fbx")
+        sOptions = ""        
+        mel.eval("FBXExportAxisConversionMethod none;")
+        mel.eval("FBXExportSmoothMesh -v false;")
+        mel.eval("FBXExportInAscii -v false;")
+        mel.eval("FBXExportScaleFactor 1.0;")
+        mel.eval("FBXExportUpAxis y;")
+        mel.eval("FBXExportEmbeddedTextures -v true;")
+        mel.eval("FBXExportInstances -v true;")
+        cmds.file(fbx_file_path, force=1, options=sOptions, type="FBX export", exportAll=True)
 
     print("Done.")
 

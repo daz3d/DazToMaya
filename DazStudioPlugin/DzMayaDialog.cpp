@@ -117,6 +117,25 @@ DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 advancedLayout->insertRow(0, m_wMayaExecutableRowLabel, m_wMayaExecutablePathLayout);
 	 m_aRowLabels.append(m_wMayaExecutableRowLabel);
 
+	 // Maya File Export Settings
+	 m_wMayaFileExportOptionsGroupBox = new QGroupBox(tr("Maya File Export Options"), this);
+	 QFormLayout* wMayaFileExportLayout = new QFormLayout();
+	 wMayaFileExportLayout->setContentsMargins(margin, margin, margin, margin);
+	 wMayaFileExportLayout->setSpacing(margin);
+	 m_wMayaFileExportOptionsGroupBox->setLayout(wMayaFileExportLayout);
+	 m_wGenerateFbxCheckBox = new QCheckBox(tr("Generate FBX file"));
+	 wMayaFileExportLayout->addRow(m_wGenerateFbxCheckBox);
+	 m_wShaderConversionComboBox = new QComboBox();
+	 m_wShaderConversionComboBox->addItem("Use Default Materials (Unreal, Unity, Godot, Blender)", "phong");
+	 m_wShaderConversionComboBox->addItem("Convert Materials to Arnold Shader", "arnold");
+	 m_wShaderConversionComboBox->addItem("Convert Materials to Standard Surface Shader", "standard");
+	 m_wShaderConversionComboBox->addItem("Convert Materials to StingrayPBS Shader", "stingray");
+	 m_wShaderConversionComboBox->setCurrentIndex(m_wShaderConversionComboBox->findData("phong"));
+	 wMayaFileExportLayout->addRow(m_wShaderConversionComboBox);
+	 //
+	 mainLayout->addRow("", m_wMayaFileExportOptionsGroupBox);
+	 m_wMayaFileExportOptionsGroupBox->setVisible(false);
+
 	 QString sMayaExeHelp = tr("Select a Maya executable to run scripts");
 	 QString sMayaExeHelp2 = tr("Select a Maya executable to run scripts. \
 Maya scripts are used for generating maya files when File->Export is used. \
@@ -619,9 +638,11 @@ void DzMayaDialog::requireMayaExecutableWidget(bool bRequired)
 		// move GUI
 		advancedLayout->removeItem(m_wMayaExecutablePathLayout);
 		mainLayout->insertRow(0, m_wMayaExecutableRowLabel, m_wMayaExecutablePathLayout);
+		m_wMayaFileExportOptionsGroupBox->setVisible(true);
 	} else {
 		mainLayout->removeItem(m_wMayaExecutablePathLayout);
 		advancedLayout->insertRow(0, m_wMayaExecutableRowLabel, m_wMayaExecutablePathLayout);
+		m_wMayaFileExportOptionsGroupBox->setVisible(false);
 	}
 	updateMayaExecutablePathEdit(isMayaTextBoxValid());
 

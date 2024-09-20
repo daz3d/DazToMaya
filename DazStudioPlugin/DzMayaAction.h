@@ -74,6 +74,8 @@ protected:
 	 QString m_sMayaExecutablePath = "";
 	 QString m_sOutputMayaFilepath = "";
 
+	 bool m_bGenerateFinalFbx;
+	 QString m_sShaderTarget;
 
 	 friend class DzMayaExporter;
 #ifdef UNITTEST_DZBRIDGE

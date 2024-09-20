@@ -486,6 +486,8 @@ void DzMayaAction::writeConfiguration()
 //	writer.addMember("Export Rig Mode", m_sExportRigMode);
 //	writer.addMember("Enable GPU Baking", m_bEnableGpuBaking);
 //	writer.addMember("Embed Textures", m_bEmbedTexturesInOutputFile);
+	writer.addMember("Generate Final Fbx", m_bGenerateFinalFbx);
+	writer.addMember("Shader Target", m_sShaderTarget);
 
 //	if (m_sAssetType.toLower().contains("mesh") || m_sAssetType == "Animation")
 	if (true)
@@ -675,7 +677,8 @@ bool DzMayaAction::readGui(DZ_BRIDGE_NAMESPACE::DzBridgeDialog* BridgeDialog)
 	if (pMayaDialog) {
 
 		if (m_sMayaExecutablePath == "" || isInteractiveMode() ) m_sMayaExecutablePath = pMayaDialog->getMayaExecutablePath().replace("\\", "/");
-
+		m_bGenerateFinalFbx = pMayaDialog->getGenerateFbxFile();
+		m_sShaderTarget = pMayaDialog->getShaderConversion();
 	}
 	else {
 		// Issue error, fail gracefully
