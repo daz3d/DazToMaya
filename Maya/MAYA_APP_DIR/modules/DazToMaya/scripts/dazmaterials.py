@@ -1089,13 +1089,28 @@ class DazMaterials:
                         # Define the path to the Standard_Transparent.sfx preset
                         standard_path = 'Scenes/StingrayPBS/Standard.sfx'
                         transparent_path = 'Scenes/StingrayPBS/Standard_Transparent.sfx'
-                        
+
+                        clr_node = None
+                        color_texture = None
+                        opacity_texture = None
+                        opacity_value = None
+                        refraction_weight = None
+                        transparent_preset_enabled = False
+
+                        cmds.shaderfx(sfxnode=shaderfx_node, loadGraph=standard_path)
                         if 'opacity' in avail_tex:
-                            # Load the preset
-                            cmds.shaderfx(sfxnode=shaderfx_node, loadGraph=transparent_path)
-                        else:
-                            cmds.shaderfx(sfxnode=shaderfx_node, loadGraph=standard_path)
-                        
+                            prop = avail_tex['opacity']
+                            opacity_texture = props[prop]['Texture']
+                            opacity_value = props[prop]['Value']
+                            if opacity_texture or opacity_value != 1.0:
+                                transparent_preset_enabled = True
+                                cmds.shaderfx(sfxnode=shaderfx_node, loadGraph=transparent_path)
+                        if not transparent_preset_enabled and "Refraction Weight" in props.keys():
+                            refraction_weight = props["Refraction Weight"]["Value"]
+                            if refraction_weight != 0.0:
+                                transparent_preset_enabled = True
+                                cmds.shaderfx(sfxnode=shaderfx_node, loadGraph=transparent_path)
+
                         # set up UV tile scale
                         if "Horizontal Tiles" in props.keys() and "Vertical Tiles" in props.keys():
                             horizontal_tiles = props["Horizontal Tiles"]["Value"]
@@ -1109,6 +1124,7 @@ class DazMaterials:
                         if "color" in avail_tex:
                             prop = avail_tex["color"]
                             if props[prop]["Texture"]:
+                                color_texture = props[prop]["Texture"]
                                 # Create file node
                                 clr_node = pm.shadingNode("file", n=prop + "_file", asTexture=True)
                                 clr_node.setAttr('fileTextureName', props[prop]["Texture"])
@@ -1122,18 +1138,29 @@ class DazMaterials:
                                 surface.base_color.set(color_as_vector)
                                 surface.use_color_map.set(False)
 
+                        # WARNING: StingrayPBS requires opacity map to be carried as an alpha channel of color map
                         if "opacity" in avail_tex:
                             prop = avail_tex["opacity"]
-                            if props[prop]["Texture"]:
+                            if opacity_texture and clr_node:
+                                if opacity_texture == color_texture:
+                                    surface.use_opacity_map.set(True)
+                                else:
+                                    # ERROR: can not have separate opacity and color maps, FAIL
+                                    print("ERROR: convert_to_stingray_pbs(): Separate opacity and color maps not supported for material: " + str(shader.name()) + ", keeping color map and setting opacity to 0.5")
+                                    surface.opacity.set(0.5)
+                                    surface.use_opacity_map.set(False)
+                            elif opacity_texture and clr_node is None:
+                                print("ERROR: convert_to_stingray_pbs(): Opacity map found without color map for material: " + str(shader.name()) + ", using opacity map as stand-in for color map and setting opacity to 0.5")
+                                # create an opacity node to be stand in for the color node
                                 opacity_node = pm.shadingNode("file", n=prop + "_file", asTexture=True)
-                                opacity_node.setAttr('fileTextureName', props[prop]["Texture"])
+                                opacity_node.setAttr('fileTextureName', opacity_texture)
                                 opacity_node.setAttr('colorSpace', 'Raw', type='string')
-                                opacity_node.setAttr('alphaIsLuminance', True)
-                                # Connect outAlpha to opacity
-                                opacity_node.outAlpha >> surface.opacity
-                                surface.use_opacity_map.set(True)
-                            else:
-                                surface.opacity.set(props[prop]["Value"])
+                                opacity_node.outColor >> surface.TEX_color_map
+                                surface.opacity.set(0.5)
+                                surface.use_color_map.set(True)
+                                surface.use_opacity_map.set(False)
+                            elif (opacity_value and opacity_value != 1.0):
+                                surface.opacity.set(opacity_value)
                                 surface.use_opacity_map.set(False)
 
                         if "metalness" in avail_tex.keys():
@@ -1176,6 +1203,51 @@ class DazMaterials:
                                 ao_node.setAttr('colorSpace', 'Raw', type='string')
                                 surface.setAttr('use_ao_map', True)
                                 ao_node.outColor >> surface.TEX_ao_map
+
+                        if "Refraction Weight" in props.keys():
+                            refraction_weight = props["Refraction Weight"]["Value"]
+                            transparency_correction = 1.01-refraction_weight
+                            if refraction_weight != 0.0:
+                                print("DEBUG: convert_to_stingray_pbs(): Refraction Weight found for material: " + str(shader.name()) + ", refraction_weight=" + str(refraction_weight))
+                                opacity_value = float(surface.opacity.get())
+                                # print("DEBUG: convert_to_stingray_pbs(): Refraction Weight Handler: opacity_value=" + str(opacity_value))
+                                if opacity_value > transparency_correction:
+                                    try:
+                                        surface.opacity.set(transparency_correction)
+                                    except Exception as e:
+                                        print("DEBUG: convert_to_stingray_pbs(): Refraction Weight Handler: Unable to set opacity value: " + str(e))
+                                
+                                # if transparency_value < refraction_weight:
+                                #     if opacity_node is None:
+                                #         try:
+                                #             cmds.setAttr(shader + ".transparency", refraction_weight, refraction_weight, refraction_weight)
+                                #         except Exception as e:
+                                #             print("DEBUG: convert_to_stingray_pbs(): Refraction Weight Handler: Unable to set transparency value: " + str(e))
+                                #     else:
+                                #         # set alphaGain to 1-refraction_weight
+                                #         opacity_node.setAttr('alphaGain', 1-refraction_weight)                                        
+                                # # set metalness value
+                                # metalness_value = float(cmds.getAttr(shader + ".reflectivity"))
+                                # if metalness_value < refraction_weight:
+                                #     try:
+                                #         cmds.setAttr(shader + ".reflectivity", 1-refraction_weight)
+                                #     except Exception as e:
+                                #         print("DEBUG: convert_to_stingray_pbs(): Refraction Weight Handler: Unable to set metalness value: " + str(e))
+                                # cosinePower_val = float(cmds.getAttr(shader + ".cosinePower"))
+                                # roughness_value = cosinePowerToRoughness(cosinePower_val)
+                                # new_roughness_value = roughness_value * (1.0 - refraction_weight)
+                                # new_cosinePower = roughnessToCosinePower(new_roughness_value)
+                                # new_roughness_value = max(new_cosinePower, 2.0)
+                                # new_roughness_value = min(new_cosinePower, 100.0)
+                                # try:
+                                #     cmds.setAttr(shader + ".cosinePower", new_cosinePower)
+                                # except Exception as e:
+                                #     print("DEBUG: convert_to_stingray_pbs(): Refraction Weight Handler: Unable to set roughness value: " + str(e))
+                                # try:
+                                #     cmds.setAttr(shader + ".specularColor", 1.0, 1.0, 1.0, type="double3")
+                                #     cmds.setAttr(shader + ".reflectedColor", 1.0, 1.0, 1.0, type="double3")
+                                # except Exception as e:
+                                #     print("DEBUG: convert_to_stingray_pbs(): Refraction Weight Handler: Unable to set specular and reflected color: " + str(e))
 
                         # Handle other properties as needed
 
