@@ -540,6 +540,9 @@ class DazMaterials:
 
                         blend_color_node = None
                         clr_node = None
+                        file_node = None
+                        opacity_node = None
+
                         if "makeup-weight" in avail_tex.keys() and "makeup-base" in avail_tex.keys() and "color" in avail_tex.keys():
                             makeup_weight = avail_tex["makeup-weight"]
                             makeup_base = avail_tex["makeup-base"]
@@ -585,13 +588,13 @@ class DazMaterials:
                         if "opacity" in avail_tex.keys():
                             prop = avail_tex["opacity"]
                             if props[prop]["Texture"] != "":
-                                file_node = pm.shadingNode("file", n = prop, asTexture = True)
-                                file_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                opacity_node = pm.shadingNode("file", n = prop, asTexture = True)
+                                opacity_node.setAttr('fileTextureName',props[prop]["Texture"])
                                 scalar = float(props[prop]["Value"])
-                                file_node.setAttr('alphaGain', scalar)
-                                file_node.setAttr('colorSpace', 'Raw', type='string')
-                                file_node.setAttr('alphaIsLuminance', True)
-                                file_node.outTransparency >> shader.transparency
+                                opacity_node.setAttr('alphaGain', scalar)
+                                opacity_node.setAttr('colorSpace', 'Raw', type='string')
+                                opacity_node.setAttr('alphaIsLuminance', True)
+                                opacity_node.outTransparency >> shader.transparency
 
                         if "roughness" in avail_tex.keys():
                             prop = avail_tex["roughness"]
@@ -643,6 +646,43 @@ class DazMaterials:
                                 file_node.outAlpha >> shader.reflectivity
                             else:
                                 shader.setAttr('reflectivity', props[prop]["Value"])
+
+                        if "Refraction Weight" in props.keys():
+                            refraction_weight = props["Refraction Weight"]["Value"]
+                            # print("DEBUG: update_phong_shaders_safe(): Refraction Weight found for material: " + str(shader.name()) + ", refraction_weight=" + str(refraction_weight))
+                            if refraction_weight != 0.0:
+                                transparency_value = float(cmds.getAttr(shader + ".transparency")[0][0])
+                                if transparency_value < refraction_weight:
+                                    if opacity_node is None:
+                                        try:
+                                            cmds.setAttr(shader + ".transparency", refraction_weight, refraction_weight, refraction_weight)
+                                        except Exception as e:
+                                            print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set transparency value: " + str(e))
+                                    else:
+                                        # set alphaGain to 1-refraction_weight
+                                        opacity_node.setAttr('alphaGain', 1-refraction_weight)                                        
+                                # set metalness value
+                                metalness_value = float(cmds.getAttr(shader + ".reflectivity"))
+                                if metalness_value < refraction_weight:
+                                    try:
+                                        cmds.setAttr(shader + ".reflectivity", 1-refraction_weight)
+                                    except Exception as e:
+                                        print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set metalness value: " + str(e))
+                                cosinePower_val = float(cmds.getAttr(shader + ".cosinePower"))
+                                roughness_value = cosinePowerToRoughness(cosinePower_val)
+                                new_roughness_value = roughness_value * (1.0 - refraction_weight)
+                                new_cosinePower = roughnessToCosinePower(new_roughness_value)
+                                new_roughness_value = max(new_cosinePower, 2.0)
+                                new_roughness_value = min(new_cosinePower, 100.0)
+                                try:
+                                    cmds.setAttr(shader + ".cosinePower", new_cosinePower)
+                                except Exception as e:
+                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set roughness value: " + str(e))
+                                try:
+                                    cmds.setAttr(shader + ".specularColor", 1.0, 1.0, 1.0, type="double3")
+                                    cmds.setAttr(shader + ".reflectedColor", 1.0, 1.0, 1.0, type="double3")
+                                except Exception as e:
+                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set specular and reflected color: " + str(e))
 
                         # if "transparency" in avail_tex.keys():
                         #     prop = avail_tex["transparency"]
