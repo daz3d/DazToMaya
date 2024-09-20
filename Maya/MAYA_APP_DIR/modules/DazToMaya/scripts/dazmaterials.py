@@ -1,4 +1,5 @@
 import os, sys
+import math
 
 import pymel.core as pm
 import maya.cmds  as cmds
@@ -8,6 +9,15 @@ from DtuLoader import DtuLoader
 from TextureLib import texture_library, texture_maps
 
 
+def cosinePowerToRoughness(cosinePower):
+    if cosinePower <= 2:
+        return 1.0
+    return math.sqrt(2 / (cosinePower + 2))
+
+def roughnessToCosinePower(roughness):
+    if roughness <= 0:
+        return 100
+    return (2 / (roughness ** 2)) - 2
 
 class DazMaterials:
     material_dict = {}
@@ -360,13 +370,15 @@ class DazMaterials:
                             for tex_name in texture_library[tex_type]["Name"]:
                                 if tex_name in props.keys():
                                     if tex_type in avail_tex.keys():
-                                        if props[tex_name]["Texture"] == "":
+                                        # if tex_type already in lookup table, only override if tex_name has a texture or non-zero value
+                                        if props[tex_name]["Texture"] == "" and props[tex_name]["Value"] == 0:
                                             continue
                                     avail_tex[tex_type] = tex_name
 
                         blend_color_node = None
                         clr_node = None
                         file_node = None
+                        opacity_node = None
 
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
@@ -383,13 +395,13 @@ class DazMaterials:
                         if "opacity" in avail_tex.keys():
                             prop = avail_tex["opacity"]
                             if props[prop]["Texture"] != "":
-                                file_node = pm.shadingNode("file", n = prop, asTexture = True)
-                                file_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                opacity_node = pm.shadingNode("file", n = prop, asTexture = True)
+                                opacity_node.setAttr('fileTextureName',props[prop]["Texture"])
                                 scalar = float(props[prop]["Value"])
-                                file_node.setAttr('alphaGain', scalar)
-                                file_node.setAttr('colorSpace', 'Raw', type='string')
-                                file_node.setAttr('alphaIsLuminance', True)
-                                file_node.outTransparency >> shader.transparency
+                                opacity_node.setAttr('alphaGain', scalar)
+                                opacity_node.setAttr('colorSpace', 'Raw', type='string')
+                                opacity_node.setAttr('alphaIsLuminance', True)
+                                opacity_node.outTransparency >> shader.transparency
 
                         # if "transparency" in avail_tex.keys():
                         #     prop = avail_tex["transparency"]
@@ -409,9 +421,9 @@ class DazMaterials:
                                 file_node.setAttr('invert', True)
                                 file_node.outAlpha >> shader.cosinePower
                             else:
-                                print("DEBUG: update_phong_shaders_safe(): no roughness image file, using roughness_val=" + str(props[prop]["Value"]) + ", for material: " + str(shader.name()))
+                                # print("DEBUG: update_phong_shaders_safe(): no roughness image file, using roughness_val=" + str(props[prop]["Value"]) + ", for material: " + str(shader.name()))
                                 roughness_val = props[prop]["Value"]
-                                cosinePower_val = (1.0 - roughness_val)*100.0
+                                cosinePower_val = roughnessToCosinePower(roughness_val)
                                 cosinePower_val = max(cosinePower_val, 2.0)
                                 cosinePower_val = min(cosinePower_val, 100.0)
                                 shader.setAttr('cosinePower', cosinePower_val)
@@ -448,6 +460,44 @@ class DazMaterials:
                                 file_node.outAlpha >> shader.reflectivity
                             else:
                                 shader.setAttr('reflectivity', props[prop]["Value"])
+
+                        if "Refraction Weight" in props.keys():
+                            refraction_weight = props["Refraction Weight"]["Value"]
+                            # print("DEBUG: update_phong_shaders_safe(): Refraction Weight found for material: " + str(shader.name()) + ", refraction_weight=" + str(refraction_weight))
+                            if refraction_weight != 0.0:
+                                transparency_value = float(cmds.getAttr(shader + ".transparency")[0][0])
+                                if transparency_value < refraction_weight:
+                                    if opacity_node is None:
+                                        try:
+                                            cmds.setAttr(shader + ".transparency", refraction_weight, refraction_weight, refraction_weight)
+                                        except Exception as e:
+                                            print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set transparency value: " + str(e))
+                                    else:
+                                        # set alphaGain to 1-refraction_weight
+                                        opacity_node.setAttr('alphaGain', 1-refraction_weight)                                        
+                                # set metalness value
+                                metalness_value = float(cmds.getAttr(shader + ".reflectivity"))
+                                if metalness_value < refraction_weight:
+                                    try:
+                                        cmds.setAttr(shader + ".reflectivity", 1-refraction_weight)
+                                    except Exception as e:
+                                        print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set metalness value: " + str(e))
+                                cosinePower_val = float(cmds.getAttr(shader + ".cosinePower"))
+                                roughness_value = cosinePowerToRoughness(cosinePower_val)
+                                new_roughness_value = roughness_value * (1.0 - refraction_weight)
+                                new_cosinePower = roughnessToCosinePower(new_roughness_value)
+                                new_roughness_value = max(new_cosinePower, 2.0)
+                                new_roughness_value = min(new_cosinePower, 100.0)
+                                try:
+                                    cmds.setAttr(shader + ".cosinePower", new_cosinePower)
+                                except Exception as e:
+                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set roughness value: " + str(e))
+                                try:
+                                    cmds.setAttr(shader + ".specularColor", 1.0, 1.0, 1.0, type="double3")
+                                    cmds.setAttr(shader + ".reflectedColor", 1.0, 1.0, 1.0, type="double3")
+                                except Exception as e:
+                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set specular and reflected color: " + str(e))
+                                    
 
                         # if "specular" in avail_tex.keys():
                         #     prop = avail_tex["specular"]
@@ -556,7 +606,7 @@ class DazMaterials:
                                 file_node.outAlpha >> shader.cosinePower
                             else:
                                 roughness_val = props[prop]["Value"]
-                                cosinePower_val = (1.0 - roughness_val)*100.0
+                                cosinePower_val = roughnessToCosinePower(roughness_val)
                                 cosinePower_val = max(cosinePower_val, 2.0)
                                 cosinePower_val = min(cosinePower_val, 100.0)
                                 shader.setAttr('cosinePower', cosinePower_val)
