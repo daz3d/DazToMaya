@@ -366,6 +366,7 @@ class DazMaterials:
 
                         blend_color_node = None
                         clr_node = None
+                        file_node = None
 
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
@@ -408,7 +409,7 @@ class DazMaterials:
                                 file_node.setAttr('invert', True)
                                 file_node.outAlpha >> shader.cosinePower
                             else:
-                                print("DEBUG: update_phong_shaders_safe(): no textures, using roughness_val=" + str(props[prop]["Value"]) + ", for material: " + str(shader.name()))
+                                print("DEBUG: update_phong_shaders_safe(): no roughness image file, using roughness_val=" + str(props[prop]["Value"]) + ", for material: " + str(shader.name()))
                                 roughness_val = props[prop]["Value"]
                                 cosinePower_val = (1.0 - roughness_val)*100.0
                                 cosinePower_val = max(cosinePower_val, 2.0)
@@ -432,7 +433,7 @@ class DazMaterials:
                                     except Exception as e:
                                         print("Error: update_phong_shaders_safe(): Error processing normal map: " + str(e) + ", setting normal_strength to 1.0")
                                         normal_strength = 1.0
-                                bump_node.bumpDepth.set(float(normal_strength) * 0.5)
+                                bump_node.bumpDepth.set(float(normal_strength))
                                 bump_node.outNormal >> shader.normalCamera
 
                         if "metalness" in avail_tex.keys():
@@ -577,7 +578,7 @@ class DazMaterials:
                                     except Exception as e:
                                         print("Error: update_phong_shaders_with_makeup(): Error processing normal map: " + str(e) + ", setting normal_strength to 1.0")
                                         normal_strength = 1.0
-                                bump_node.bumpDepth.set(float(normal_strength) * 0.5)
+                                bump_node.bumpDepth.set(float(normal_strength))
                                 bump_node.outNormal >> shader.normalCamera
 
                         if "metalness" in avail_tex.keys():

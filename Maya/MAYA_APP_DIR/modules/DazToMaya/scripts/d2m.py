@@ -1,7 +1,7 @@
 DZBRIDGE_VERSION_MAJOR = 2024
 DZBRIDGE_VERSION_MINOR = 2
 DZBRIDGE_VERSION_REVISION = 1
-DZBRIDGE_VERSION_BUILD = 13
+DZBRIDGE_VERSION_BUILD = 15
 DZBRIDGE_VERSION_STRING = "v%s.%s.%s.%s" % (DZBRIDGE_VERSION_MAJOR, DZBRIDGE_VERSION_MINOR, DZBRIDGE_VERSION_REVISION, DZBRIDGE_VERSION_BUILD)
 ##
 ## DazToMaya
@@ -2853,8 +2853,11 @@ def btn_save_with_text_callback():
                                     )
 
     if save_file_result != None:
-        out_path = os.path.dirname(save_file_result[0]) + "/"
+        # Delete unused nodes
+        print("Deleting unused nodes")
+        mel.eval('MLdeleteUnused();')
 
+        out_path = os.path.dirname(save_file_result[0]) + "/"
         try:
             os.makedirs(out_path + "/images")
         except:
@@ -2862,15 +2865,27 @@ def btn_save_with_text_callback():
 
         texture_file_nodes = pm.ls(typ='file')
         for file_node in texture_file_nodes:
-            print(file_node)
             image_path = file_node.getAttr('fileTextureName')
+            # save file properties
+            colorSpace = cmds.getAttr(file_node + '.colorSpace')
+            colorGain = cmds.setAttr(file_node + '.colorGain')
+            alphaGain = cmds.getAttr(file_node + '.alphaGain')
+            alphaIsLuminance = cmds.getAttr(file_node + '.alphaIsLuminance')
+            invert = cmds.getAttr(file_node + '.invert')
             just_file_name = os.path.basename(image_path)
             out_file_name = out_path + "images/" + str(just_file_name)
             if image_path != out_file_name:
+                print("Copying file node:" + file_node)
                 from shutil import copyfile
                 copyfile(image_path, out_file_name)
                 file_node.setAttr('fileTextureName',
                                  "images/" + str(just_file_name))
+                # restore file properties
+                if colorSpace: cmds.setAttr(file_node + '.colorSpace', colorSpace, type='string')
+                if colorGain: cmds.setAttr(file_node + '.colorGain', float(colorGain))
+                if alphaGain: cmds.setAttr(file_node + '.alphaGain', float(alphaGain))
+                if alphaIsLuminance: cmds.setAttr(file_node + '.alphaIsLuminance', bool(alphaIsLuminance))
+                if invert: cmds.setAttr(file_node + '.invert', bool(invert))
 
         cmds.file(rename=save_file_result[0])
         if ".ma" in save_file_result[0]:

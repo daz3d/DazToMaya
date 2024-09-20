@@ -68,6 +68,9 @@ def _main(argv):
     if "Output Maya Filepath" in dtu_dict:
         file_path = dtu_dict["Output Maya Filepath"]
 
+    # Delete unused nodes
+    mel.eval('MLdeleteUnused()')
+
     # Save Textures
     root_path = os.path.dirname(file_path)
     images_foldername = os.path.basename(file_path) + "_images"
@@ -83,6 +86,12 @@ def _main(argv):
     for file_node in texture_file_nodes:
         _add_to_log("DEBUG: processing file_node: " + file_node)
         image_path = cmds.getAttr(file_node + '.fileTextureName')
+        # save file properties
+        colorSpace = cmds.getAttr(file_node + '.colorSpace')
+        colorGain = cmds.setAttr(file_node + '.colorGain')
+        alphaGain = cmds.getAttr(file_node + '.alphaGain')
+        alphaIsLuminance = cmds.getAttr(file_node + '.alphaIsLuminance')
+        invert = cmds.getAttr(file_node + '.invert')
         just_file_name = os.path.basename(image_path)
         out_file_name = images_folderpath + "/" + str(just_file_name)
         if image_path != out_file_name:
@@ -91,6 +100,12 @@ def _main(argv):
             cmds.setAttr(file_node + '.fileTextureName', 
                          images_foldername + "/" + str(just_file_name),
                          type='string')
+            # restore file properties
+            if colorSpace: cmds.setAttr(file_node + '.colorSpace', colorSpace, type='string')
+            if colorGain: cmds.setAttr(file_node + '.colorGain', float(colorGain))
+            if alphaGain: cmds.setAttr(file_node + '.alphaGain', float(alphaGain))
+            if alphaIsLuminance: cmds.setAttr(file_node + '.alphaIsLuminance', bool(alphaIsLuminance))
+            if invert: cmds.setAttr(file_node + '.invert', bool(invert))
 
     # Save Maya File
     cmds.file(rename=file_path)
