@@ -80,7 +80,7 @@ def _main(argv):
         import dazmaterials as dzm
         if shader_target == "arnold":
             _add_to_log("DEBUG: converting to arnold")
-            dzm.DazMaterials(True).convert_to_arnold()
+            dzm.DazMaterials(False).convert_to_arnold()
         elif shader_target == "standard":
             _add_to_log("DEBUG: converting to standard")
             dzm.DazMaterials(False).convert_to_standard_surface()
@@ -114,7 +114,7 @@ def _main(argv):
         invert = cmds.getAttr(file_node + '.invert')
         just_file_name = os.path.basename(image_path)
         out_file_name = images_folderpath + "/" + str(just_file_name)
-        if image_path != out_file_name:
+        if image_path and image_path != out_file_name:
             from shutil import copyfile
             _add_to_log("DEBUG: copying file: " + image_path + " to " + out_file_name)
             copyfile(image_path, out_file_name)
@@ -136,18 +136,18 @@ def _main(argv):
         cmds.file(save=True, type="mayaBinary")
 
     if generate_final_fbx:
-        _add_to_log("DEBUG: generate_final_fbx=True")
         # Generate FBX
         fbx_file_path = file_path.replace(".ma", ".fbx").replace(".mb", ".fbx")
-        sOptions = ""        
+        _add_to_log("DEBUG: generate_final_fbx: exporting to " + fbx_file_path)
         mel.eval("FBXExportAxisConversionMethod none;")
         mel.eval("FBXExportSmoothMesh -v false;")
         mel.eval("FBXExportInAscii -v false;")
         mel.eval("FBXExportScaleFactor 1.0;")
         mel.eval("FBXExportUpAxis y;")
-        mel.eval("FBXExportEmbeddedTextures -v true;")
         mel.eval("FBXExportInstances -v true;")
-        cmds.file(fbx_file_path, force=1, options=sOptions, type="FBX export", exportAll=True)
+        mel.eval("FBXExportEmbeddedTextures -v true;")
+        # file -force -options "" -type "FBX export" -pr -ea "C:/Users/dbui2/Documents/__Ultra_Tests/maya-phong.fbx";
+        cmds.file(fbx_file_path, force=True, options="", type="FBX export", pr=True, exportAll=True)
 
     print("Done.")
 

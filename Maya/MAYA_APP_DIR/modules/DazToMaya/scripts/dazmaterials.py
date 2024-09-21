@@ -112,7 +112,11 @@ class DazMaterials:
                             for tex_name in texture_library[tex_type]["Name"]:
                                 if tex_name in props.keys():
                                     if tex_type in avail_tex.keys():
-                                        if props[tex_name]["Texture"] == "":
+                                        existing_texture = props[avail_tex[tex_type]]["Texture"]
+                                        # if tex_type already in lookup table, only override if tex_name has a texture or non-zero value
+                                        if props[tex_name]["Texture"] == "" and existing_texture != "":
+                                            continue
+                                        elif props[tex_name]["Value"] == 0.0:
                                             continue
                                     avail_tex[tex_type] = tex_name
 
@@ -520,38 +524,46 @@ class DazMaterials:
 
                         if "Refraction Weight" in props.keys():
                             refraction_weight = props["Refraction Weight"]["Value"]
-                            # print("DEBUG: update_phong_shaders_safe(): Refraction Weight found for material: " + str(shader.name()) + ", refraction_weight=" + str(refraction_weight))
                             if refraction_weight != 0.0:
+                                print("DEBUG: update_phong_shaders_safe(): Refraction Weight found for material: " + str(shader.name()) + ", refraction_weight=" + str(refraction_weight))
+                                # set transparency value
                                 transparency_value = float(cmds.getAttr(shader + ".transparency")[0][0])
-                                if transparency_value < refraction_weight:
+                                transparency_correction = max(transparency_value, refraction_weight)
+                                transparency_correction = min(0.95, transparency_correction)
+                                if transparency_value != transparency_correction:
+                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Setting transparency value to: " + str(transparency_correction))
                                     if opacity_node is None:
                                         try:
-                                            cmds.setAttr(shader + ".transparency", refraction_weight, refraction_weight, refraction_weight)
+                                            cmds.setAttr(shader + ".transparency", transparency_correction, transparency_correction, transparency_correction)
                                         except Exception as e:
                                             print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set transparency value: " + str(e))
                                     else:
-                                        # set alphaGain to 1-refraction_weight
-                                        opacity_node.setAttr('alphaGain', 1-refraction_weight)                                        
+                                        alpha_correction = 1.05 - refraction_weight
+                                        opacity_node.setAttr('alphaGain', alpha_correction)
                                 # set metalness value
                                 metalness_value = float(cmds.getAttr(shader + ".reflectivity"))
                                 if metalness_value < refraction_weight:
+                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Setting metalness value to refraction_weight: " + str(refraction_weight))
                                     try:
-                                        cmds.setAttr(shader + ".reflectivity", 1-refraction_weight)
+                                        cmds.setAttr(shader + ".reflectivity", refraction_weight)
                                     except Exception as e:
                                         print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set metalness value: " + str(e))
+                                # set roughness value
                                 cosinePower_val = float(cmds.getAttr(shader + ".cosinePower"))
                                 roughness_value = cosinePowerToRoughness(cosinePower_val)
-                                new_roughness_value = roughness_value * (1.0 - refraction_weight)
+                                new_roughness_value = roughness_value * (1.01 - refraction_weight)
                                 new_cosinePower = roughnessToCosinePower(new_roughness_value)
-                                new_roughness_value = max(new_cosinePower, 2.0)
-                                new_roughness_value = min(new_cosinePower, 100.0)
-                                try:
-                                    cmds.setAttr(shader + ".cosinePower", new_cosinePower)
-                                except Exception as e:
-                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set roughness value: " + str(e))
+                                new_cosinePower = max(new_cosinePower, 2.0)
+                                new_cosinePower = min(new_cosinePower, 100.0)
+                                if cosinePower_val != new_cosinePower:
+                                    print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Setting roughness value to: " + str(new_roughness_value) + ", cosinePower=" + str(new_cosinePower))
+                                    try:
+                                        cmds.setAttr(shader + ".cosinePower", new_cosinePower)
+                                    except Exception as e:
+                                        print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set roughness value: " + str(e))
                                 try:
                                     cmds.setAttr(shader + ".specularColor", 1.0, 1.0, 1.0, type="double3")
-                                    cmds.setAttr(shader + ".reflectedColor", 1.0, 1.0, 1.0, type="double3")
+                                    cmds.setAttr(shader + ".reflectedColor", 0.01, 0.01, 0.01, type="double3")
                                 except Exception as e:
                                     print("DEBUG: update_phong_shaders_safe(): Refraction Weight Handler: Unable to set specular and reflected color: " + str(e))
                                     
@@ -564,9 +576,9 @@ class DazMaterials:
                         #         file_node.setAttr('alphaIsLuminance', True)
                         #         file_node.outColor >> shader.specularColor
 
-                        print("DEBUG: update_phong_shaders_safe(): done for material: " + str(shader.name()))
+                        # print("DEBUG: update_phong_shaders_safe(): done for material: " + str(shader.name()))
 
-        print("DEBUG: update_phong_shaders_safe(): done")
+        # print("DEBUG: update_phong_shaders_safe(): done")
 
 
     ## DB 2023-July-17: enhanced shader update which may break Maya's Fbx Exporter
@@ -594,7 +606,11 @@ class DazMaterials:
                             for tex_name in texture_library[tex_type]["Name"]:
                                 if tex_name in props.keys():
                                     if tex_type in avail_tex.keys():
-                                        if props[tex_name]["Texture"] == "":
+                                        existing_texture = props[avail_tex[tex_type]]["Texture"]
+                                        # if tex_type already in lookup table, only override if tex_name has a texture or non-zero value
+                                        if props[tex_name]["Texture"] == "" and existing_texture != "":
+                                            continue
+                                        elif props[tex_name]["Value"] == 0.0:
                                             continue
                                     avail_tex[tex_type] = tex_name
 
@@ -871,7 +887,11 @@ class DazMaterials:
                             for tex_name in texture_library[tex_type]["Name"]:
                                 if tex_name in props.keys():
                                     if tex_type in avail_tex.keys():
-                                        if props[tex_name]["Texture"] == "":
+                                        existing_texture = props[avail_tex[tex_type]]["Texture"]
+                                        # if tex_type already in lookup table, only override if tex_name has a texture or non-zero value
+                                        if props[tex_name]["Texture"] == "" and existing_texture != "":
+                                            continue
+                                        elif props[tex_name]["Value"] == 0.0:
                                             continue
                                     avail_tex[tex_type] = tex_name
 
@@ -1079,11 +1099,16 @@ class DazMaterials:
                         surface.outColor >> se.surfaceShader
 
                         avail_tex = {}
-                        for tex_type, tex_info in texture_library.items():
-                            for tex_name in tex_info["Name"]:
-                                if tex_name in props:
-                                    if tex_type in avail_tex and props[tex_name]["Texture"] == "":
-                                        continue
+                        for tex_type in texture_library.keys():
+                            for tex_name in texture_library[tex_type]["Name"]:
+                                if tex_name in props.keys():
+                                    if tex_type in avail_tex.keys():
+                                        existing_texture = props[avail_tex[tex_type]]["Texture"]
+                                        # if tex_type already in lookup table, only override if tex_name has a texture or non-zero value
+                                        if props[tex_name]["Texture"] == "" and existing_texture != "":
+                                            continue
+                                        elif props[tex_name]["Value"] == 0.0:
+                                            continue
                                     avail_tex[tex_type] = tex_name
 
                         # Get the name of the shader node
