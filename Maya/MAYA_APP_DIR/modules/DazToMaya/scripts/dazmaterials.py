@@ -71,11 +71,39 @@ class DazMaterials:
             properties[prop["Name"]] = prop
         return properties
 
+    ## DB 2024-09-21: update to work with new Bake Makeup feature in Daz Bridge Library, check for existence of weight and base color maps
+    ## DB 2023-July-17: find if any HD makeup properties are present
+    def has_hd_makeup(self):
+        self.load_materials()
+        bMakeupEnabled = False
+        bHasWeightMap = False
+        bHasBaseColorMap = False
+        for obj in self.material_dict.keys():
+            # print("DEBUG: HD Makeup check, obj=" + str(obj) )
+            for mat in self.material_dict[obj].keys():
+                # print("DEBUG: HD Makeup check, mat=" + str(mat) )
+                for prop in self.material_dict[obj][mat]["Properties"]:
+                    # print("DEBUG: HD Makeup check, prop=" + prop["Name"])
+                    if "Name" in prop.keys() and prop["Name"] == "Makeup Enable":
+                        if "Value" in prop.keys() and prop["Value"] == 1:
+                            bMakeupEnabled = True
+                    if "Name" in prop.keys() and prop["Name"] == "Makeup Weight":
+                        if "Texture" in prop.keys() and prop["Texture"] != "":
+                            bHasWeightMap = True
+                    if "Name" in prop.keys() and prop["Name"] == "Makeup Base Color":
+                        if "Texture" in prop.keys() and prop["Texture"] != "":
+                            bHasBaseColorMap = True
+
+        if (bMakeupEnabled and bHasWeightMap and bHasBaseColorMap):
+            #print("DEBUG: HD Makeup found")
+            return True
+        else:
+            return False
+
     """
     Reference for the standard followed.
     https://substance3d.adobe.com/tutorials/courses/Substance-guide-to-Rendering-in-Arnold
-    """
-    
+    """   
     
     def convert_to_arnold(self):
         allshaders = self.get_materials_in_scene()
@@ -361,23 +389,6 @@ class DazMaterials:
 
         #print("DEBUG: convert_to_arnold(): done")
         return
-
-
-    ## DB 2023-July-17: find if any HD makeup properties are present
-    def has_hd_makeup(self):
-        self.load_materials()
-        for obj in self.material_dict.keys():
-            # print("DEBUG: HD Makeup check, obj=" + str(obj) )
-            for mat in self.material_dict[obj].keys():
-                # print("DEBUG: HD Makeup check, mat=" + str(mat) )
-                for prop in self.material_dict[obj][mat]["Properties"]:
-                    # print("DEBUG: HD Makeup check, prop=" + prop["Name"])
-                    if "Name" in prop.keys() and prop["Name"] == "Makeup Enable":
-                        if "Value" in prop.keys() and prop["Value"] == 1:
-                            #print("DEBUG: HD Makeup found")
-                            return True
-        return False
-
 
     ## DB 2023-July-17: safe shader update which will not break Maya's Fbx Exporter
     def update_phong_shaders_safe(self):
