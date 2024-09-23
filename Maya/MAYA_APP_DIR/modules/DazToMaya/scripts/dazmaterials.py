@@ -150,6 +150,8 @@ class DazMaterials:
 
                         blend_color_node = None
                         clr_node = None
+                        color_texture = None
+                        opacity_texture = None
                         uv_tile = None
 
                         # set up UV tile scale
@@ -200,6 +202,7 @@ class DazMaterials:
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
                             if props[prop]["Texture"] != "":
+                                color_texture = props[prop]["Texture"]
                                 clr_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 clr_node.setAttr('fileTextureName',props[prop]["Texture"])
                                 color_as_vector = self.convert_color(props[prop]["Value"])
@@ -214,13 +217,18 @@ class DazMaterials:
                         if "opacity" in avail_tex.keys():
                             prop = avail_tex["opacity"]
                             if props[prop]["Texture"] != "":
+                                opacity_texture = props[prop]["Texture"]
                                 file_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 file_node.setAttr('fileTextureName',props[prop]["Texture"])
                                 scalar = float(props[prop]["Value"])
                                 file_node.setAttr('colorGain', [scalar, scalar, scalar])
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
-                                file_node.setAttr('alphaIsLuminance', True)
-                                file_node.outColor >> surface.opacity
+                                if opacity_texture == color_texture:
+                                    file_node.setAttr('colorGain', [scalar*10, scalar*10, scalar*10])
+                                    file_node.setAttr('alphaIsLuminance', False)
+                                else:
+                                    file_node.setAttr('alphaIsLuminance', True)
+                                file_node.outTransparency >> surface.opacity
                                 if uv_tile is not None:
                                     uv_tile.outUV >> file_node.uvCoord
                                 cmds.setAttr('hardwareRenderingGlobals.transparencyAlgorithm', 5)
@@ -425,6 +433,8 @@ class DazMaterials:
 
                         blend_color_node = None
                         clr_node = None
+                        color_texture = None
+                        opacity_texture = None
                         file_node = None
                         opacity_node = None
                         uv_tile = None
@@ -442,6 +452,7 @@ class DazMaterials:
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
                             if props[prop]["Texture"] != "":
+                                color_texture = props[prop]["Texture"]
                                 clr_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 clr_node.setAttr('fileTextureName',props[prop]["Texture"])
                                 color_as_vector = self.convert_color(props[prop]["Value"])
@@ -457,15 +468,20 @@ class DazMaterials:
                             prop = avail_tex["opacity"]
                             if props[prop]["Texture"] != "":
                                 print("DEBUG: update_phong_shaders_safe(): opacity found for material: " + str(shader.name()))
-                                opacity_node = pm.shadingNode("file", n = prop, asTexture = True)
-                                opacity_node.setAttr('fileTextureName',props[prop]["Texture"])
-                                scalar = float(props[prop]["Value"])
-                                opacity_node.setAttr('alphaGain', scalar)
-                                opacity_node.setAttr('colorSpace', 'Raw', type='string')
-                                opacity_node.setAttr('alphaIsLuminance', True)
-                                opacity_node.outTransparency >> shader.transparency
-                                if uv_tile is not None:
-                                    uv_tile.outUV >> opacity_node.uvCoord
+                                opacity_texture = props[prop]["Texture"]
+                                if opacity_texture == color_texture:
+                                    # use color node for opacity
+                                    clr_node.outTransparency >> shader.transparency
+                                else:
+                                    opacity_node = pm.shadingNode("file", n = prop, asTexture = True)
+                                    opacity_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                    scalar = float(props[prop]["Value"])
+                                    opacity_node.setAttr('alphaGain', scalar)
+                                    opacity_node.setAttr('colorSpace', 'Raw', type='string')
+                                    opacity_node.setAttr('alphaIsLuminance', True)
+                                    opacity_node.outTransparency >> shader.transparency
+                                    if uv_tile is not None:
+                                        uv_tile.outUV >> opacity_node.uvCoord
 
                         # if "transparency" in avail_tex.keys():
                         #     prop = avail_tex["transparency"]
@@ -627,6 +643,8 @@ class DazMaterials:
 
                         blend_color_node = None
                         clr_node = None
+                        color_texture = None
+                        opacity_texture = None
                         file_node = None
                         opacity_node = None
                         uv_tile = None
@@ -678,6 +696,7 @@ class DazMaterials:
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
                             if props[prop]["Texture"] != "":
+                                color_texture = props[prop]["Texture"]
                                 clr_node = pm.shadingNode("file", n = prop, asTexture = True)
                                 clr_node.setAttr('fileTextureName',props[prop]["Texture"])
                                 color_as_vector = self.convert_color(props[prop]["Value"])
@@ -692,15 +711,20 @@ class DazMaterials:
                         if "opacity" in avail_tex.keys():
                             prop = avail_tex["opacity"]
                             if props[prop]["Texture"] != "":
-                                opacity_node = pm.shadingNode("file", n = prop, asTexture = True)
-                                opacity_node.setAttr('fileTextureName',props[prop]["Texture"])
-                                scalar = float(props[prop]["Value"])
-                                opacity_node.setAttr('alphaGain', scalar)
-                                opacity_node.setAttr('colorSpace', 'Raw', type='string')
-                                opacity_node.setAttr('alphaIsLuminance', True)
-                                opacity_node.outTransparency >> shader.transparency
-                                if uv_tile is not None:
-                                    uv_tile.outUV >> opacity_node.uvCoord
+                                opacity_texture = props[prop]["Texture"]
+                                if opacity_texture == color_texture:
+                                    # use color node for opacity
+                                    clr_node.outTransparency >> shader.transparency
+                                else:
+                                    opacity_node = pm.shadingNode("file", n = prop, asTexture = True)
+                                    opacity_node.setAttr('fileTextureName',props[prop]["Texture"])
+                                    scalar = float(props[prop]["Value"])
+                                    opacity_node.setAttr('alphaGain', scalar)
+                                    opacity_node.setAttr('colorSpace', 'Raw', type='string')
+                                    opacity_node.setAttr('alphaIsLuminance', True)
+                                    opacity_node.outTransparency >> shader.transparency
+                                    if uv_tile is not None:
+                                        uv_tile.outUV >> opacity_node.uvCoord
 
                         if "roughness" in avail_tex.keys():
                             prop = avail_tex["roughness"]
@@ -908,6 +932,8 @@ class DazMaterials:
 
                         blend_color_node = None
                         clr_node = None
+                        color_texture = None
+                        opacity_texture = None
                         uv_tile = None
 
                         # set up UV tile scale
@@ -957,6 +983,7 @@ class DazMaterials:
                         if "color" in avail_tex.keys() and blend_color_node is None:
                             prop = avail_tex["color"]
                             if props[prop]["Texture"] != "":
+                                color_texture = props[prop]["Texture"]
                                 clr_node = pm.shadingNode("file", n=prop, asTexture=True)
                                 clr_node.setAttr('fileTextureName', props[prop]["Texture"])
                                 color_as_vector = self.convert_color(props[prop]["Value"])
@@ -971,13 +998,18 @@ class DazMaterials:
                         if "opacity" in avail_tex.keys():
                             prop = avail_tex["opacity"]
                             if props[prop]["Texture"] != "":
+                                opacity_texture = props[prop]["Texture"]
                                 file_node = pm.shadingNode("file", n=prop, asTexture=True)
                                 file_node.setAttr('fileTextureName', props[prop]["Texture"])
                                 scalar = float(props[prop]["Value"])
                                 file_node.setAttr('colorGain', [scalar, scalar, scalar])
                                 file_node.setAttr('colorSpace', 'Raw', type='string')
-                                file_node.setAttr('alphaIsLuminance', True)
-                                file_node.outColor >> surface.opacity
+                                if opacity_texture == color_texture:
+                                    file_node.setAttr('colorGain', [scalar*10, scalar*10, scalar*10])
+                                    file_node.setAttr('alphaIsLuminance', False)
+                                else:
+                                    file_node.setAttr('alphaIsLuminance', True)
+                                file_node.outTransparency >> surface.opacity
                                 if uv_tile is not None:
                                     uv_tile.outUV >> file_node.uvCoord
                                 cmds.setAttr('hardwareRenderingGlobals.transparencyAlgorithm', 5)
