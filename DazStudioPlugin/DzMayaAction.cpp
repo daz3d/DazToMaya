@@ -92,21 +92,10 @@ bool DzMayaUtils::GenerateExporterBatchFile(QString batchFilePath, QString sExec
 
 DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* options)
 {
-	if (dzScene->getNumSelectedNodes() != 1)
-	{
-		DzNodeList rootNodes = DZ_BRIDGE_NAMESPACE::DzBridgeAction::BuildRootNodeList();
-		if (rootNodes.length() == 1)
-		{
-			dzScene->setPrimarySelection(rootNodes[0]);
-		}
-		else if (rootNodes.length() > 1)
-		{
-			QMessageBox::critical(0, tr("Error: No Selection"),
-				tr("Please select one Character or Prop in the scene to export."), QMessageBox::Abort);
-			return DZ_OPERATION_FAILED_ERROR;
-		}
+	bool bDefaultToEnvironment = false;
+	if (DZ_BRIDGE_NAMESPACE::DzBridgeAction::SelectBestRootNodeForTransfer() == DZ_BRIDGE_NAMESPACE::EAssetType::Other) {
+		bDefaultToEnvironment = true;
 	}
-
 	QString sMayaOutputPath = QFileInfo(filename).dir().path().replace("\\", "/");
 
 	// process options
@@ -136,7 +125,10 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 		dzApp->log("Maya Exporter: CRITICAL ERROR: Unable to initialize DzMayaDialog. Aborting operation.");
 		return DZ_OPERATION_FAILED_ERROR;
 	}
-
+	if (bDefaultToEnvironment) {
+		int nEnvIndex = pDialog->getAssetTypeCombo()->findText("Environment");
+		pDialog->getAssetTypeCombo()->setCurrentIndex(nEnvIndex);
+	}
 	pDialog->requireMayaExecutableWidget(true);
 	pMayaAction->executeAction();
 	pDialog->requireMayaExecutableWidget(false);
@@ -333,25 +325,11 @@ void DzMayaAction::executeAction()
 		return;
 	}
 
-	// Create and show the dialog. If the user cancels, exit early,
-	// otherwise continue on and do the thing that required modal
-	// input from the user.
-	if (dzScene->getNumSelectedNodes() != 1)
-	{
-		DzNodeList rootNodes = DzBridgeAction::BuildRootNodeList();
-		if (rootNodes.length() == 1)
-		{
-			dzScene->setPrimarySelection(rootNodes[0]);
-		}
-		else if (rootNodes.length() > 1)
-		{
-			if (m_nNonInteractiveMode == 0)
-			{
-				QMessageBox::warning(0, tr("Error"),
-					tr("Please select one Character or Prop to send."), QMessageBox::Ok);
-			}
-		}
+	bool bDefaultToEnvironment = false;
+	if (SelectBestRootNodeForTransfer() == DZ_BRIDGE_NAMESPACE::EAssetType::Other) {
+		bDefaultToEnvironment = true;
 	}
+
 
 	// Create the dialog
 	if (m_bridgeDialog == nullptr)
@@ -395,6 +373,11 @@ void DzMayaAction::executeAction()
 			m_MorphNamesToExport.clear();
 		}
 
+	}
+
+	if (bDefaultToEnvironment) {
+		int nEnvIndex = m_bridgeDialog->getAssetTypeCombo()->findText("Environment");
+		m_bridgeDialog->getAssetTypeCombo()->setCurrentIndex(nEnvIndex);
 	}
 
 	// If the Accept button was pressed, start the export
