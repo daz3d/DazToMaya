@@ -23,7 +23,7 @@ public:
 class DzMayaExporter : public DzExporter {
 	Q_OBJECT
 public:
-	DzMayaExporter(QString sExt) : DzExporter(sExt) {};
+	DzMayaExporter(QString sExt) : DzExporter(sExt) { this->setObjectName("DzBridge_DazToMaya_Exporter"); };
 
 public slots:
 	virtual void getDefaultOptions(DzFileIOSettings* options) const {};

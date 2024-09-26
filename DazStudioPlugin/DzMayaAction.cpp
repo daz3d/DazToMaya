@@ -247,6 +247,8 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 DzMayaAction::DzMayaAction() :
 	DzBridgeAction(tr("Send to &Maya..."), tr("Send the selected node to Maya."))
 {
+	this->setObjectName("DzBridge_DazToMaya_Action");
+
 	m_nNonInteractiveMode = 0;
 	m_sAssetType = QString("SkeletalMesh");
 	//Setup Icon

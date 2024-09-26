@@ -52,6 +52,8 @@ QValidator::State DzFileValidator::validate(QString& input, int& pos) const {
 DzMayaDialog::DzMayaDialog(QWidget* parent) :
 	 DzBridgeDialog(parent, DAZ_BRIDGE_PLUGIN_NAME)
 {
+	this->setObjectName("DzBridge_DazToMaya_Dialog");
+
 	 intermediateFolderEdit = nullptr;
 	 intermediateFolderButton = nullptr;
 
