@@ -58,10 +58,8 @@ class DzMayaAction : public DZ_BRIDGE_NAMESPACE::DzBridgeAction {
 	 Q_OBJECT
 public:
 	DzMayaAction();
-	DzError getExecutActionResult() { return m_nExecuteActionResult; }
 
 protected:
-	 DzError m_nExecuteActionResult = DZ_OPERATION_FAILED_ERROR;
 
 	 void executeAction() override;
 	 Q_INVOKABLE bool createUI();

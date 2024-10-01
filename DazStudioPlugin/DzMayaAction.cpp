@@ -93,7 +93,7 @@ bool DzMayaUtils::GenerateExporterBatchFile(QString batchFilePath, QString sExec
 DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* options)
 {
 	bool bDefaultToEnvironment = false;
-	if (DZ_BRIDGE_NAMESPACE::DzBridgeAction::SelectBestRootNodeForTransfer() == DZ_BRIDGE_NAMESPACE::EAssetType::Other) {
+	if (DZ_BRIDGE_NAMESPACE::DzBridgeAction::SelectBestRootNodeForTransfer(false) == DZ_BRIDGE_NAMESPACE::EAssetType::Other) {
 		bDefaultToEnvironment = true;
 	}
 	QString sMayaOutputPath = QFileInfo(filename).dir().path().replace("\\", "/");
@@ -115,6 +115,7 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 	exportProgress.step(25);
 
 	DzMayaAction* pMayaAction = new DzMayaAction();
+	pMayaAction->m_pSelectedNode = dzScene->getPrimarySelection();
 	pMayaAction->m_sOutputMayaFilepath = QString(filename).replace("\\", "/");
 	pMayaAction->setNonInteractiveMode(DZ_BRIDGE_NAMESPACE::eNonInteractiveMode::DzExporterMode);
 	pMayaAction->createUI();
@@ -312,6 +313,7 @@ bool DzMayaAction::createUI()
 void DzMayaAction::executeAction()
 {
 	m_nExecuteActionResult = DZ_OPERATION_FAILED_ERROR;
+	m_eSelectedNodeAssetType = DZ_BRIDGE_NAMESPACE::EAssetType::None;
 
 	// CreateUI() disabled for debugging -- 2022-Feb-25
 	/*
@@ -335,11 +337,10 @@ void DzMayaAction::executeAction()
 		return;
 	}
 
-	bool bDefaultToEnvironment = false;
-	if (SelectBestRootNodeForTransfer() == DZ_BRIDGE_NAMESPACE::EAssetType::Other) {
-		bDefaultToEnvironment = true;
+	if (m_nNonInteractiveMode != DZ_BRIDGE_NAMESPACE::eNonInteractiveMode::DzExporterMode) {
+		m_eSelectedNodeAssetType = SelectBestRootNodeForTransfer(true);
+		m_pSelectedNode = dzScene->getPrimarySelection();
 	}
-
 
 	// Create the dialog
 	if (m_bridgeDialog == nullptr)
@@ -385,10 +386,7 @@ void DzMayaAction::executeAction()
 
 	}
 
-	if (bDefaultToEnvironment) {
-		int nEnvIndex = m_bridgeDialog->getAssetTypeCombo()->findText("Environment");
-		m_bridgeDialog->getAssetTypeCombo()->setCurrentIndex(nEnvIndex);
-	}
+	m_bridgeDialog->setEAssetType(m_eSelectedNodeAssetType);
 
 	// If the Accept button was pressed, start the export
 	int dlgResult = -1;
@@ -398,11 +396,24 @@ void DzMayaAction::executeAction()
 	}
 	if (isInteractiveMode() == false || dlgResult == QDialog::Accepted)
 	{
-		// DB 2021-10-11: Progress Bar
-		DzProgress* exportProgress = new DzProgress("Sending to Maya...", 10);
+		// Read GUI values
+		if (readGui(m_bridgeDialog) == false)
+		{
+			m_nExecuteActionResult = DZ_OPERATION_FAILED_ERROR;
+			return;
+		}
 
-		// Read Common GUI values
-		readGui(m_bridgeDialog);
+		// DB 2021-10-11: Progress Bar
+		DzProgress* exportProgress = new DzProgress("Sending to Maya...", 10, false, true);
+
+		DzError result = doPromptableObjectBaking();
+		if (result != DZ_NO_ERROR) {
+			exportProgress->finish();
+			exportProgress->cancel();
+			m_nExecuteActionResult = result;
+			return;
+		}
+		exportProgress->step();
 
 		//Create Daz3D folder if it doesn't exist
 		QDir dir;
@@ -410,45 +421,6 @@ void DzMayaAction::executeAction()
 		exportProgress->step();
 
 		if (m_sAssetType == "Environment") {
-			if (isInteractiveMode())
-			{
-				QString sMessageBoth = tr("\
-The current scene contains instances and custom pivot points which must be replaced and baked out. \
-These changes can not be undone. Make sure you Abort and save your scene if needed.\n\
-\n\
-Do you want to proceed with these changes now?");
-				QString sMessageInstances = tr("\
-The current scene contains instances which must be replaced with their original objects. \
-These changes can not be undone. Make sure you Abort and save your scene if needed. \n\
-\n\
-Do you want to proceed with these changes now?");
-				QString sMessageCustomPivots = tr("\
-The current scene contains custom pivot points which must be baked out. \
-These changes can not be undone. Make sure you Abort and save your scene if needed. \n\
-\n\
-Do you want to proceed with these changes now?");
-				bool bInstancesDetected = DetectInstancesInScene();
-				bool bCustomPivotsDetected = DetectCustomPivotsInScene();
-				if (bInstancesDetected || bCustomPivotsDetected)
-				{
-					QString sEnvironmentMessagePrompt;
-					if (bInstancesDetected && bCustomPivotsDetected) sEnvironmentMessagePrompt = sMessageBoth;
-					else if (bInstancesDetected) sEnvironmentMessagePrompt = sMessageInstances;
-					else sEnvironmentMessagePrompt = sMessageCustomPivots;
-					int userChoice = QMessageBox::information(0,
-						QObject::tr("Environment Export"),
-						sEnvironmentMessagePrompt,
-						QMessageBox::Yes,
-						QMessageBox::Abort);
-					if (userChoice == QMessageBox::Abort) {
-						exportProgress->cancel();
-						exportProgress->finish();
-						m_nExecuteActionResult = DZ_USER_CANCELLED_OPERATION;
-						return;
-					}
-				}
-			}
-			BakePivotsAndInstances();
 
 			QDir().mkdir(m_sDestinationPath);
 			m_pSelectedNode = dzScene->getPrimarySelection();
@@ -476,27 +448,47 @@ Do you want to proceed with these changes now?");
 			if (result != DZ_NO_ERROR) {
 				undoPreProcessScene();
 				m_nExecuteActionResult = result;
+				exportProgress->finish();
+				exportProgress->cancel();
 				return;
 			}
+			exportProgress->step();
 
 			writeConfiguration();
+			exportProgress->step();
+
 			undoPreProcessScene();
+			exportProgress->step();
 
 		} 
 		else 
 		{
+			DzNode* pParentNode = NULL;
+			if (m_pSelectedNode->isRootNode() == false) {
+				dzApp->log("INFO: Selected Node for Export is not a Root Node, unparenting now....");
+				pParentNode = m_pSelectedNode->getNodeParent();
+				pParentNode->removeNodeChild(m_pSelectedNode, true);
+				dzApp->log("INFO: Parent stored: " + pParentNode->getLabel() + ", New Root Node: " + m_pSelectedNode->getLabel());
+			}
+			exportProgress->step();
 			exportHD(exportProgress);
+			exportProgress->step();
+			if (pParentNode) {
+				dzApp->log("INFO: Restoring Parent relationship: " + pParentNode->getLabel() + ", child node: " + m_pSelectedNode->getLabel());
+				pParentNode->addNodeChild(m_pSelectedNode, true);
+			}
 		}
 
-		// DB 2021-10-11: Progress Bar
-		exportProgress->finish();
-
+		exportProgress->update(10);
 		// DB 2021-09-02: messagebox "Export Complete"
 		if (m_nNonInteractiveMode == 0)
 		{
 			QMessageBox::information(0, "Daz To Maya Bridge",
 				tr("Export phase from Daz Studio complete. Please switch to Maya to begin Import phase."), QMessageBox::Ok);
 		}
+
+		// DB 2021-10-11: Progress Bar
+		exportProgress->finish();
 
 	}
 
@@ -506,6 +498,8 @@ Do you want to proceed with these changes now?");
 
 void DzMayaAction::writeConfiguration()
 {
+	DzProgress* pDtuProgress = new DzProgress("Writing DTU file", 10, false, true);
+
 	QString DTUfilename = m_sDestinationPath + m_sAssetName + ".dtu";
 	QFile DTUfile(DTUfilename);
 	DTUfile.open(QIODevice::WriteOnly);
@@ -513,6 +507,7 @@ void DzMayaAction::writeConfiguration()
 	writer.startObject(true);
 
 	writeDTUHeader(writer);
+	pDtuProgress->step();
 
 	// Plugin-specific items
 //	writer.addMember("Use Blender Tools", m_bUseBlenderTools);
@@ -524,6 +519,7 @@ void DzMayaAction::writeConfiguration()
 //	writer.addMember("Embed Textures", m_bEmbedTexturesInOutputFile);
 	writer.addMember("Generate Final Fbx", m_bGenerateFinalFbx);
 	writer.addMember("Shader Target", m_sShaderTarget);
+	pDtuProgress->step();
 
 //	if (m_sAssetType.toLower().contains("mesh") || m_sAssetType == "Animation")
 	if (true)
@@ -537,26 +533,36 @@ void DzMayaAction::writeConfiguration()
 			pCVSStream = new QTextStream(&file);
 			*pCVSStream << "Version, Object, Material, Type, Color, Opacity, File" << endl;
 		}
-		writeAllMaterials(m_pSelectedNode, writer, pCVSStream);
+
+		if (m_sAssetType == "Environment") {
+			writeSceneMaterials(writer, pCVSStream);
+			pDtuProgress->step();
+		}
+		else {
+			writeAllMaterials(m_pSelectedNode, writer, pCVSStream);
+			pDtuProgress->step();
+		}
+
 		writeAllMorphs(writer);
 
 		writeMorphLinks(writer);
-		//writer.startMemberObject("MorphLinks");
-		//writer.finishObject();
 		writeMorphNames(writer);
-		//writer.startMemberArray("MorphNames");
-		//writer.finishArray();
+		pDtuProgress->step();
 
 		DzBoneList aBoneList = getAllBones(m_pSelectedNode);
 
 		writeSkeletonData(m_pSelectedNode, writer);
 		writeHeadTailData(m_pSelectedNode, writer);
-
 		writeJointOrientation(aBoneList, writer);
 		writeLimitData(aBoneList, writer);
 		writePoseData(m_pSelectedNode, writer, true);
+		pDtuProgress->step();
+
 		writeAllSubdivisions(writer);
+		pDtuProgress->step();
+
 		writeAllDforceInfo(m_pSelectedNode, writer);
+		pDtuProgress->step();
 	}
 
 	//if (m_sAssetType == "Pose")
@@ -572,20 +578,40 @@ void DzMayaAction::writeConfiguration()
 	writer.finishObject();
 	DTUfile.close();
 
+	pDtuProgress->finish();
+
 }
 
 // Setup custom FBX export options
 void DzMayaAction::setExportOptions(DzFileIOSettings& ExportOptions)
 {
-	//ExportOptions.setBoolValue("doEmbed", false);
-	//ExportOptions.setBoolValue("doDiffuseOpacity", false);
-	//ExportOptions.setBoolValue("doCopyTextures", false);
+//	ExportOptions.setBoolValue("IncludeFaceGroupsAsPolygonSets", false);
+//	ExportOptions.setBoolValue("IncludeFaceGroupsAsPolygonGroups", false);
+
 	ExportOptions.setBoolValue("doFps", true);
 	ExportOptions.setBoolValue("doLocks", false);
 	ExportOptions.setBoolValue("doLimits", false);
 	ExportOptions.setBoolValue("doBaseFigurePoseOnly", false);
 	ExportOptions.setBoolValue("doHelperScriptScripts", false);
 	ExportOptions.setBoolValue("doMentalRayMaterials", false);
+
+	//ExportOptions.setBoolValue("doEmbed", false);
+	//ExportOptions.setBoolValue("doDiffuseOpacity", false);
+	//ExportOptions.setBoolValue("doCopyTextures", false);
+
+	// Unable to use this option, since generated files are referenced only in FBX and unknown to DTU
+	ExportOptions.setBoolValue("MergeDiffuseOpacity", false);
+	// disable these options since we use Blender to generate a new FBX with embedded files
+	ExportOptions.setBoolValue("EmbedTextures", false);
+	ExportOptions.setBoolValue("CollectTextures", false);
+
+	// Custom Properties
+	ExportOptions.setBoolValue("IncludeNodeNamesLabels", true);
+	ExportOptions.setBoolValue("IncludeNodePresentation", true);
+	ExportOptions.setBoolValue("IncludeNodeSelectionMap", true);
+	ExportOptions.setBoolValue("IncludeSceneIDs", true);
+	ExportOptions.setBoolValue("IncludeFollowTargets", true);
+
 }
 
 QString DzMayaAction::readGuiRootFolder()
