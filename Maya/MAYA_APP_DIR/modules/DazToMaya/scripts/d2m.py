@@ -2159,16 +2159,29 @@ def clean_namespace():
 
 
 def scene_renamer():
-    objs = mel.eval('ls')
-    for obj in objs:
-        obj_modified = obj.replace("FBXASC045", "_")
-        obj_modified = obj.replace("FBXASC046", "_")
+    # joints = cmds.ls(type='joint')
+    # mesh_shapes = cmds.ls(type='mesh')
+    # mesh_transforms = cmds.listRelatives(mesh_shapes, parent=True, type='transform', fullPath=False) or []
+    # other_transforms = [x for x in cmds.ls(type='transform', long=True) if x not in mesh_transforms]
+    # fullpath_objs = joints + mesh_transforms + other_transforms
+    # objs = cmds.ls(fullpath_objs, long=False)
+    objs = cmds.ls()
 
-        obj_modified = obj_modified.replace("ShapeShapeOrig", "Shape")
-        obj_modified = obj_modified.replace("ShapeShape", "Shape")
-        obj_modified = obj_modified.replace("_Shape", "")
-        obj_modified = obj_modified.replace("Shape", "")
+    for obj in objs:
+        obj_modified = obj
+        obj_modified = obj.replace("FBXASC045", "_")
+        obj_modified = obj_modified.replace("FBXASC046", "_")
+
+        if "ShapeShapeOrig" in obj_modified:
+            obj_modified = obj_modified.replace("ShapeShapeOrig", "ShapeOrig")
+        elif "ShapeShape" in obj_modified:
+            obj_modified = obj_modified.replace("ShapeShape", "Shape")
+        elif "_Shape" in obj_modified:
+            obj_modified = obj_modified.replace("_Shape", "")
+        elif "Shape" in obj_modified:
+            obj_modified = obj_modified.replace("Shape", "")
         obj_modified = obj_modified.replace("FBXASC032", "_")
+        obj_modified = obj_modified.replace("FBXASC033", "_")
         obj_modified = obj_modified.replace("FBXASC048", "_0")
         obj_modified = obj_modified.replace("FBXASC049", "_1")
         obj_modified = obj_modified.replace("FBXASC050", "_2")
@@ -2180,14 +2193,19 @@ def scene_renamer():
         obj_modified = obj_modified.replace("FBXASC056", "_8")
         obj_modified = obj_modified.replace("FBXASC057", "_9")
 
-        #print obj + "  ---  " + obj_modified
+        if "|" in obj_modified:
+            obj_modified = obj_modified.split("|")[-1]
+
         if obj == obj_modified:
             pass
         else:
-            try:
-                cmds.rename(obj, obj_modified)
-            except:
-                pass
+            long_name = cmds.ls(obj, long=True)
+            if long_name is not None and len(long_name) > 0:
+                print("Renaming: " + str(long_name) + " to " + obj_modified + "...")
+                try:
+                    cmds.rename(long_name, obj_modified)
+                except Exception as e:
+                    print("Error occured: " + str(e))
 
 
 ## DB 2023-Aug-07: Modify genesis skeletons and generate HIK rig
