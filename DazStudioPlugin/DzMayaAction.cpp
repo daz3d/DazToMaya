@@ -93,7 +93,7 @@ bool DzMayaUtils::GenerateExporterBatchFile(QString batchFilePath, QString sExec
 DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* options)
 {
 	bool bDefaultToEnvironment = false;
-	if (DZ_BRIDGE_NAMESPACE::DzBridgeAction::SelectBestRootNodeForTransfer(false) == DZ_BRIDGE_NAMESPACE::EAssetType::Other) {
+	if (DZ_BRIDGE_NAMESPACE::DzBridgeAction::SelectBestRootNodeForTransfer(false) == DZ_BRIDGE_NAMESPACE::EAssetType::Scene) {
 		bDefaultToEnvironment = true;
 	}
 	QString sMayaOutputPath = QFileInfo(filename).dir().path().replace("\\", "/");
