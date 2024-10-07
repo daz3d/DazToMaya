@@ -9,6 +9,8 @@ except:
 
 import sys
 import os
+import tempfile
+import shutil
 maya_modules_path = os.path.expanduser("~/maya/modules")
 daz_to_maya_path = os.path.join(maya_modules_path, "DazToMaya").replace("\\", "/")
 
@@ -42,7 +44,7 @@ def _add_to_log(message):
         logfile = g_logfile
 
     print(str(message))
-    with open(logfile, "a") as file:
+    with open(logfile, "a", encoding="utf-8") as file:
         file.write(str(message) + "\n")
 
 def _main(argv):
@@ -129,11 +131,26 @@ def _main(argv):
             if invert: cmds.setAttr(file_node + '.invert', bool(invert))
 
     # Save Maya File
-    cmds.file(rename=file_path)
-    if ".ma" in file_path:
-        cmds.file(save=True, type="mayaAscii")
-    else:
-        cmds.file(save=True, type="mayaBinary")
+    try:
+        cmds.file(rename=file_path)
+        if ".ma" in file_path:
+            cmds.file(save=True, type="mayaAscii")
+        else:
+            cmds.file(save=True, type="mayaBinary")
+        _add_to_log("Saved file: " + file_path)
+    except RuntimeError as e:
+        _add_to_log("ERROR while saving file: " + file_path + " " + str(e))
+        temp_folder = tempfile.gettempdir().replace("\\", "/")
+        temp_file_name = os.path.basename(file_path)
+        temp_file_path = temp_folder + "/" + temp_file_name
+        _add_to_log("Attempting to save to temp folder: " + temp_file_path)
+        cmds.file(rename=temp_file_path)
+        if ".ma" in file_path:
+            cmds.file(save=True, type="mayaAscii")
+        else:
+            cmds.file(save=True, type="mayaBinary")
+        _add_to_log("Moving temp file to: " + file_path)
+        shutil.move(temp_file_path, file_path)
 
     if generate_final_fbx:
         # Generate FBX

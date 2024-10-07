@@ -58,13 +58,17 @@ QString DzMayaUtils::FindMayaPyExe(QString sMayaExecutablePath)
 	return sMayaPyExe;
 }
 
-bool DzMayaUtils::GenerateExporterBatchFile(QString batchFilePath, QString sExecutablePath, QString sCommandArgs)
+bool DzMayaUtils::GenerateExporterBatchFile(QString batchFilePath, QString sExecutablePath, QString sCommandArgs, QString sCWD)
 {
 	QString sBatchFileFolder = QFileInfo(batchFilePath).dir().path().replace("\\", "/");
 	QDir().mkdir(sBatchFileFolder);
 
 	// 4. Generate manual batch file to launch exporter scripts
-	QString sBatchString = QString("\"%1\"").arg(sExecutablePath);
+	QString sBatchString = QString("\
+chcp 65001\n\
+cd /d \"%1\"\n\
+\"%2\"\
+").arg(sCWD).arg(sExecutablePath);
 	foreach(QString arg, sCommandArgs.split(";"))
 	{
 		if (arg.contains(" "))
@@ -80,11 +84,12 @@ bool DzMayaUtils::GenerateExporterBatchFile(QString batchFilePath, QString sExec
 	QFile batchFileOut(batchFilePath);
 	bool bResult = batchFileOut.open(QIODevice::WriteOnly | QIODevice::OpenModeFlag::Truncate);
 	if (bResult) {
-		batchFileOut.write(sBatchString.toAscii().constData());
+		batchFileOut.write(sBatchString.toUtf8().constData());
 		batchFileOut.close();
 	}
 	else {
 		dzApp->log("ERROR: GenerateExporterBatchFile(): Unable to open batch file for writing: " + batchFilePath);
+		return false;
 	}
 
 	return true;
@@ -170,8 +175,11 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 
-	QString sMayaLogPath = sIntermediatePath + "/" + "create_maya_file.log";
-	QString sScriptPath = sIntermediateScriptsPath + "/" + "create_maya_file.py";
+	//QString sMayaLogPath = sIntermediatePath + "/" + "create_maya_file.log";
+	//QString sScriptPath = sIntermediateScriptsPath + "/" + "create_maya_file.py";
+	//QString sCommandArgs = QString("%1;%2").arg(sScriptPath).arg(pMayaAction->m_sDestinationFBX);
+	QString sMayaLogPath = QString(".") + "/" + "create_maya_file.log";
+	QString sScriptPath = QString("./Scripts") + "/" + "create_maya_file.py";
 	QString sCommandArgs = QString("%1;%2").arg(sScriptPath).arg(pMayaAction->m_sDestinationFBX);
 #if WIN32
 	QString batchFilePath = sIntermediatePath + "/" + "create_maya_file.bat";
@@ -188,7 +196,7 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 		exportProgress.cancel();
 		return DZ_OPERATION_FAILED_ERROR;
 	}
-	DzMayaUtils::GenerateExporterBatchFile(batchFilePath, sMayaPyExecutable, sCommandArgs);
+	DzMayaUtils::GenerateExporterBatchFile(batchFilePath, sMayaPyExecutable, sCommandArgs, sIntermediatePath);
 
 	bool result = pMayaAction->executeMayaScripts(sMayaPyExecutable, sCommandArgs, 120);
 
@@ -202,7 +210,9 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 			tr("Export from Daz Studio complete."), QMessageBox::Ok);
 
 #ifdef WIN32
-	ShellExecuteA(NULL, "open", sMayaOutputPath.toLocal8Bit().data(), NULL, NULL, SW_SHOWDEFAULT);
+//	ShellExecuteA(NULL, "open", sMayaOutputPath.toLocal8Bit().data(), NULL, NULL, SW_SHOWDEFAULT);
+	std::wstring wcsMayaOutputPath(reinterpret_cast<const wchar_t*>(sMayaOutputPath.utf16()));
+	ShellExecuteW(NULL, L"open", wcsMayaOutputPath.c_str(), NULL, NULL, SW_SHOWDEFAULT);
 #elif defined(__APPLE__)
 	QStringList args;
 	args << "-e";
@@ -228,7 +238,9 @@ DzError	DzMayaExporter::write(const QString& filename, const DzFileIOSettings* o
 		sErrorString += QString("Please check log files at : %1\n").arg(pMayaAction->m_sDestinationPath);
 		QMessageBox::critical(0, "Maya Exporter", tr(sErrorString.toLocal8Bit()), QMessageBox::Ok);
 #ifdef WIN32
-		ShellExecuteA(NULL, "open", pMayaAction->m_sDestinationPath.toLocal8Bit().data(), NULL, NULL, SW_SHOWDEFAULT);
+//		ShellExecuteA(NULL, "open", pMayaAction->m_sDestinationPath.toLocal8Bit().data(), NULL, NULL, SW_SHOWDEFAULT);
+		std::wstring wcsDestinationPath(reinterpret_cast<const wchar_t*>(pMayaAction->m_sDestinationPath.utf16()));
+		ShellExecuteW(NULL, L"open", wcsDestinationPath.c_str(), NULL, NULL, SW_SHOWDEFAULT);
 #elif defined(__APPLE__)
 		QStringList args;
 		args << "-e";
